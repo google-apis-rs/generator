@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "discovery_parser",
+    "field_selector",
+    "field_selector_derive",
+    "generator",
+]

@@ -1,0 +1,15 @@
+[package]
+name = "field_selector_derive"
+version = "0.1.0"
+authors = ["Glenn Griffin <ggriffiniii@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "field_selector_derive"
+proc-macro = true
+
+[dependencies]
+serde_derive_internals = "0.24"
+syn = "0.15"
+quote = "0.6"
+proc-macro2 = "0.4"
