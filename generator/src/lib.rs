@@ -295,6 +295,7 @@ fn to_rust_varstr(s: &str) -> String {
 }
 
 fn escape_keywords(s: String) -> String {
+    // TODO: add all keywords
     if ["type", "match"].contains(&s.as_str()) {
         format!("r#{}", s)
     } else {
@@ -652,6 +653,7 @@ impl quote::ToTokens for TypeDef {
         tokens.append_all(std::iter::once(match &self.typ {
             TypeFields::Enum { variants } => {
                 quote! {
+                    #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
                     pub enum #name {
                         #(#variants,)*
                     }
@@ -659,6 +661,7 @@ impl quote::ToTokens for TypeDef {
             }
             TypeFields::Struct { fields } => {
                 quote! {
+                    #[derive(Debug, Clone, Eq, PartialEq, Hash)]
                     pub struct #name {
                         #(#fields,)*
                     }
