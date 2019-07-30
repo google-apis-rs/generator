@@ -46,7 +46,7 @@ impl APIDesc {
             .resources
             .iter()
             .map(|(resource_id, resource_desc)| {
-                Resource::from_disco_resource(resource_id, resource_desc, &discovery_desc.schemas)
+                Resource::from_disco_resource(resource_id, &parse_quote!{crate}, resource_desc, &discovery_desc.schemas)
             })
             .collect();
         schema_types.sort_by(|a, b| a.type_path_str().cmp(&b.type_path_str()));
@@ -79,6 +79,22 @@ impl APIDesc {
             }
             out.push(typ.clone());
         }
+        fn add_resource_types(resource: &Resource, out: &mut Vec<Type>) {
+            for resource in &resource.resources {
+                add_resource_types(resource, out); 
+            }
+            for method in &resource.methods {
+                for param in &method.params {
+                    add_types(&param.typ, out);
+                }
+                if let Some(req) = method.request.as_ref() {
+                    add_types(req, out);
+                }
+                if let Some(resp) = method.response.as_ref() {
+                    add_types(resp, out);
+                }
+            }
+        }
         let mut out = Vec::new();
         for typ in &self.schema_types {
             add_types(typ, &mut out);
@@ -87,17 +103,7 @@ impl APIDesc {
             add_types(&param.typ, &mut out);
         }
         for resource in &self.resources {
-            for method in &resource.methods {
-                for param in &method.params {
-                    add_types(&param.typ, &mut out);
-                }
-                if let Some(req) = method.request.as_ref() {
-                    add_types(req, &mut out);
-                }
-                if let Some(resp) = method.response.as_ref() {
-                    add_types(resp, &mut out);
-                }
-            }
+            add_resource_types(resource, &mut out);
         }
         let type_path_cmp = |a: &Type, b: &Type| {
             let a_path = a.type_path();
@@ -131,6 +137,10 @@ impl quote::ToTokens for APIDesc {
             mod params {
                 #(#params_to_create)*
             }
+            struct Client;
+            impl Client {
+
+            }
             #(#resource_modules)*
         }));
     }
@@ -139,12 +149,15 @@ impl quote::ToTokens for APIDesc {
 #[derive(Clone, Debug)]
 struct Resource {
     ident: syn::Ident,
+    parent_path: syn::Path,
+    resources: Vec<Resource>,
     methods: Vec<Method>,
 }
 
 impl Resource {
     fn from_disco_resource(
         resource_id: &str,
+        parent_path: &syn::Path,
         disco_resource: &discovery_parser::ResourceDesc,
         all_schemas: &HashMap<String, discovery_parser::SchemaDesc>,
     ) -> Resource {
@@ -161,9 +174,15 @@ impl Resource {
                 )
             })
             .collect();
+        let mut nested_resources: Vec<Resource> = disco_resource.resources.iter().map(|(nested_id, resource_desc)| {
+            Resource::from_disco_resource(nested_id, &parse_quote!{parent_path::#resource_ident}, resource_desc, all_schemas)
+        }).collect();
         methods.sort_by(|a, b| a.id.cmp(&b.id));
+        nested_resources.sort_by(|a, b| a.ident.cmp(&b.ident));
         Resource {
             ident: resource_ident,
+            parent_path: parent_path.clone(),
+            resources: nested_resources,
             methods,
         }
     }
@@ -246,8 +265,9 @@ impl Param {
         parent_path: &syn::TypePath,
         disco_param: &discovery_parser::ParamDesc,
     ) -> Param {
-        let ident = to_ident(&to_rust_typestr(&param_id));
-        Param::with_ident(ident, parent_path, disco_param)
+        let ident = to_ident(&to_rust_varstr(&param_id));
+        let type_ident = to_ident(&to_rust_typestr(&param_id));
+        Param::with_ident(ident, type_ident, parent_path, disco_param)
     }
 
     fn from_disco_method_param(
@@ -256,19 +276,21 @@ impl Param {
         parent_path: &syn::TypePath,
         disco_param: &discovery_parser::ParamDesc,
     ) -> Param {
-        let ident = to_ident(&to_rust_typestr(&format!("{}-{}", &method_id, &param_id)));
-        Param::with_ident(ident, parent_path, disco_param)
+        let ident = to_ident(&to_rust_varstr(param_id));
+        let type_ident = to_ident(&to_rust_typestr(&format!("{}-{}", &method_id, &param_id)));
+        Param::with_ident(ident, type_ident, parent_path, disco_param)
     }
 
     fn with_ident(
         ident: syn::Ident,
+        type_ident: syn::Ident,
         parent_path: &syn::TypePath,
         disco_param: &discovery_parser::ParamDesc,
     ) -> Param {
         let typ = Type::from_disco_ref_or_type(
-            &ident,
+            &type_ident,
             parent_path,
-            &RefOrType::Type(disco_param.typ.as_type_desc()),
+            &RefOrType::Type(discovery_parser::TypeDesc::from_param(disco_param.clone())),
             &HashMap::new(),
         );
         Param {
@@ -280,26 +302,55 @@ impl Param {
             typ,
         }
     }
+
+    fn init_method(&self) -> ParamInitMethod {
+        match self.typ.type_desc {
+            TypeDesc::String => ParamInitMethod::IntoImpl(parse_quote!{String}),
+            TypeDesc::Bool => ParamInitMethod::ByValue,
+            TypeDesc::Int32 => ParamInitMethod::ByValue,
+            TypeDesc::Uint32 => ParamInitMethod::ByValue,
+            TypeDesc::Float32 => ParamInitMethod::ByValue,
+            TypeDesc::Int64 => ParamInitMethod::ByValue,
+            TypeDesc::Uint64 => ParamInitMethod::ByValue,
+            TypeDesc::Float64 => ParamInitMethod::ByValue,
+            TypeDesc::Bytes => ParamInitMethod::IntoImpl(parse_quote!{Box<[u8]>}),
+            TypeDesc::Date => ParamInitMethod::IntoImpl(parse_quote!{String}),
+            TypeDesc::DateTime => ParamInitMethod::IntoImpl(parse_quote!{String}),
+            TypeDesc::Enum(_) => ParamInitMethod::ByValue,
+            TypeDesc::Any | TypeDesc::Array{..} | TypeDesc::Object{..} => panic!("param {} is not an expected type: {:?}", &self.ident, &self.typ.type_desc),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum ParamInitMethod {
+    IntoImpl(syn::TypePath),
+    ByValue,
 }
 
 fn to_rust_typestr(s: &str) -> String {
     use inflector::cases::pascalcase::to_pascal_case;
     let s = to_pascal_case(s);
-    escape_keywords(s)
+    fixup(s)
 }
 
 fn to_rust_varstr(s: &str) -> String {
     use inflector::cases::snakecase::to_snake_case;
     let s = to_snake_case(s);
-    escape_keywords(s)
+    fixup(s)
 }
 
-fn escape_keywords(s: String) -> String {
+fn fixup(s: String) -> String {
     // TODO: add all keywords
-    if ["type", "match"].contains(&s.as_str()) {
+    let s = if ["type", "match"].contains(&s.as_str()) {
         format!("r#{}", s)
     } else {
         s
+    };
+    let s: String = s.chars().map(|c| if !c.is_ascii_alphanumeric() { '_' } else { c }).collect();
+    match s.chars().next() {
+        Some(c) if c.is_ascii_digit() => "_".to_owned() + &s,
+        _ => s,
     }
 }
 
@@ -355,7 +406,6 @@ impl Type {
         ref_or_type: &RefOrType<discovery_parser::TypeDesc>,
         all_schemas: &HashMap<String, discovery_parser::SchemaDesc>,
     ) -> Type {
-        use discovery_parser::TypeDesc as DiscoTypeDesc;
         let empty_type_path = || syn::TypePath {
             qself: None,
             path: syn::Path {
@@ -369,147 +419,86 @@ impl Type {
                     .get(reference)
                     .unwrap_or_else(|| panic!("failed to lookup {} in schemas", reference));
                 Type::from_disco_schema(reference_schema, all_schemas)
-            }
-            RefOrType::Type(DiscoTypeDesc::Any) => unimplemented!("Any"),
-            RefOrType::Type(DiscoTypeDesc::String)
-            | RefOrType::Type(DiscoTypeDesc::FormattedString { .. }) => Type {
-                id: parse_quote! {String},
-                parent_path: empty_type_path(),
-                type_desc: TypeDesc::String,
             },
-            RefOrType::Type(DiscoTypeDesc::Boolean) => Type {
-                id: parse_quote! {bool},
-                parent_path: empty_type_path(),
-                type_desc: TypeDesc::Bool,
-            },
-            RefOrType::Type(DiscoTypeDesc::Int32) => Type {
-                id: parse_quote! {i32},
-                parent_path: empty_type_path(),
-                type_desc: TypeDesc::Int32,
-            },
-            RefOrType::Type(DiscoTypeDesc::Uint32) => Type {
-                id: parse_quote! {u32},
-                parent_path: empty_type_path(),
-                type_desc: TypeDesc::Uint32,
-            },
-            RefOrType::Type(DiscoTypeDesc::Float32) => Type {
-                id: parse_quote! {f32},
-                parent_path: empty_type_path(),
-                type_desc: TypeDesc::Float32,
-            },
-            RefOrType::Type(DiscoTypeDesc::Int64) => Type {
-                id: parse_quote! {i64},
-                parent_path: empty_type_path(),
-                type_desc: TypeDesc::Int64,
-            },
-            RefOrType::Type(DiscoTypeDesc::Uint64) => Type {
-                id: parse_quote! {u64},
-                parent_path: empty_type_path(),
-                type_desc: TypeDesc::Uint64,
-            },
-            RefOrType::Type(DiscoTypeDesc::Float64) => Type {
-                id: parse_quote! {f64},
-                parent_path: empty_type_path(),
-                type_desc: TypeDesc::Float64,
-            },
-            RefOrType::Type(DiscoTypeDesc::Bytes) => Type {
-                id: parse_quote! {Vec<u8>},
-                parent_path: empty_type_path(),
-                type_desc: TypeDesc::Bytes,
-            },
-            RefOrType::Type(DiscoTypeDesc::Date) => Type {
-                id: parse_quote! {Date<chrono::UTC>},
-                parent_path: parse_quote! {::chrono},
-                type_desc: TypeDesc::Date,
-            },
-            RefOrType::Type(DiscoTypeDesc::DateTime) => Type {
-                id: parse_quote! {DateTime<chrono::UTC>},
-                parent_path: parse_quote! {::chrono},
-                type_desc: TypeDesc::DateTime,
-            },
-            RefOrType::Type(DiscoTypeDesc::Enumeration(enums)) => {
-                use discovery_parser::EnumDesc as DiscoEnumDesc;
-                Type {
-                    id: parse_quote! {#ident},
-                    parent_path: parent_path.clone(),
-                    type_desc: TypeDesc::Enum(
-                        enums
-                            .iter()
-                            .map(|DiscoEnumDesc { description, value }| {
-                                let ident = to_ident(&to_rust_typestr(&value));
-                                EnumDesc {
-                                    ident,
-                                    description: Some(description.clone()),
-                                }
-                            })
-                            .collect(),
-                    ),
-                }
-            }
-            RefOrType::Type(DiscoTypeDesc::Array { items }) => {
-                let items_ident = to_ident(&to_rust_typestr(&format!("{}-items", ident)));
-                let item_type =
-                    Type::from_disco_ref_or_type(&items_ident, &parent_path, &items, all_schemas);
-                let item_path = item_type.type_path();
-                Type {
-                    id: parse_quote! {Vec<#item_path>},
-                    parent_path: empty_type_path(),
-                    type_desc: TypeDesc::Array {
-                        items: Box::new(item_type),
+            RefOrType::Type(disco_type) => {
+                let type_desc = TypeDesc::from_disco_type(ident, parent_path, disco_type, all_schemas);
+                match type_desc {
+                    TypeDesc::Any => unimplemented!("Any"),
+                    TypeDesc::String => Type {
+                        id: parse_quote! {String},
+                        parent_path: empty_type_path(),
+                        type_desc,
+                    },
+                    TypeDesc::Bool => Type {
+                        id: parse_quote! {bool},
+                        parent_path: empty_type_path(),
+                        type_desc,
+                    },
+                    TypeDesc::Int32 => Type {
+                        id: parse_quote! {i32},
+                        parent_path: empty_type_path(),
+                        type_desc,
+                    },
+                    TypeDesc::Uint32 => Type {
+                        id: parse_quote! {u32},
+                        parent_path: empty_type_path(),
+                        type_desc,
+                    },
+                    TypeDesc::Float32 => Type {
+                        id: parse_quote! {f32},
+                        parent_path: empty_type_path(),
+                        type_desc,
+                    },
+                    TypeDesc::Int64 => Type {
+                        id: parse_quote! {i64},
+                        parent_path: empty_type_path(),
+                        type_desc,
+                    },
+                    TypeDesc::Uint64 => Type {
+                        id: parse_quote! {u64},
+                        parent_path: empty_type_path(),
+                        type_desc,
+                    },
+                    TypeDesc::Float64 => Type {
+                        id: parse_quote! {f64},
+                        parent_path: empty_type_path(),
+                        type_desc,
+                    },
+                    TypeDesc::Bytes => Type {
+                        id: parse_quote! {Vec<u8>},
+                        parent_path: empty_type_path(),
+                        type_desc,
+                    },
+                    TypeDesc::Date => Type {
+                        id: parse_quote! {Date<chrono::UTC>},
+                        parent_path: parse_quote! {::chrono},
+                        type_desc,
+                    },
+                    TypeDesc::DateTime => Type {
+                        id: parse_quote! {DateTime<chrono::UTC>},
+                        parent_path: parse_quote! {::chrono},
+                        type_desc,
+                    },
+                    TypeDesc::Enum(_) => Type {
+                        id: parse_quote! {#ident},
+                        parent_path: parent_path.clone(),
+                        type_desc,
+                    },
+                    TypeDesc::Array { ref items } => {
+                        let item_path = items.type_path();
+                        Type {
+                            id: parse_quote! {Vec<#item_path>},
+                            parent_path: empty_type_path(),
+                            type_desc,
+                        }
+                    },
+                    TypeDesc::Object{..} => Type {
+                        id: parse_quote! {#ident},
+                        parent_path: parent_path.clone(),
+                        type_desc,
                     },
                 }
-            }
-            RefOrType::Type(DiscoTypeDesc::Object {
-                properties,
-                additional_properties,
-            }) => {
-                use discovery_parser::PropertyDesc as DiscoPropDesc;
-                let props = properties
-                    .iter()
-                    .map(|(prop_id, DiscoPropDesc { description, typ })| {
-                        let prop_ident = to_ident(&to_rust_varstr(&prop_id));
-                        let type_ident =
-                            to_ident(&to_rust_typestr(&format!("{}-{}", ident, prop_id)));
-                        let typ = Type::from_disco_ref_or_type(
-                            &type_ident,
-                            &parent_path,
-                            &typ,
-                            all_schemas,
-                        );
-                        (
-                            prop_ident.clone(),
-                            PropertyDesc {
-                                ident: prop_ident,
-                                description: description.clone(),
-                                typ,
-                            },
-                        )
-                    })
-                    .collect();
-
-                let add_props = additional_properties.as_ref().map(|prop_desc| {
-                    let type_ident = to_ident(&to_rust_typestr(&format!(
-                        "{}-additional-properties",
-                        &ident
-                    )));
-                    let typ = Type::from_disco_ref_or_type(
-                        &type_ident,
-                        &parent_path,
-                        &prop_desc.typ,
-                        all_schemas,
-                    );
-                    Box::new(PropertyDesc {
-                        ident: parse_quote! {additional_properties},
-                        description: prop_desc.description.clone(),
-                        typ,
-                    })
-                });
-                Type {
-                    id: parse_quote! {#ident},
-                    parent_path: parent_path.clone(),
-                    type_desc: TypeDesc::Object { props, add_props },
-                }
-            }
+            },
         }
     }
 
@@ -537,8 +526,11 @@ impl Type {
                 let variants = enums
                     .iter()
                     .map(|EnumDesc { description, ident }| {
+                        let doc: Option<TokenStream> = description.as_ref().map(|description| {
+                            parse_quote!{#[doc = #description]}
+                        });
                         parse_quote! {
-                            #[doc = #description]
+                            #doc
                             #ident
                         }
                     })
@@ -595,7 +587,13 @@ impl Type {
                     })
                 }
                 (true, Some(_)) => None,
-                (true, None) => panic!("object without properties or additional_properties"),
+                (true, None) => {
+                    Some(TypeDef {
+                        id: self.id.clone(),
+                        parent_path: self.parent_path.clone(),
+                        typ: TypeFields::Struct{ fields: Vec::new() },
+                    })
+                },
             },
             _ => None,
         }
@@ -624,6 +622,103 @@ enum TypeDesc {
         props: HashMap<syn::Ident, PropertyDesc>,
         add_props: Option<Box<PropertyDesc>>,
     },
+}
+
+impl TypeDesc {
+    fn from_disco_type(ident: &syn::Ident, parent_path: &syn::TypePath, disco_type: &discovery_parser::TypeDesc, all_schemas: &HashMap<String, discovery_parser::SchemaDesc>) -> TypeDesc {
+        match (disco_type.typ.as_str(), disco_type.format.as_ref().map(|x| x.as_str())) {
+            ("any", None) => unimplemented!("Any"),
+            ("boolean", None) => TypeDesc::Bool,
+            ("integer", Some("uint32")) => TypeDesc::Uint32,
+            ("integer", Some("int32")) => TypeDesc::Int32,
+            ("number", Some("float")) => TypeDesc::Float32,
+            ("number", Some("double")) => TypeDesc::Float64,
+            ("string", Some("int64")) => TypeDesc::Int64,
+            ("string", Some("uint64")) => TypeDesc::Uint64,
+            ("string", Some("byte")) => TypeDesc::Bytes,
+            ("string", Some("date")) => TypeDesc::Date,
+            ("string", Some("date-time")) => TypeDesc::DateTime,
+            ("string", _) => {
+                if disco_type.enumeration.is_empty() {
+                    TypeDesc::String
+                } else {
+                    TypeDesc::Enum(
+                        disco_type.enumeration
+                            .iter()
+                            .zip(disco_type.enum_descriptions.iter())
+                            .map(|(value, description)| {
+                                let ident = to_ident(&to_rust_typestr(&value));
+                                let description = if description.is_empty() {
+                                    None
+                                } else {
+                                    Some(description.clone())
+                                };
+                                EnumDesc { ident, description }
+                            })
+                            .collect(),
+                    )
+                }
+            },
+            ("array", None) => {
+                if let Some(ref items) = disco_type.items {
+                    let items_ident = to_ident(&to_rust_typestr(&format!("{}-items", ident)));
+                    let item_type =
+                        Type::from_disco_ref_or_type(&items_ident, &parent_path, items, all_schemas);
+                    TypeDesc::Array { items: Box::new(item_type) }
+                } else {
+                    panic!("no items specified within array: {:?}", disco_type);
+                }
+            }
+            ("object", None) => {
+                use discovery_parser::PropertyDesc as DiscoPropDesc;
+                let props = disco_type.properties
+                    .iter()
+                    .map(|(prop_id, DiscoPropDesc { description, typ })| {
+                        let prop_ident = to_ident(&to_rust_varstr(&prop_id));
+                        let type_ident =
+                            to_ident(&to_rust_typestr(&format!("{}-{}", ident, prop_id)));
+                        let typ = Type::from_disco_ref_or_type(
+                            &type_ident,
+                            &parent_path,
+                            &typ,
+                            all_schemas,
+                        );
+                        (
+                            prop_ident.clone(),
+                            PropertyDesc {
+                                ident: prop_ident,
+                                description: description.clone(),
+                                typ,
+                            },
+                        )
+                    })
+                    .collect();
+
+                let add_props = disco_type.additional_properties.as_ref().map(|prop_desc| {
+                    let type_ident = to_ident(&to_rust_typestr(&format!(
+                        "{}-additional-properties",
+                        &ident
+                    )));
+                    let typ = Type::from_disco_ref_or_type(
+                        &type_ident,
+                        &parent_path,
+                        &prop_desc.typ,
+                        all_schemas,
+                    );
+                    Box::new(PropertyDesc {
+                        ident: parse_quote! {additional_properties},
+                        description: prop_desc.description.clone(),
+                        typ,
+                    })
+                });
+                TypeDesc::Object {
+                    props,
+                    add_props,
+                }
+            },
+            _ => panic!("unable to determine type from discovery doc: {:?}", disco_type),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
