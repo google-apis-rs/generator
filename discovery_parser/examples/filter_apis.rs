@@ -16,9 +16,25 @@ struct ApiSpec {
     discovery_rest_url: String,
 }
 
+fn count_resources<'a>(resources: impl Iterator<Item=&'a discovery_parser::ResourceDesc>) -> usize {
+    resources.map(|resource| {
+        let sub_resources: usize = count_resources(resource.resources.values());
+        1 + sub_resources
+    }).sum()
+}
+
+fn count_methods<'a>(resources: impl Iterator<Item=&'a discovery_parser::ResourceDesc>) -> usize {
+    resources.map(|resource| {
+        let sub_methods: usize = count_methods(resource.resources.values());
+        resource.methods.len() + sub_methods
+    }).sum()
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut all_param_types = BTreeSet::new();
     for_each_api(|rest_desc| {
+        println!("{} {}{}", count_methods(rest_desc.resources.values()), rest_desc.name, rest_desc.version);
+        return;
         for param in rest_desc.parameters.values() {
             all_param_types.insert((param.typ.clone(), param.format.clone()));
         }
@@ -38,10 +54,11 @@ fn for_each_api<F>(mut f: F) -> Result<(), Box<dyn std::error::Error>>
 where
     F: FnMut(&DiscoveryRestDesc),
 {
-    let all_apis: ApiList = reqwest::get("https://www.googleapis.com/discovery/v1/apis")?.json()?;
+    let client = reqwest::Client::new();
+    let all_apis: ApiList = client.get("https://www.googleapis.com/discovery/v1/apis").send()?.json()?;
     println!("There are {} apis", all_apis.items.len());
     for api in all_apis.items {
-        match get_api(&api.discovery_rest_url) {
+        match get_api(&client, &api.discovery_rest_url) {
             Ok(rest_desc) => f(&rest_desc),
             Err(err) => eprintln!("Failed to get {}: {}", &api.discovery_rest_url, err),
         }
@@ -49,7 +66,7 @@ where
     Ok(())
 }
 
-fn get_api(url: &str) -> Result<DiscoveryRestDesc, Box<dyn std::error::Error>> {
-        println!("Fetching {}", url);
-        Ok(reqwest::get(url)?.json()?)
+fn get_api(client: &reqwest::Client, url: &str) -> Result<DiscoveryRestDesc, Box<dyn std::error::Error>> {
+        eprintln!("Fetching {}", url);
+        Ok(client.get(url).send()?.json()?)
 }

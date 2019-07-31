@@ -4,7 +4,7 @@ use quote::quote;
 use syn::parse_quote;
 
 pub(crate) fn generate(method: &Method) -> TokenStream {
-    let builder_name = to_ident(&to_rust_typestr(&format!("{}-Call", &method.id)));
+    let builder_name = method.builder_name();
     let (required_params, optional_params): (Vec<_>, _) = method.params.iter().partition(|param| param.required);
 
     let mut builder_fields: Vec<syn::Field> = required_params.iter().map(|&param| {
@@ -39,6 +39,7 @@ pub(crate) fn generate(method: &Method) -> TokenStream {
     });
 
     quote! {
+        #[derive(Debug,Clone)]
         struct #builder_name {
             #(#builder_fields,)*
 

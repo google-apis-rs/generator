@@ -5,16 +5,25 @@ use std::collections::HashMap;
 use std::error::Error;
 use syn::parse_quote;
 
+mod cargo;
 mod resource_builder;
 mod method_builder;
 
-pub fn generate<U>(discovery_url: U) -> Result<TokenStream, Box<dyn Error>>
+pub fn generate<U, P>(discovery_url: U, base_dir: P) -> Result<TokenStream, Box<dyn Error>>
 where
     U: reqwest::IntoUrl,
+    P: AsRef<std::path::Path>,
 {
     let desc: DiscoveryRestDesc = reqwest::get(discovery_url)?.json()?;
     let api_desc = APIDesc::from_discovery(&desc);
+    let project_path = base_dir.as_ref().join("foo");
+    let src_path = project_path.join("src");
+    std::fs::create_dir_all(&src_path)?;
+    let cargo_path = project_path.join("Cargo.toml");
+    let cargo_contents = toml::ser::to_string_pretty(&cargo::manifest())?;
+    std::fs::write(&cargo_path, &cargo_contents)?;
     Ok(quote! {#api_desc})
+
 }
 
 // A structure that represents the desired rust API. Typically built by
@@ -130,6 +139,14 @@ impl quote::ToTokens for APIDesc {
             typ.parent_path == parse_quote!{crate::params}
         }).filter_map(|typ| typ.type_def());
         let resource_modules = self.resources.iter().map(resource_builder::generate);
+        let resource_actions = self.resources.iter().map(|resource| {
+            let resource_ident = &resource.ident;
+            quote!{
+                fn #resource_ident(&self) -> crate::#resource_ident::Actions {
+                    crate::#resource_ident::Actions
+                }
+            }
+        });
         tokens.append_all(std::iter::once(quote!{
             mod schemas {
                 #(#schemas_to_create)*
@@ -139,7 +156,7 @@ impl quote::ToTokens for APIDesc {
             }
             struct Client;
             impl Client {
-
+                #(#resource_actions)*
             }
             #(#resource_modules)*
         }));
@@ -234,7 +251,20 @@ impl Method {
                 Param::from_disco_method_param(&method_id, param_id, &parse_quote! {#parent_path::params}, param_desc)
             })
             .collect();
-        params.sort_by(|a, b| a.ident.cmp(&b.ident));
+        // Sort params first by parameter order, then by ident.
+        params.sort_by(|a, b| {
+            let pos_in_param_order = |param: &Param| {
+                disco_method.parameter_order.iter().position(|param_name| to_ident(&to_rust_varstr(param_name)) == param.ident)
+            };
+            let a_pos = pos_in_param_order(a);
+            let b_pos = pos_in_param_order(b);
+            match (a_pos, b_pos) {
+                (Some(a), Some(b)) => a.cmp(&b),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => a.ident.cmp(&b.ident),
+            }
+        });
         Method {
             id: method_id.to_owned(),
             path: disco_method.path.clone(),
@@ -246,6 +276,10 @@ impl Method {
             response,
             scopes: disco_method.scopes.clone(),
         }
+    }
+
+    fn builder_name(&self) -> syn::Ident {
+        to_ident(&to_rust_typestr(&format!("{}-Call", &self.id)))
     }
 }
 
