@@ -32,16 +32,16 @@ impl Dependency {
     }
 }
 
-pub(crate) fn manifest() -> Manifest {
+pub(crate) fn manifest(crate_name: impl Into<String>) -> Manifest {
     Manifest{
         package: Package{
-            name: "Foo".to_owned(),
+            name: crate_name.into(),
             version: "0.1.0".to_owned(),
             authors: vec!["Glenn Griffin <ggriffiniii@gmail.com".to_owned()],
             edition: Some("2018".to_owned()),
         },
         dependencies: vec![
-            ("foo", Dependency::new(Some("0.1"), &[], None)),
+            ("serde", Dependency::new(Some("1"), &["derive"], None)),
         ].into_iter().map(|(name, def)| (name.to_owned(), def)).collect(),
     }
 }

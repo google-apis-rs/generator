@@ -35,8 +35,10 @@ pub(crate) fn generate(resource: &Resource) -> TokenStream {
             };
             field_pattern
         });
+        let method_description = &method.description;
         quote!{
-            fn #method_ident(&self#(, #required_args)*) -> #method_builder_type {
+            #[doc = #method_description]
+            pub fn #method_ident(&self#(, #required_args)*) -> #method_builder_type {
                 #method_builder_type{
                     #(#method_builder_initializers,)*
                 }
@@ -45,20 +47,24 @@ pub(crate) fn generate(resource: &Resource) -> TokenStream {
     });
     let sub_resource_actions = resource.resources.iter().map(|sub_resource| {
         let sub_resource_ident = &sub_resource.ident;
+        let sub_action_ident = sub_resource.action_type_name();
+        let description = format!("Actions that can be performed on the {} resource", sub_resource_ident);
         quote!{
-            fn #sub_resource_ident(&self) -> #sub_resource_ident::Actions {
-                #sub_resource_ident::Actions
+            #[doc = #description]
+            pub fn #sub_resource_ident(&self) -> #sub_resource_ident::#sub_action_ident {
+                #sub_resource_ident::#sub_action_ident
             }
         }
     });
+    let action_ident = resource.action_type_name();
     quote!{
-        mod #ident {
-            mod params {
+        pub mod #ident {
+            pub mod params {
                 #(#param_type_defs)*
             }
 
-            struct Actions;
-            impl Actions {
+            pub struct #action_ident;
+            impl #action_ident {
                 #(#method_actions)*
                 #(#sub_resource_actions)*
             }

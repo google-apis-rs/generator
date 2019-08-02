@@ -26,7 +26,7 @@ pub(crate) fn generate(method: &Method) -> TokenStream {
 
     let param_methods = optional_params.iter().map(|param| {
         let fn_name = to_ident(&to_rust_varstr(&format!("{}", param.ident)));
-        match param.typ.type_desc {
+        let fn_def = match param.typ.type_desc {
             TypeDesc::String => {
                 param_into_method(&fn_name, &param.ident, parse_quote!{impl Into<String>})
             },
@@ -35,12 +35,21 @@ pub(crate) fn generate(method: &Method) -> TokenStream {
                 param_into_method(&fn_name, &param.ident, parse_quote!{impl Into<Box<[#items_type]>>})
             },
             _ => param_value_method(&fn_name, &param.ident, param.typ.type_path().into()),
+        };
+        let description = &param.description;
+        quote!{
+            #[doc = #description]
+            #fn_def
         }
     });
 
+    let url_method = 
+
+
+
     quote! {
         #[derive(Debug,Clone)]
-        struct #builder_name {
+        pub struct #builder_name {
             #(#builder_fields,)*
 
         }
@@ -52,18 +61,18 @@ pub(crate) fn generate(method: &Method) -> TokenStream {
 }
 
 fn param_into_method(fn_name: &syn::Ident, param_ident: &syn::Ident, param_type: syn::Type) -> TokenStream {
-    parse_quote!{
-        fn #fn_name(mut self, value: #param_type) -> Self {
-            self.#param_ident = value.into();
+    quote!{
+        pub fn #fn_name(mut self, value: #param_type) -> Self {
+            self.#param_ident = Some(value.into());
             self
         }
     }
 }
 
 fn param_value_method(fn_name: &syn::Ident, param_ident: &syn::Ident, param_type: syn::Type) -> TokenStream {
-    parse_quote!{
-        fn #fn_name(mut self, value: #param_type) -> Self {
-            self.#param_ident = value;
+    quote!{
+        pub fn #fn_name(mut self, value: #param_type) -> Self {
+            self.#param_ident = Some(value);
             self
         }
     }

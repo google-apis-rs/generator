@@ -1,5 +1,5 @@
 use serde::{Deserialize, Deserializer};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,7 +37,7 @@ pub struct DiscoveryRestDesc {
     pub owner_domain: String,
     pub owner_name: String,
     #[serde(default)]
-    pub icons: HashMap<String, String>,
+    pub icons: BTreeMap<String, String>,
     pub documentation_link: Option<String>,
     pub protocol: String,
     pub base_url: String,
@@ -46,11 +46,11 @@ pub struct DiscoveryRestDesc {
     pub service_path: String,
     pub batch_path: String,
     #[serde(default)]
-    pub parameters: HashMap<String, ParamDesc>,
+    pub parameters: BTreeMap<String, ParamDesc>,
     pub auth: Option<AuthDesc>,
     #[serde(default)]
-    pub schemas: HashMap<String, SchemaDesc>,
-    pub resources: HashMap<String, ResourceDesc>,
+    pub schemas: BTreeMap<String, SchemaDesc>,
+    pub resources: BTreeMap<String, ResourceDesc>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -83,7 +83,7 @@ pub struct AuthDesc {
 #[serde(rename_all = "camelCase")]
 pub struct Oauth2Desc {
     #[serde(default)]
-    pub scopes: HashMap<String, ScopeDesc>,
+    pub scopes: BTreeMap<String, ScopeDesc>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -142,7 +142,7 @@ pub struct TypeDesc {
     #[serde(default)]
     pub enum_descriptions: Vec<String>,
     #[serde(default)]
-    pub properties: HashMap<String, PropertyDesc>,
+    pub properties: BTreeMap<String, PropertyDesc>,
     #[serde(default)]
     pub additional_properties: Option<Box<PropertyDesc>>,
     pub items: Option<Box<RefOrType<TypeDesc>>>,
@@ -155,7 +155,7 @@ impl TypeDesc {
             format: param.format,
             enumeration: param.enumeration,
             enum_descriptions: param.enum_descriptions,
-            properties: HashMap::new(),
+            properties: BTreeMap::new(),
             additional_properties: None,
             items: None,
         }
@@ -166,9 +166,8 @@ impl TypeDesc {
 #[serde(rename_all = "camelCase")]
 pub struct ResourceDesc {
     #[serde(default)]
-    pub resources: HashMap<String, ResourceDesc>,
-    #[serde(default)]
-    pub methods: HashMap<String, MethodDesc>,
+    pub resources: BTreeMap<String, ResourceDesc>,
+    pub methods: BTreeMap<String, MethodDesc>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -179,7 +178,7 @@ pub struct MethodDesc {
     pub http_method: String,
     pub description: Option<String>,
     #[serde(default)]
-    pub parameters: HashMap<String, ParamDesc>,
+    pub parameters: BTreeMap<String, ParamDesc>,
     #[serde(default)]
     pub parameter_order: Vec<String>,
     pub request: Option<RefOrType<TypeDesc>>,

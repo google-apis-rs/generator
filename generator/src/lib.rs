@@ -1,13 +1,14 @@
 use discovery_parser::{DiscoveryRestDesc, RefOrType};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::error::Error;
 use syn::parse_quote;
 
 mod cargo;
 mod resource_builder;
 mod method_builder;
+mod uri_template;
 
 pub fn generate<U, P>(discovery_url: U, base_dir: P) -> Result<TokenStream, Box<dyn Error>>
 where
@@ -20,8 +21,9 @@ where
     let src_path = project_path.join("src");
     std::fs::create_dir_all(&src_path)?;
     let cargo_path = project_path.join("Cargo.toml");
-    let cargo_contents = toml::ser::to_string_pretty(&cargo::manifest())?;
+    let cargo_contents = toml::ser::to_string_pretty(&cargo::manifest(format!("google_{}{}", &desc.name, &desc.version)))?;
     std::fs::write(&cargo_path, &cargo_contents)?;
+    std::fs::write(&src_path.join("lib.rs"), &quote!{#api_desc}.to_string())?;
     Ok(quote! {#api_desc})
 
 }
@@ -141,20 +143,23 @@ impl quote::ToTokens for APIDesc {
         let resource_modules = self.resources.iter().map(resource_builder::generate);
         let resource_actions = self.resources.iter().map(|resource| {
             let resource_ident = &resource.ident;
+            let action_ident = resource.action_type_name();
+            let description = format!("Actions that can be performed on the {} resource", &resource.ident);
             quote!{
-                fn #resource_ident(&self) -> crate::#resource_ident::Actions {
-                    crate::#resource_ident::Actions
+                #[doc= #description]
+                pub fn #resource_ident(&self) -> crate::#resource_ident::#action_ident {
+                    crate::#resource_ident::#action_ident
                 }
             }
         });
         tokens.append_all(std::iter::once(quote!{
-            mod schemas {
+            pub mod schemas {
                 #(#schemas_to_create)*
             }
-            mod params {
+            pub mod params {
                 #(#params_to_create)*
             }
-            struct Client;
+            pub struct Client;
             impl Client {
                 #(#resource_actions)*
             }
@@ -176,7 +181,7 @@ impl Resource {
         resource_id: &str,
         parent_path: &syn::Path,
         disco_resource: &discovery_parser::ResourceDesc,
-        all_schemas: &HashMap<String, discovery_parser::SchemaDesc>,
+        all_schemas: &BTreeMap<String, discovery_parser::SchemaDesc>,
     ) -> Resource {
         let resource_ident = to_ident(&to_rust_varstr(&resource_id));
         let mut methods: Vec<Method> = disco_resource
@@ -203,6 +208,10 @@ impl Resource {
             methods,
         }
     }
+
+    fn action_type_name(&self) -> syn::Ident {
+        to_ident(&to_rust_typestr(&format!("{}Actions", &self.ident)))
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -223,7 +232,7 @@ impl Method {
         method_id: &str,
         parent_path: &syn::TypePath,
         disco_method: &discovery_parser::MethodDesc,
-        all_schemas: &HashMap<String, discovery_parser::SchemaDesc>,
+        all_schemas: &BTreeMap<String, discovery_parser::SchemaDesc>,
     ) -> Method {
         let request = disco_method.request.as_ref().map(|req| {
             let req_ident = to_ident(&to_rust_typestr(&format!("{}-request", method_id)));
@@ -279,7 +288,7 @@ impl Method {
     }
 
     fn builder_name(&self) -> syn::Ident {
-        to_ident(&to_rust_typestr(&format!("{}-Call", &self.id)))
+        to_ident(&to_rust_typestr(&format!("{}-RequestBuilder", &self.id)))
     }
 }
 
@@ -325,7 +334,7 @@ impl Param {
             &type_ident,
             parent_path,
             &RefOrType::Type(discovery_parser::TypeDesc::from_param(disco_param.clone())),
-            &HashMap::new(),
+            &BTreeMap::new(),
         );
         Param {
             ident,
@@ -423,7 +432,7 @@ struct Type {
 impl Type {
     fn from_disco_schema(
         disco_schema: &discovery_parser::SchemaDesc,
-        all_schemas: &HashMap<String, discovery_parser::SchemaDesc>,
+        all_schemas: &BTreeMap<String, discovery_parser::SchemaDesc>,
     ) -> Type {
         let ident = to_ident(&to_rust_typestr(&disco_schema.id));
         Type::from_disco_ref_or_type(
@@ -438,7 +447,7 @@ impl Type {
         ident: &syn::Ident,
         parent_path: &syn::TypePath,
         ref_or_type: &RefOrType<discovery_parser::TypeDesc>,
-        all_schemas: &HashMap<String, discovery_parser::SchemaDesc>,
+        all_schemas: &BTreeMap<String, discovery_parser::SchemaDesc>,
     ) -> Type {
         let empty_type_path = || syn::TypePath {
             qself: None,
@@ -555,6 +564,16 @@ impl Type {
     }
 
     fn type_def(&self) -> Option<TypeDef> {
+        let mut derives = vec![quote!{Debug}, quote!{Clone}, quote!{PartialEq}, quote!{PartialOrd}];
+        if self.type_desc.is_hashable() {
+            derives.push(quote!{Hash});
+        }
+        if self.type_desc.is_ord() {
+            derives.push(quote!{Ord});
+        }
+        if self.type_desc.is_eq() {
+            derives.push(quote!{Eq});
+        }
         match &self.type_desc {
             TypeDesc::Enum(enums) => {
                 let variants = enums
@@ -572,9 +591,10 @@ impl Type {
                 Some(TypeDef {
                     id: self.id.clone(),
                     parent_path: self.parent_path.clone(),
+                    derives,
                     typ: TypeFields::Enum { variants },
                 })
-            }
+            },
             TypeDesc::Object { props, add_props } => match (props.is_empty(), add_props) {
                 (false, add_props) => {
                     let mut fields: Vec<syn::Field> = props
@@ -602,7 +622,7 @@ impl Type {
                         let mut field = make_field(
                             &description,
                             &ident,
-                            parse_quote! {HashMap<String, #add_props_type_path},
+                            parse_quote! {BTreeMap<String, #add_props_type_path},
                         );
                         use syn::parse::Parser;
                         field.attrs.extend(
@@ -617,6 +637,7 @@ impl Type {
                     Some(TypeDef {
                         id: self.id.clone(),
                         parent_path: self.parent_path.clone(),
+                        derives,
                         typ: TypeFields::Struct { fields },
                     })
                 }
@@ -625,6 +646,7 @@ impl Type {
                     Some(TypeDef {
                         id: self.id.clone(),
                         parent_path: self.parent_path.clone(),
+                        derives,
                         typ: TypeFields::Struct{ fields: Vec::new() },
                     })
                 },
@@ -653,13 +675,13 @@ enum TypeDesc {
         items: Box<Type>,
     },
     Object {
-        props: HashMap<syn::Ident, PropertyDesc>,
+        props: BTreeMap<syn::Ident, PropertyDesc>,
         add_props: Option<Box<PropertyDesc>>,
     },
 }
 
 impl TypeDesc {
-    fn from_disco_type(ident: &syn::Ident, parent_path: &syn::TypePath, disco_type: &discovery_parser::TypeDesc, all_schemas: &HashMap<String, discovery_parser::SchemaDesc>) -> TypeDesc {
+    fn from_disco_type(ident: &syn::Ident, parent_path: &syn::TypePath, disco_type: &discovery_parser::TypeDesc, all_schemas: &BTreeMap<String, discovery_parser::SchemaDesc>) -> TypeDesc {
         match (disco_type.typ.as_str(), disco_type.format.as_ref().map(|x| x.as_str())) {
             ("any", None) => unimplemented!("Any"),
             ("boolean", None) => TypeDesc::Bool,
@@ -753,6 +775,72 @@ impl TypeDesc {
             _ => panic!("unable to determine type from discovery doc: {:?}", disco_type),
         }
     }
+
+    fn is_hashable(&self) -> bool {
+        match self {
+            TypeDesc::Any => unimplemented!("Any"),
+            TypeDesc::String => true,
+            TypeDesc::Bool => true,
+            TypeDesc::Int32 => true,
+            TypeDesc::Uint32 => true,
+            TypeDesc::Float32 => false,
+            TypeDesc::Int64 => true,
+            TypeDesc::Uint64 => true,
+            TypeDesc::Float64 => false,
+            TypeDesc::Bytes => true,
+            TypeDesc::Date => true,
+            TypeDesc::DateTime => true,
+            TypeDesc::Enum(_) => true,
+            TypeDesc::Array {items} => items.type_desc.is_hashable(),
+            TypeDesc::Object { props, add_props } => {
+                add_props.as_ref().map(|prop| prop.typ.type_desc.is_hashable()).unwrap_or(true) && props.values().all(|prop| prop.typ.type_desc.is_hashable())
+            },
+        }
+    }
+
+    fn is_ord(&self) -> bool {
+        match self {
+            TypeDesc::Any => unimplemented!("Any"),
+            TypeDesc::String => true,
+            TypeDesc::Bool => true,
+            TypeDesc::Int32 => true,
+            TypeDesc::Uint32 => true,
+            TypeDesc::Float32 => false,
+            TypeDesc::Int64 => true,
+            TypeDesc::Uint64 => true,
+            TypeDesc::Float64 => false,
+            TypeDesc::Bytes => true,
+            TypeDesc::Date => true,
+            TypeDesc::DateTime => true,
+            TypeDesc::Enum(_) => true,
+            TypeDesc::Array {items} => items.type_desc.is_ord(),
+            TypeDesc::Object { props, add_props } => {
+                add_props.as_ref().map(|prop| prop.typ.type_desc.is_ord()).unwrap_or(true) && props.values().all(|prop| prop.typ.type_desc.is_ord())
+            },
+        }
+    }
+
+    fn is_eq(&self) -> bool {
+        match self {
+            TypeDesc::Any => unimplemented!("Any"),
+            TypeDesc::String => true,
+            TypeDesc::Bool => true,
+            TypeDesc::Int32 => true,
+            TypeDesc::Uint32 => true,
+            TypeDesc::Float32 => false,
+            TypeDesc::Int64 => true,
+            TypeDesc::Uint64 => true,
+            TypeDesc::Float64 => false,
+            TypeDesc::Bytes => true,
+            TypeDesc::Date => true,
+            TypeDesc::DateTime => true,
+            TypeDesc::Enum(_) => true,
+            TypeDesc::Array {items} => items.type_desc.is_eq(),
+            TypeDesc::Object { props, add_props } => {
+                add_props.as_ref().map(|prop| prop.typ.type_desc.is_eq()).unwrap_or(true) && props.values().all(|prop| prop.typ.type_desc.is_eq())
+            },
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -772,6 +860,7 @@ struct EnumDesc {
 struct TypeDef {
     id: syn::PathSegment,       // ident of this type e.g. MyType
     parent_path: syn::TypePath, // path to containing module e.g. types
+    derives: Vec<TokenStream>,     // The derives to create
     typ: TypeFields,            // definition of this type
 }
 
@@ -779,10 +868,11 @@ impl quote::ToTokens for TypeDef {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         use quote::TokenStreamExt;
         let name = &self.id;
+        let derives = &self.derives;
         tokens.append_all(std::iter::once(match &self.typ {
             TypeFields::Enum { variants } => {
                 quote! {
-                    #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+                    #[derive(#(#derives,)*)]
                     pub enum #name {
                         #(#variants,)*
                     }
@@ -790,7 +880,7 @@ impl quote::ToTokens for TypeDef {
             }
             TypeFields::Struct { fields } => {
                 quote! {
-                    #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+                    #[derive(#(#derives,)*)]
                     pub struct #name {
                         #(#fields,)*
                     }

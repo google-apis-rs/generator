@@ -31,23 +31,33 @@ fn count_methods<'a>(resources: impl Iterator<Item=&'a discovery_parser::Resourc
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut all_param_types = BTreeSet::new();
     for_each_api(|rest_desc| {
-        println!("{} {}{}", count_methods(rest_desc.resources.values()), rest_desc.name, rest_desc.version);
-        return;
-        for param in rest_desc.parameters.values() {
-            all_param_types.insert((param.typ.clone(), param.format.clone()));
-        }
-        for resource in rest_desc.resources.values() {
+        for_each_resource(rest_desc, |resource| {
             for method in resource.methods.values() {
-                for param in method.parameters.values() {
-                    all_param_types.insert((param.typ.clone(), param.format.clone()));
-                }
+                println!("{}", &method.path);
             }
-        }
+        });
     })?;
-    println!("Param types: {:?}", all_param_types);
     Ok(())
+}
+
+fn for_each_resource<F>(rest_desc: &DiscoveryRestDesc, mut f: F)
+where
+    F: FnMut(&discovery_parser::ResourceDesc),
+{
+    fn per_resource<F>(res: &discovery_parser::ResourceDesc, f: &mut F)
+    where
+        F: FnMut(&discovery_parser::ResourceDesc),
+    {
+        for sub_resource in res.resources.values() {
+            per_resource(sub_resource, f);
+        }
+        f(res)
+    }
+
+    for resource in rest_desc.resources.values() {
+        per_resource(resource, &mut f);
+    }
 }
 
 fn for_each_api<F>(mut f: F) -> Result<(), Box<dyn std::error::Error>>
