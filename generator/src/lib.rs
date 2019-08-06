@@ -8,7 +8,6 @@ use syn::parse_quote;
 mod cargo;
 mod resource_builder;
 mod method_builder;
-mod uri_template;
 
 pub fn generate<U, P>(discovery_url: U, base_dir: P) -> Result<TokenStream, Box<dyn Error>>
 where
@@ -294,6 +293,7 @@ impl Method {
 
 #[derive(Clone, Debug)]
 struct Param {
+    id: String,
     ident: syn::Ident,
     description: Option<String>,
     default: Option<String>,
@@ -310,7 +310,7 @@ impl Param {
     ) -> Param {
         let ident = to_ident(&to_rust_varstr(&param_id));
         let type_ident = to_ident(&to_rust_typestr(&param_id));
-        Param::with_ident(ident, type_ident, parent_path, disco_param)
+        Param::with_ident(param_id, ident, type_ident, parent_path, disco_param)
     }
 
     fn from_disco_method_param(
@@ -321,10 +321,11 @@ impl Param {
     ) -> Param {
         let ident = to_ident(&to_rust_varstr(param_id));
         let type_ident = to_ident(&to_rust_typestr(&format!("{}-{}", &method_id, &param_id)));
-        Param::with_ident(ident, type_ident, parent_path, disco_param)
+        Param::with_ident(param_id, ident, type_ident, parent_path, disco_param)
     }
 
     fn with_ident(
+        id: &str,
         ident: syn::Ident,
         type_ident: syn::Ident,
         parent_path: &syn::TypePath,
@@ -337,6 +338,7 @@ impl Param {
             &BTreeMap::new(),
         );
         Param {
+            id: id.to_owned(),
             ident,
             description: disco_param.description.clone(),
             default: disco_param.default.clone(),

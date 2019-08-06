@@ -43,10 +43,6 @@ pub(crate) fn generate(method: &Method) -> TokenStream {
         }
     });
 
-    let url_method = 
-
-
-
     quote! {
         #[derive(Debug,Clone)]
         pub struct #builder_name {
