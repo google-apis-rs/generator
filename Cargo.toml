@@ -5,5 +5,5 @@ members = [
     "field_selector",
     "field_selector_derive",
     "generator",
-    "uri_templates",
+    "uri_template_parser",
 ]

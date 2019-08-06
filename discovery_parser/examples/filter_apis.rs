@@ -16,18 +16,24 @@ struct ApiSpec {
     discovery_rest_url: String,
 }
 
-fn count_resources<'a>(resources: impl Iterator<Item=&'a discovery_parser::ResourceDesc>) -> usize {
-    resources.map(|resource| {
-        let sub_resources: usize = count_resources(resource.resources.values());
-        1 + sub_resources
-    }).sum()
+fn count_resources<'a>(
+    resources: impl Iterator<Item = &'a discovery_parser::ResourceDesc>,
+) -> usize {
+    resources
+        .map(|resource| {
+            let sub_resources: usize = count_resources(resource.resources.values());
+            1 + sub_resources
+        })
+        .sum()
 }
 
-fn count_methods<'a>(resources: impl Iterator<Item=&'a discovery_parser::ResourceDesc>) -> usize {
-    resources.map(|resource| {
-        let sub_methods: usize = count_methods(resource.resources.values());
-        resource.methods.len() + sub_methods
-    }).sum()
+fn count_methods<'a>(resources: impl Iterator<Item = &'a discovery_parser::ResourceDesc>) -> usize {
+    resources
+        .map(|resource| {
+            let sub_methods: usize = count_methods(resource.resources.values());
+            resource.methods.len() + sub_methods
+        })
+        .sum()
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -65,7 +71,10 @@ where
     F: FnMut(&DiscoveryRestDesc),
 {
     let client = reqwest::Client::new();
-    let all_apis: ApiList = client.get("https://www.googleapis.com/discovery/v1/apis").send()?.json()?;
+    let all_apis: ApiList = client
+        .get("https://www.googleapis.com/discovery/v1/apis")
+        .send()?
+        .json()?;
     println!("There are {} apis", all_apis.items.len());
     for api in all_apis.items {
         match get_api(&client, &api.discovery_rest_url) {
@@ -76,7 +85,10 @@ where
     Ok(())
 }
 
-fn get_api(client: &reqwest::Client, url: &str) -> Result<DiscoveryRestDesc, Box<dyn std::error::Error>> {
-        eprintln!("Fetching {}", url);
-        Ok(client.get(url).send()?.json()?)
+fn get_api(
+    client: &reqwest::Client,
+    url: &str,
+) -> Result<DiscoveryRestDesc, Box<dyn std::error::Error>> {
+    eprintln!("Fetching {}", url);
+    Ok(client.get(url).send()?.json()?)
 }

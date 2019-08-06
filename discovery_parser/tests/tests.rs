@@ -1,4 +1,4 @@
-use discovery_parser::{normalize, RawDiscoveryRestDesc, RestDescOrErr};
+use discovery_parser::{DiscoveryRestDesc, RestDescOrErr};
 use serde::Deserialize;
 use std::error::Error;
 
@@ -48,8 +48,7 @@ fn parse_one_api() -> Result<(), Box<dyn Error>> {
     println!("Fetching {}", url);
     let body: String = reqwest::get(url)?.text()?;
     std::fs::write("/tmp/content", &body)?;
-    let desc: RawDiscoveryRestDesc = serde_json::from_str(&body)?;
-    let desc = normalize(desc);
+    let desc: DiscoveryRestDesc = serde_json::from_str(&body)?;
     println!("{:#?}", desc);
     Ok(())
 }

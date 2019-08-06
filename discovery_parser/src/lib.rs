@@ -150,7 +150,7 @@ pub struct TypeDesc {
 
 impl TypeDesc {
     pub fn from_param(param: ParamDesc) -> TypeDesc {
-        TypeDesc{
+        TypeDesc {
             typ: param.typ,
             format: param.format,
             enumeration: param.enumeration,
