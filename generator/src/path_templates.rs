@@ -30,9 +30,7 @@ pub(crate) enum ExpansionStyle {
 }
 
 impl<'a> PathAstNode<'a> {
-    fn from_parser_ast_node(
-        n: parser::AstNode<'a>,
-    ) -> Result<PathAstNode<'a>, String> {
+    fn from_parser_ast_node(n: parser::AstNode<'a>) -> Result<PathAstNode<'a>, String> {
         Ok(match n {
             parser::AstNode::Lit(lit) => PathAstNode::Lit(lit),
             parser::AstNode::Expr(expr) => {
@@ -67,7 +65,7 @@ impl<'a> PathTemplate<'a> {
         Ok(PathTemplate { nodes })
     }
 
-    pub(crate) fn nodes(&self) -> impl Iterator<Item=&PathAstNode> {
+    pub(crate) fn nodes(&self) -> impl Iterator<Item = &PathAstNode> {
         self.nodes.iter()
     }
 }

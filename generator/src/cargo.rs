@@ -20,14 +20,21 @@ pub(crate) struct Dependency {
     version: Option<String>,
     features: Vec<String>,
     path: Option<String>,
+    git: Option<String>,
 }
 
 impl Dependency {
-    fn new(version: Option<&str>, features: &[&str], path: Option<&str>) -> Self {
+    fn new(
+        version: Option<&str>,
+        features: &[&str],
+        path: Option<&str>,
+        git: Option<&str>,
+    ) -> Self {
         Dependency {
             version: version.map(std::borrow::ToOwned::to_owned),
             features: features.into_iter().map(|&x| x.to_owned()).collect(),
             path: path.map(std::borrow::ToOwned::to_owned),
+            git: git.map(std::borrow::ToOwned::to_owned),
         }
     }
 }
@@ -40,9 +47,26 @@ pub(crate) fn manifest(crate_name: impl Into<String>) -> Manifest {
             authors: vec!["Glenn Griffin <ggriffiniii@gmail.com".to_owned()],
             edition: Some("2018".to_owned()),
         },
-        dependencies: vec![("serde", Dependency::new(Some("1"), &["derive"], None))]
-            .into_iter()
-            .map(|(name, def)| (name.to_owned(), def))
-            .collect(),
+        dependencies: vec![
+            ("serde", Dependency::new(Some("1"), &["derive"], None, None)),
+            (
+                "chrono",
+                Dependency::new(Some("0.4"), &["serde"], None, None),
+            ),
+            ("reqwest", Dependency::new(Some("0.9"), &[], None, None)),
+            ("reqwest", Dependency::new(Some("0.9"), &[], None, None)),
+            (
+                "field_selector",
+                Dependency::new(
+                    None,
+                    &[],
+                    None,
+                    Some("https://github.com/ggriffiniii/google-apis"),
+                ),
+            ),
+        ]
+        .into_iter()
+        .map(|(name, def)| (name.to_owned(), def))
+        .collect(),
     }
 }

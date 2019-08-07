@@ -1,3 +1,5 @@
+#![recursion_limit = "128"] // for quote macro
+
 use discovery_parser::{DiscoveryRestDesc, RefOrType};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
@@ -10,13 +12,16 @@ mod method_builder;
 mod path_templates;
 mod resource_builder;
 
-pub fn generate<U, P>(discovery_url: U, base_dir: P) -> Result<TokenStream, Box<dyn Error>>
+pub fn generate<U, P>(discovery_url: U, base_dir: P, auth_token: &str) -> Result<(), Box<dyn Error>>
 where
     U: reqwest::IntoUrl,
     P: AsRef<std::path::Path>,
 {
+    println!("getting discovery doc");
     let desc: DiscoveryRestDesc = reqwest::get(discovery_url)?.json()?;
+    println!("buidling api desc");
     let api_desc = APIDesc::from_discovery(&desc);
+    println!("creating directory and Cargo.toml");
     let project_path = base_dir.as_ref().join("foo");
     let src_path = project_path.join("src");
     std::fs::create_dir_all(&src_path)?;
@@ -26,8 +31,13 @@ where
         &desc.name, &desc.version
     )))?;
     std::fs::write(&cargo_path, &cargo_contents)?;
-    std::fs::write(&src_path.join("lib.rs"), &quote! {#api_desc}.to_string())?;
-    Ok(quote! {#api_desc})
+    println!("writing lib");
+    std::fs::write(
+        &src_path.join("lib.rs"),
+        api_desc.generate(auth_token).to_string(),
+    )?;
+    println!("returning");
+    Ok(())
 }
 
 // A structure that represents the desired rust API. Typically built by
@@ -36,6 +46,8 @@ where
 struct APIDesc {
     name: String,
     version: String,
+    root_url: String,
+    service_path: String,
     schema_types: Vec<Type>,
     params: Vec<Param>,
     resources: Vec<Resource>,
@@ -73,10 +85,93 @@ impl APIDesc {
         APIDesc {
             name: discovery_desc.name.clone(),
             version: discovery_desc.version.clone(),
+            root_url: discovery_desc.root_url.clone(),
+            service_path: discovery_desc.service_path.clone(),
             schema_types,
             params,
             resources,
         }
+    }
+
+    fn generate(&self, auth_token: &str) -> TokenStream {
+        println!("getting all types");
+        let all_types = self.all_types();
+        let schemas_to_create = all_types
+            .iter()
+            .filter(|typ| typ.parent_path == parse_quote! {crate::schemas})
+            .filter_map(|typ| typ.type_def());
+        let params_to_create = all_types
+            .iter()
+            .filter(|typ| typ.parent_path == parse_quote! {crate::params})
+            .filter_map(|typ| typ.type_def());
+        println!("generating resources");
+        let resource_modules = self
+            .resources
+            .iter()
+            .map(|resource| resource_builder::generate(&self.base_url(), &self.params, resource));
+        println!("creating resource actions");
+        let resource_actions = self.resources.iter().map(|resource| {
+            let resource_ident = &resource.ident;
+            let action_ident = resource.action_type_name();
+            let description = format!(
+                "Actions that can be performed on the {} resource",
+                &resource.ident
+            );
+            quote! {
+                #[doc= #description]
+                pub fn #resource_ident(&self) -> crate::#resource_ident::#action_ident {
+                    crate::#resource_ident::#action_ident{
+                        reqwest: &self.reqwest,
+                    }
+                }
+            }
+        });
+        println!("outputting");
+        quote! {
+            // A serde helper module that can be used with the `with` attribute
+            // to deserialize any string to a FromStr type. Google API's encode
+            // i64, u64 values as strings.
+            fn deserialize_parsed_string<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
+            where
+                T: ::std::str::FromStr,
+                T::Err: ::std::fmt::Display,
+                D: ::serde::de::Deserializer<'de>,
+            {
+                use ::serde::Deserialize;
+                match Option::<String>::deserialize(deserializer)? {
+                    Some(x) => Ok(Some(x.parse().map_err(::serde::de::Error::custom)?)),
+                    None => Ok(None),
+                }
+            }
+
+            fn auth_token() -> &'static str {
+                #auth_token
+            }
+
+            pub mod schemas {
+                #(#schemas_to_create)*
+            }
+            pub mod params {
+                #(#params_to_create)*
+            }
+            pub struct Client{
+                reqwest: ::reqwest::Client,
+            }
+            impl Client {
+                pub fn new() -> Self {
+                    Client{
+                        reqwest: ::reqwest::Client::new(),
+                    }
+                }
+
+                #(#resource_actions)*
+            }
+            #(#resource_modules)*
+        }
+    }
+
+    fn base_url(&self) -> String {
+        self.root_url.to_owned() + &self.service_path
     }
 
     fn all_types(&self) -> Vec<Type> {
@@ -133,50 +228,6 @@ impl APIDesc {
         out.sort_by(type_path_cmp);
         out.dedup_by(|a, b| type_path_cmp(a, b) == std::cmp::Ordering::Equal);
         out
-    }
-}
-
-impl quote::ToTokens for APIDesc {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        use quote::TokenStreamExt;
-
-        let all_types = self.all_types();
-        let schemas_to_create = all_types
-            .iter()
-            .filter(|typ| typ.parent_path == parse_quote! {crate::schemas})
-            .filter_map(|typ| typ.type_def());
-        let params_to_create = all_types
-            .iter()
-            .filter(|typ| typ.parent_path == parse_quote! {crate::params})
-            .filter_map(|typ| typ.type_def());
-        let resource_modules = self.resources.iter().map(resource_builder::generate);
-        let resource_actions = self.resources.iter().map(|resource| {
-            let resource_ident = &resource.ident;
-            let action_ident = resource.action_type_name();
-            let description = format!(
-                "Actions that can be performed on the {} resource",
-                &resource.ident
-            );
-            quote! {
-                #[doc= #description]
-                pub fn #resource_ident(&self) -> crate::#resource_ident::#action_ident {
-                    crate::#resource_ident::#action_ident
-                }
-            }
-        });
-        tokens.append_all(std::iter::once(quote! {
-            pub mod schemas {
-                #(#schemas_to_create)*
-            }
-            pub mod params {
-                #(#params_to_create)*
-            }
-            pub struct Client;
-            impl Client {
-                #(#resource_actions)*
-            }
-            #(#resource_modules)*
-        }));
     }
 }
 
@@ -420,11 +471,9 @@ fn to_rust_varstr(s: &str) -> String {
 
 fn fixup(s: String) -> String {
     // TODO: add all keywords
-    let s = if ["type", "match"].contains(&s.as_str()) {
-        format!("r#{}", s)
-    } else {
-        s
-    };
+    if ["type", "match"].contains(&s.as_str()) {
+        return format!("r#{}", s);
+    }
     let s: String = s
         .chars()
         .map(|c| if !c.is_ascii_alphanumeric() { '_' } else { c })
@@ -456,7 +505,7 @@ fn make_field(doc: &Option<String>, ident: &syn::Ident, ty: syn::Type) -> syn::F
         vis: syn::parse_quote! {pub},
         ident: Some(ident.clone()),
         colon_token: Some(syn::parse_quote! {:}),
-        ty,
+        ty: parse_quote! {Option<#ty>},
     }
 }
 
@@ -552,12 +601,12 @@ impl Type {
                         type_desc,
                     },
                     TypeDesc::Date => Type {
-                        id: parse_quote! {Date<chrono::UTC>},
+                        id: parse_quote! {Date<chrono::offset::Utc>},
                         parent_path: parse_quote! {::chrono},
                         type_desc,
                     },
                     TypeDesc::DateTime => Type {
-                        id: parse_quote! {DateTime<chrono::UTC>},
+                        id: parse_quote! {DateTime<chrono::offset::Utc>},
                         parent_path: parse_quote! {::chrono},
                         type_desc,
                     },
@@ -574,11 +623,24 @@ impl Type {
                             type_desc,
                         }
                     }
-                    TypeDesc::Object { .. } => Type {
-                        id: parse_quote! {#ident},
-                        parent_path: parent_path.clone(),
-                        type_desc,
-                    },
+                    TypeDesc::Object {
+                        ref props,
+                        ref add_props,
+                    } => {
+                        let add_props_type = add_props.as_ref().map(|prop| prop.typ.type_path());
+                        match (props.is_empty(), add_props_type) {
+                            (true, Some(add_props_type)) => Type {
+                                id: parse_quote! {BTreeMap<String, #add_props_type>},
+                                parent_path: parse_quote! {::std::collections},
+                                type_desc,
+                            },
+                            _ => Type {
+                                id: parse_quote! {#ident},
+                                parent_path: parent_path.clone(),
+                                type_desc,
+                            },
+                        }
+                    }
                 }
             }
         }
@@ -602,7 +664,7 @@ impl Type {
         self.type_path().into_token_stream().to_string()
     }
 
-    fn type_def(&self) -> Option<TypeDef> {
+    fn type_def(&self) -> Option<TokenStream> {
         let mut derives = vec![
             quote! {Debug},
             quote! {Clone},
@@ -618,25 +680,54 @@ impl Type {
         if self.type_desc.is_eq() {
             derives.push(quote! {Eq});
         }
+        let name = &self.id;
         match &self.type_desc {
             TypeDesc::Enum(enums) => {
-                let variants = enums
-                    .iter()
-                    .map(|EnumDesc { description, ident }| {
+                derives.push(quote! {Copy});
+                let variants = enums.iter().map(
+                    |EnumDesc {
+                         description, ident, ..
+                     }| {
                         let doc: Option<TokenStream> = description.as_ref().map(|description| {
-                            parse_quote! {#[doc = #description]}
+                            quote! {#[doc = #description]}
                         });
-                        parse_quote! {
+                        quote! {
                             #doc
                             #ident
                         }
-                    })
-                    .collect();
-                Some(TypeDef {
-                    id: self.id.clone(),
-                    parent_path: self.parent_path.clone(),
-                    derives,
-                    typ: TypeFields::Enum { variants },
+                    },
+                );
+                let to_string_arms = enums.iter().map(|EnumDesc { ident, value, .. }| {
+                    quote! {#name::#ident => #value}
+                });
+
+                Some(quote! {
+                    #[derive(#(#derives,)*)]
+                    pub enum #name {
+                        #(#variants,)*
+                    }
+
+                    impl #name {
+                        pub fn as_str(self) -> &'static str {
+                            match self {
+                                #(#to_string_arms,)*
+                            }
+                        }
+                    }
+
+                    impl ::std::fmt::Display for #name {
+                        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                            f.write_str(self.as_str())
+                        }
+                    }
+
+                    impl ::serde::Serialize for #name {
+                        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                            where S: ::serde::ser::Serializer
+                        {
+                            serializer.serialize_str(self.as_str())
+                        }
+                    }
                 })
             }
             TypeDesc::Object { props, add_props } => match (props.is_empty(), add_props) {
@@ -647,12 +738,30 @@ impl Type {
                             |(
                                 _,
                                 PropertyDesc {
+                                    id,
                                     ident,
                                     description,
                                     typ,
+                                    ..
                                 },
                             )| {
-                                make_field(&description, ident, syn::Type::Path(typ.type_path()))
+                                use syn::parse::Parser;
+                                let mut field = make_field(&description, ident, syn::Type::Path(typ.type_path()));
+                                field.attrs.extend(
+                                    syn::Attribute::parse_outer.parse2(quote!{
+                                        #[serde(rename=#id,default)]
+                                    })
+                                    .expect("failed to parse serde attr")
+                                );
+                                if let TypeDesc::Int64 | TypeDesc::Uint64 = typ.type_desc {
+                                    field.attrs.extend(
+                                        syn::Attribute::parse_outer.parse2(quote!{
+                                            #[serde(deserialize_with="crate::deserialize_parsed_string")]
+                                        })
+                                        .expect("failed to parse serde attr")
+                                    );
+                                }
+                                field
                             },
                         )
                         .collect();
@@ -661,6 +770,7 @@ impl Type {
                             ident,
                             description,
                             typ,
+                            ..
                         } = &**boxed_prop_desc;
                         let add_props_type_path = typ.type_path();
                         let mut field = make_field(
@@ -678,20 +788,41 @@ impl Type {
                         );
                         fields.push(field);
                     }
-                    Some(TypeDef {
-                        id: self.id.clone(),
-                        parent_path: self.parent_path.clone(),
-                        derives,
-                        typ: TypeFields::Struct { fields },
+                    derives.push(quote! {::serde::Deserialize});
+                    derives.push(quote! {::serde::Serialize});
+                    Some(quote! {
+                        #[derive(#(#derives,)*)]
+                        pub struct #name {
+                            #(#fields,)*
+                        }
+
+                        impl ::field_selector::FieldSelector for #name {
+                            fn field_selector_with_ident(ident: &str, selector: &mut String) {
+                                match selector.chars().rev().nth(0) {
+                                    Some(',') | None => {},
+                                    _ => selector.push_str(","),
+                                }
+                                selector.push_str(ident);
+                                selector.push_str("*");
+                            }
+                        }
                     })
                 }
                 (true, Some(_)) => None,
-                (true, None) => Some(TypeDef {
-                    id: self.id.clone(),
-                    parent_path: self.parent_path.clone(),
-                    derives,
-                    typ: TypeFields::Struct { fields: Vec::new() },
-                }),
+                (true, None) => {
+                    derives.push(quote! {Copy});
+                    derives.push(quote! {Default});
+                    derives.push(quote! {::serde::Deserialize});
+                    derives.push(quote! {::serde::Serialize});
+                    Some(quote! {
+                        #[derive(#(#derives,)*)]
+                        pub struct #name;
+
+                        impl ::field_selector::FieldSelector for #name {
+                            fn field_selector_with_ident(ident; &str, selector: &mut String) {}
+                        }
+                    })
+                }
             },
             _ => None,
         }
@@ -760,7 +891,11 @@ impl TypeDesc {
                                 } else {
                                     Some(description.clone())
                                 };
-                                EnumDesc { ident, description }
+                                EnumDesc {
+                                    ident,
+                                    description,
+                                    value: value.to_owned(),
+                                }
                             })
                             .collect(),
                     )
@@ -800,6 +935,7 @@ impl TypeDesc {
                         (
                             prop_ident.clone(),
                             PropertyDesc {
+                                id: prop_id.clone(),
                                 ident: prop_ident,
                                 description: description.clone(),
                                 typ,
@@ -809,10 +945,8 @@ impl TypeDesc {
                     .collect();
 
                 let add_props = disco_type.additional_properties.as_ref().map(|prop_desc| {
-                    let type_ident = to_ident(&to_rust_typestr(&format!(
-                        "{}-additional-properties",
-                        &ident
-                    )));
+                    let prop_id = format!("{}-additional-properties", &ident);
+                    let type_ident = to_ident(&to_rust_typestr(&prop_id));
                     let typ = Type::from_disco_ref_or_type(
                         &type_ident,
                         &parent_path,
@@ -820,6 +954,7 @@ impl TypeDesc {
                         all_schemas,
                     );
                     Box::new(PropertyDesc {
+                        id: prop_id,
                         ident: parse_quote! {additional_properties},
                         description: prop_desc.description.clone(),
                         typ,
@@ -915,6 +1050,7 @@ impl TypeDesc {
 
 #[derive(Clone, Debug)]
 struct PropertyDesc {
+    id: String,
     ident: syn::Ident,
     description: Option<String>,
     typ: Type,
@@ -924,44 +1060,5 @@ struct PropertyDesc {
 struct EnumDesc {
     description: Option<String>,
     ident: syn::Ident,
-}
-
-#[derive(Clone, Debug)]
-struct TypeDef {
-    id: syn::PathSegment,       // ident of this type e.g. MyType
-    parent_path: syn::TypePath, // path to containing module e.g. types
-    derives: Vec<TokenStream>,  // The derives to create
-    typ: TypeFields,            // definition of this type
-}
-
-impl quote::ToTokens for TypeDef {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        use quote::TokenStreamExt;
-        let name = &self.id;
-        let derives = &self.derives;
-        tokens.append_all(std::iter::once(match &self.typ {
-            TypeFields::Enum { variants } => {
-                quote! {
-                    #[derive(#(#derives,)*)]
-                    pub enum #name {
-                        #(#variants,)*
-                    }
-                }
-            }
-            TypeFields::Struct { fields } => {
-                quote! {
-                    #[derive(#(#derives,)*)]
-                    pub struct #name {
-                        #(#fields,)*
-                    }
-                }
-            }
-        }));
-    }
-}
-
-#[derive(Clone, Debug)]
-enum TypeFields {
-    Enum { variants: Vec<syn::Variant> },
-    Struct { fields: Vec<syn::Field> },
+    value: String,
 }

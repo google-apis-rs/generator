@@ -40,7 +40,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for_each_api(|rest_desc| {
         for_each_resource(rest_desc, |resource| {
             for method in resource.methods.values() {
-                println!("{}", &method.path);
+                for (id, param) in &method.parameters {
+                    if param.location == "path" {
+                        println!(
+                            "{}: {} {} {}",
+                            id,
+                            &param.typ,
+                            param.format.as_ref().map(|x| x.as_str()).unwrap_or(""),
+                            if param.enumeration.is_empty() {
+                                ""
+                            } else {
+                                "enum"
+                            }
+                        );
+                    }
+                }
             }
         });
     })?;

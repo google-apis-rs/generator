@@ -1,9 +1,15 @@
-use crate::{method_builder, to_ident, to_rust_typestr, to_rust_varstr, ParamInitMethod, Resource};
+use crate::{
+    method_builder, to_ident, to_rust_typestr, to_rust_varstr, Param, ParamInitMethod, Resource,
+};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::parse_quote;
 
-pub(crate) fn generate(resource: &Resource) -> TokenStream {
+pub(crate) fn generate(
+    base_url: &str,
+    global_params: &[Param],
+    resource: &Resource,
+) -> TokenStream {
     let ident = &resource.ident;
     let param_type_defs = resource.methods.iter().flat_map(|method| {
         method
@@ -11,8 +17,14 @@ pub(crate) fn generate(resource: &Resource) -> TokenStream {
             .iter()
             .filter_map(|param| param.typ.type_def())
     });
-    let method_builders = resource.methods.iter().map(method_builder::generate);
-    let nested_resource_mods = resource.resources.iter().map(generate);
+    let method_builders = resource
+        .methods
+        .iter()
+        .map(|method| method_builder::generate(base_url, global_params, method));
+    let nested_resource_mods = resource
+        .resources
+        .iter()
+        .map(|resource| generate(base_url, global_params, resource));
 
     let method_actions = resource.methods.iter().map(|method| {
         let method_ident = to_ident(&to_rust_varstr(&method.id));
@@ -28,7 +40,8 @@ pub(crate) fn generate(resource: &Resource) -> TokenStream {
             };
             init_method
         });
-        let method_builder_initializers = method.params.iter().map(|param| {
+        let all_params = global_params.into_iter().chain(method.params.iter());
+        let method_builder_initializers = all_params.map(|param| {
             let name = &param.ident;
             let field_pattern: syn::FieldValue = if param.required {
                 match param.init_method() {
@@ -45,6 +58,7 @@ pub(crate) fn generate(resource: &Resource) -> TokenStream {
             #[doc = #method_description]
             pub fn #method_ident(&self#(, #required_args)*) -> #method_builder_type {
                 #method_builder_type{
+                    reqwest: &self.reqwest,
                     #(#method_builder_initializers,)*
                 }
             }
@@ -71,8 +85,10 @@ pub(crate) fn generate(resource: &Resource) -> TokenStream {
                 #(#param_type_defs)*
             }
 
-            pub struct #action_ident;
-            impl #action_ident {
+            pub struct #action_ident<'a> {
+                pub(super) reqwest: &'a reqwest::Client,
+            }
+            impl<'a> #action_ident<'a> {
                 #(#method_actions)*
                 #(#sub_resource_actions)*
             }
