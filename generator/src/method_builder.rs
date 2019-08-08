@@ -6,9 +6,6 @@ use quote::quote;
 use syn::parse_quote;
 
 pub(crate) fn generate(base_url: &str, global_params: &[Param], method: &Method) -> TokenStream {
-    if is_iter_method(method) {
-        println!("method: {} is iterable", method.id);
-    }
     let builder_name = method.builder_name();
     let all_params = global_params.into_iter().chain(method.params.iter());
     let (required_params, optional_params): (Vec<_>, _) =
@@ -64,6 +61,8 @@ pub(crate) fn generate(base_url: &str, global_params: &[Param], method: &Method)
     let path_method = path_method(base_url, &method.path, &method.params);
     let request_method = request_method(&method.http_method, all_params);
     let exec_method = exec_method(method.response.as_ref());
+    let iterable_method_impl = iterable_method_impl(method);
+    let iter_methods = iter_methods(method);
 
     quote! {
         #[derive(Debug,Clone)]
@@ -79,8 +78,10 @@ pub(crate) fn generate(base_url: &str, global_params: &[Param], method: &Method)
 
             #path_method
             #request_method
-
+            #iter_methods
         }
+
+        #iterable_method_impl
     }
 }
 
@@ -89,25 +90,28 @@ fn exec_method(response: Option<&Type>) -> TokenStream {
         Some(typ) => {
             let resp_type_path = typ.type_path();
             quote! {
-                pub fn execute<T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector>(mut self) -> Result<T, Box<dyn ::std::error::Error>> {
+                pub fn execute<T>(&mut self) -> Result<T, Box<dyn ::std::error::Error>>
+                where
+                    T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
+                {
                     if self.fields.is_none() {
                         self.fields = Some(T::field_selector());
                     }
                     Ok(self._request().send()?.error_for_status()?.json()?)
                 }
 
-                pub fn execute_text(self) -> Result<String, Box<dyn ::std::error::Error>> {
+                pub fn execute_text(&mut self) -> Result<String, Box<dyn ::std::error::Error>> {
                     Ok(self._request().send()?.error_for_status()?.text()?)
                 }
 
-                pub fn execute_debug(self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
+                pub fn execute_debug(&mut self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
                     self.execute()
                 }
             }
         }
         None => {
             quote! {
-                pub fn execute(self) -> Result<(), Box<dyn ::std::error::Error>> {
+                pub fn execute(&mut self) -> Result<(), Box<dyn ::std::error::Error>> {
                     self._request().send()?.error_for_status()?;
                     Ok(())
                 }
@@ -122,7 +126,7 @@ fn param_into_method(
     param_type: syn::Type,
 ) -> TokenStream {
     quote! {
-        pub fn #fn_name(mut self, value: #param_type) -> Self {
+        pub fn #fn_name(&mut self, value: #param_type) -> &mut Self {
             self.#param_ident = Some(value.into());
             self
         }
@@ -135,7 +139,7 @@ fn param_value_method(
     param_type: syn::Type,
 ) -> TokenStream {
     quote! {
-        pub fn #fn_name(mut self, value: #param_type) -> Self {
+        pub fn #fn_name(&mut self, value: #param_type) -> &mut Self {
             self.#param_ident = Some(value);
             self
         }
@@ -274,4 +278,120 @@ fn is_iter_method(method: &Method) -> bool {
         })
         .is_some();
     response_contains_next_page_token && params_contains_page_token
+}
+
+fn iterable_method_impl(method: &Method) -> TokenStream {
+    if !is_iter_method(method) {
+        return quote!{};
+    }
+    let builder_name = method.builder_name();
+    quote!{
+        impl<'a> crate::IterableMethod for #builder_name<'a> {
+            fn set_page_token(&mut self, value: String) {
+                self.page_token = value.into();
+            }
+
+            fn execute<T>(&mut self) -> Result<T, Box<dyn ::std::error::Error>>
+            where
+                T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
+            {
+                self.execute()
+            }
+        }
+    }
+}
+
+fn iter_methods(method: &Method) -> TokenStream {
+    if !is_iter_method(method) {
+        return quote!{};
+    }
+
+    let array_props: Vec<&PropertyDesc> = if let Some(Type{type_desc: TypeDesc::Object{props, ..}, ..}) = &method.response {
+        props.values().filter(|prop| {
+            match prop.typ.type_desc {
+                TypeDesc::Array{..} => true,
+                _ => false,
+            }
+        }).collect()
+    } else {
+        Vec::new()
+    };
+    let array_iter_methods = array_props.iter().map(|prop| {
+        let iter_method_ident: syn::Ident = syn::parse_str(&format!("iter_{}", &prop.ident)).unwrap();
+        let prop_ident = &prop.ident;
+        let prop_id = &prop.id;
+        quote!{
+            pub fn #iter_method_ident<T>(&'a mut self) -> impl Iterator<Item=Result<T, Box<dyn ::std::error::Error>>> + 'a
+            where
+                T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector + 'a,
+            {
+
+                struct ItemIter<'a, M, T>{
+                    method: &'a mut M,
+                    finished: bool,
+                    items_iter: Option<::std::vec::IntoIter<T>>,
+                }
+
+                impl<'a, M, T> Iterator for ItemIter<'a, M, T>
+                where
+                    M: crate::IterableMethod,
+                    T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
+                {
+                    type Item = Result<T, Box<dyn ::std::error::Error>>;
+
+                    fn next(&mut self) -> Option<Result<T, Box<dyn ::std::error::Error>>> {
+                        use ::field_selector::FieldSelector;
+                        #[derive(::serde::Deserialize,FieldSelector)]
+                        struct Resp<T>
+                        where
+                            T: FieldSelector,
+                        {
+                            #[serde(rename=#prop_id)]
+                            items: Option<Vec<T>>,
+
+                            #[serde(rename="nextPageToken")]
+                            next_page_token: Option<String>,
+                        }
+                        loop {
+                            if let Some(iter) = self.items_iter.as_mut() {
+                                match iter.next() {
+                                    Some(v) => return Some(Ok(v)),
+                                    None => {},
+                                }
+                            }
+
+                            if self.finished {
+                                return None;
+                            }
+
+                            let resp: Resp<T> = match self.method.execute() {
+                                Ok(r) => r,
+                                Err(err) => return Some(Err(err)),
+                            };
+
+                            if let Some(next_page_token) = resp.next_page_token {
+                                self.method.set_page_token(next_page_token);
+                            } else {
+                                self.finished = true;
+                            }
+
+                            self.items_iter = resp.items.map(|i| i.into_iter());
+                        }
+                    }
+                }
+
+                ItemIter{method: self, finished: false, items_iter: None}
+            }
+        }
+    });
+
+    quote!{
+        #(#array_iter_methods)*
+        pub fn iter<T>(&'a mut self) -> impl Iterator<Item=Result<T, Box<dyn ::std::error::Error>>> + 'a
+        where
+            T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector + 'a,
+        {
+            crate::PageIter{method: self, finished: false, _phantom: ::std::default::Default::default()}
+        }
+    }
 }
