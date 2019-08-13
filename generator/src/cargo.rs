@@ -1,72 +1,23 @@
-use serde::Serialize;
-use std::collections::BTreeMap;
+use toml_edit::{value, Document};
 
-#[derive(Debug, Clone, Serialize)]
-pub(crate) struct Manifest {
-    package: Package,
-    dependencies: BTreeMap<String, Dependency>,
-}
+const CARGO_TOML: &str = r#"
+[package]
+name = "CRATE NAME GOES HERE"
+version = "VERSION GOES HERE"
+authors = ["Glenn Griffin <ggriffiniii@gmail.com"]
+edition = "2018"
 
-#[derive(Debug, Clone, Serialize)]
-pub(crate) struct Package {
-    name: String,
-    version: String,
-    authors: Vec<String>,
-    edition: Option<String>,
-}
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+reqwest = "0.9"
+field_selector = { git = "https://github.com/ggriffiniii/google-apis" }
+"#;
 
-#[derive(Debug, Clone, Serialize)]
-pub(crate) struct Dependency {
-    version: Option<String>,
-    features: Vec<String>,
-    path: Option<String>,
-    git: Option<String>,
-}
-
-impl Dependency {
-    fn new(
-        version: Option<&str>,
-        features: &[&str],
-        path: Option<&str>,
-        git: Option<&str>,
-    ) -> Self {
-        Dependency {
-            version: version.map(std::borrow::ToOwned::to_owned),
-            features: features.into_iter().map(|&x| x.to_owned()).collect(),
-            path: path.map(std::borrow::ToOwned::to_owned),
-            git: git.map(std::borrow::ToOwned::to_owned),
-        }
-    }
-}
-
-pub(crate) fn manifest(crate_name: impl Into<String>) -> Manifest {
-    Manifest {
-        package: Package {
-            name: crate_name.into(),
-            version: "0.1.0".to_owned(),
-            authors: vec!["Glenn Griffin <ggriffiniii@gmail.com".to_owned()],
-            edition: Some("2018".to_owned()),
-        },
-        dependencies: vec![
-            ("serde", Dependency::new(Some("1"), &["derive"], None, None)),
-            (
-                "chrono",
-                Dependency::new(Some("0.4"), &["serde"], None, None),
-            ),
-            ("reqwest", Dependency::new(Some("0.9"), &[], None, None)),
-            ("reqwest", Dependency::new(Some("0.9"), &[], None, None)),
-            (
-                "field_selector",
-                Dependency::new(
-                    None,
-                    &[],
-                    None,
-                    Some("https://github.com/ggriffiniii/google-apis"),
-                ),
-            ),
-        ]
-        .into_iter()
-        .map(|(name, def)| (name.to_owned(), def))
-        .collect(),
-    }
+pub(crate) fn cargo_toml(crate_name: impl Into<String>) -> Document {
+    let mut doc: Document = CARGO_TOML.trim().parse().unwrap();
+    let package = &mut doc["package"];
+    package["name"] = value(crate_name.into());
+    package["version"] = value("0.1.0");
+    doc
 }

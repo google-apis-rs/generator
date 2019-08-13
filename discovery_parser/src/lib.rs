@@ -24,12 +24,15 @@ pub enum RestDescOrErr {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "strict", serde(deny_unknown_fields))]
 pub struct DiscoveryRestDesc {
     pub kind: Option<String>,
     pub etag: Option<String>,
     pub discovery_version: Option<String>,
     pub id: String,
     pub name: String,
+    pub canonical_name: Option<String>,
+    pub fully_encode_reserved_expansion: Option<bool>,
     pub version: String,
     pub revision: String,
     pub title: String,
@@ -45,16 +48,24 @@ pub struct DiscoveryRestDesc {
     pub root_url: String,
     pub service_path: String,
     pub batch_path: String,
+    #[serde(rename="version_module")]
+    pub version_module: Option<bool>,
+    pub package_path: Option<String>,
+    pub labels: Option<Vec<String>>,
+    pub features: Option<Vec<String>>,
     #[serde(default)]
     pub parameters: BTreeMap<String, ParamDesc>,
     pub auth: Option<AuthDesc>,
     #[serde(default)]
     pub schemas: BTreeMap<String, SchemaDesc>,
     pub resources: BTreeMap<String, ResourceDesc>,
+    #[serde(default)]
+    pub methods: BTreeMap<String, MethodDesc>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
+#[cfg_attr(feature = "strict", serde(deny_unknown_fields))]
 pub struct ParamDesc {
     pub description: Option<String>,
     pub default: Option<String>,
@@ -71,16 +82,20 @@ pub struct ParamDesc {
     pub enumeration: Vec<String>,
     #[serde(default)]
     pub enum_descriptions: Vec<String>,
+    #[serde(default)]
+    pub repeated: bool,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "strict", serde(deny_unknown_fields))]
 pub struct AuthDesc {
     pub oauth2: Oauth2Desc,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "strict", serde(deny_unknown_fields))]
 pub struct Oauth2Desc {
     #[serde(default)]
     pub scopes: BTreeMap<String, ScopeDesc>,
@@ -88,14 +103,17 @@ pub struct Oauth2Desc {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "strict", serde(deny_unknown_fields))]
 pub struct ScopeDesc {
     pub description: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "strict", serde(deny_unknown_fields))]
 pub struct SchemaDesc {
     pub id: String,
+    pub description: Option<String>,
     #[serde(flatten, rename = "type")]
     pub typ: TypeDesc,
 }
@@ -167,6 +185,7 @@ impl TypeDesc {
 pub struct ResourceDesc {
     #[serde(default)]
     pub resources: BTreeMap<String, ResourceDesc>,
+    #[serde(default)]
     pub methods: BTreeMap<String, MethodDesc>,
 }
 
@@ -185,4 +204,37 @@ pub struct MethodDesc {
     pub response: Option<RefOrType<TypeDesc>>,
     #[serde(default)]
     pub scopes: Vec<String>,
+    #[serde(default)]
+    pub supports_media_download: bool,
+    #[serde(default)]
+    pub use_media_download_service: bool,
+    #[serde(default)]
+    pub supports_subscription: bool,
+    #[serde(default)]
+    pub supports_media_upload: bool,
+    pub media_upload: Option<MediaUpload>,
 }
+
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MediaUpload {
+    accept: Vec<String>,
+    max_size: String,
+    protocols: UploadProtocols,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadProtocols {
+    pub simple: Option<UploadProtocol>,
+    pub resumable: Option<UploadProtocol>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadProtocol {
+    multipart: bool,
+    path: String,
+}
+

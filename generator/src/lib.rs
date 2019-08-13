@@ -1,6 +1,7 @@
 #![recursion_limit = "256"] // for quote macro
 
 use discovery_parser::{DiscoveryRestDesc, RefOrType};
+use log::{info};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use std::collections::BTreeMap;
@@ -11,32 +12,32 @@ mod cargo;
 mod method_builder;
 mod path_templates;
 mod resource_builder;
+mod rustfmt;
 
 pub fn generate<U, P>(discovery_url: U, base_dir: P, auth_token: &str) -> Result<(), Box<dyn Error>>
 where
     U: reqwest::IntoUrl,
     P: AsRef<std::path::Path>,
 {
-    println!("getting discovery doc");
+    use std::io::Write;
+    info!("getting discovery doc");
     let desc: DiscoveryRestDesc = reqwest::get(discovery_url)?.json()?;
-    println!("buidling api desc");
+    info!("buidling api desc");
     let api_desc = APIDesc::from_discovery(&desc);
-    println!("creating directory and Cargo.toml");
+    info!("creating directory and Cargo.toml");
     let project_path = base_dir.as_ref().join("foo");
     let src_path = project_path.join("src");
     std::fs::create_dir_all(&src_path)?;
     let cargo_path = project_path.join("Cargo.toml");
-    let cargo_contents = toml::ser::to_string_pretty(&cargo::manifest(format!(
-        "google_{}{}",
-        &desc.name, &desc.version
-    )))?;
+    let cargo_contents =
+        cargo::cargo_toml(format!("google_{}_{}", &desc.name, &desc.version)).to_string();
     std::fs::write(&cargo_path, &cargo_contents)?;
-    println!("writing lib");
-    std::fs::write(
-        &src_path.join("lib.rs"),
-        api_desc.generate(auth_token).to_string(),
-    )?;
-    println!("returning");
+    info!("writing lib");
+    let output_file = std::fs::File::create(&src_path.join("lib.rs"))?;
+    let mut rustfmt_writer = crate::rustfmt::RustFmtWriter::new(output_file)?;
+    rustfmt_writer.write_all(api_desc.generate(auth_token).to_string().as_bytes())?;
+    rustfmt_writer.close()?;
+    info!("returning");
     Ok(())
 }
 
@@ -52,7 +53,6 @@ struct APIDesc {
     params: Vec<Param>,
     resources: Vec<Resource>,
 }
-
 impl APIDesc {
     fn from_discovery(discovery_desc: &DiscoveryRestDesc) -> APIDesc {
         let mut schema_types: Vec<Type> = discovery_desc
@@ -79,6 +79,9 @@ impl APIDesc {
                 )
             })
             .collect();
+        if any_method_supports_media(&resources) {
+            add_media_to_alt_param(&mut params);
+        }
         schema_types.sort_by(|a, b| a.type_path_str().cmp(&b.type_path_str()));
         params.sort_by(|a, b| a.ident.cmp(&b.ident));
         resources.sort_by(|a, b| a.ident.cmp(&b.ident));
@@ -94,7 +97,7 @@ impl APIDesc {
     }
 
     fn generate(&self, auth_token: &str) -> TokenStream {
-        println!("getting all types");
+        info!("getting all types");
         let all_types = self.all_types();
         let schemas_to_create = all_types
             .iter()
@@ -104,12 +107,12 @@ impl APIDesc {
             .iter()
             .filter(|typ| typ.parent_path == parse_quote! {crate::params})
             .filter_map(|typ| typ.type_def());
-        println!("generating resources");
+        info!("generating resources");
         let resource_modules = self
             .resources
             .iter()
             .map(|resource| resource_builder::generate(&self.base_url(), &self.params, resource));
-        println!("creating resource actions");
+        info!("creating resource actions");
         let resource_actions = self.resources.iter().map(|resource| {
             let resource_ident = &resource.ident;
             let action_ident = resource.action_type_name();
@@ -126,21 +129,33 @@ impl APIDesc {
                 }
             }
         });
-        println!("outputting");
+        info!("outputting");
         quote! {
             // A serde helper module that can be used with the `with` attribute
-            // to deserialize any string to a FromStr type. Google API's encode
-            // i64, u64 values as strings.
-            fn deserialize_parsed_string<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
-            where
-                T: ::std::str::FromStr,
-                T::Err: ::std::fmt::Display,
-                D: ::serde::de::Deserializer<'de>,
-            {
-                use ::serde::Deserialize;
-                match Option::<String>::deserialize(deserializer)? {
-                    Some(x) => Ok(Some(x.parse().map_err(::serde::de::Error::custom)?)),
-                    None => Ok(None),
+            // to deserialize any string to a FromStr type and serialize any
+            // Display type to a String. Google API's encode i64, u64 values as
+            // strings.
+            mod parsed_string {
+                pub fn serialize<T, S>(value: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
+                where
+                    T: ::std::fmt::Display,
+                    S: ::serde::Serializer,
+                {
+                    use ::serde::Serialize;
+                    value.as_ref().map(|x| x.to_string()).serialize(serializer)
+                }
+
+                pub fn deserialize<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
+                where
+                    T: ::std::str::FromStr,
+                    T::Err: ::std::fmt::Display,
+                    D: ::serde::de::Deserializer<'de>,
+                {
+                    use ::serde::Deserialize;
+                    match Option::<String>::deserialize(deserializer)? {
+                        Some(x) => Ok(Some(x.parse().map_err(::serde::de::Error::custom)?)),
+                        None => Ok(None),
+                    }
                 }
             }
 
@@ -227,8 +242,8 @@ impl APIDesc {
         self.root_url.to_owned() + &self.service_path
     }
 
-    fn all_types(&self) -> Vec<Type> {
-        fn add_types(typ: &Type, out: &mut Vec<Type>) {
+    fn all_types(&self) -> Vec<&Type> {
+        fn add_types<'a>(typ: &'a Type, out: &mut Vec<&'a Type>) {
             match &typ.type_desc {
                 TypeDesc::Array { items } => {
                     add_types(&items, out);
@@ -243,9 +258,9 @@ impl APIDesc {
                 }
                 _ => {}
             }
-            out.push(typ.clone());
+            out.push(typ);
         }
-        fn add_resource_types(resource: &Resource, out: &mut Vec<Type>) {
+        fn add_resource_types<'a>(resource: &'a Resource, out: &mut Vec<&'a Type>) {
             for resource in &resource.resources {
                 add_resource_types(resource, out);
             }
@@ -271,7 +286,7 @@ impl APIDesc {
         for resource in &self.resources {
             add_resource_types(resource, &mut out);
         }
-        let type_path_cmp = |a: &Type, b: &Type| {
+        let type_path_cmp = |a: &&Type, b: &&Type| {
             let a_path = a.type_path();
             let b_path = b.type_path();
             let a_path = quote! {#a_path}.to_string();
@@ -350,6 +365,8 @@ struct Method {
     request: Option<Type>,
     response: Option<Type>,
     scopes: Vec<String>,
+    supports_media_download: bool,
+    use_media_download_service: bool,
 }
 
 impl Method {
@@ -417,6 +434,8 @@ impl Method {
             request,
             response,
             scopes: disco_method.scopes.clone(),
+            supports_media_download: disco_method.supports_media_download,
+            use_media_download_service: disco_method.use_media_download_service,
         }
     }
 
@@ -531,7 +550,7 @@ fn fixup(s: String) -> String {
         .chars()
         .map(|c| if !c.is_ascii_alphanumeric() { '_' } else { c })
         .collect();
-    match s.chars().next() {
+    match s.chars().nth(0) {
         Some(c) if c.is_ascii_digit() => "_".to_owned() + &s,
         _ => s,
     }
@@ -753,6 +772,9 @@ impl Type {
                 let to_string_arms = enums.iter().map(|EnumDesc { ident, value, .. }| {
                     quote! {#name::#ident => #value}
                 });
+                let from_string_arms = enums.iter().map(|EnumDesc { ident, value, .. }| {
+                    quote! {#value => #name::#ident}
+                });
 
                 Some(quote! {
                     #[derive(#(#derives,)*)]
@@ -781,6 +803,19 @@ impl Type {
                             serializer.serialize_str(self.as_str())
                         }
                     }
+
+                    impl<'de> ::serde::Deserialize<'de> for #name {
+                        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+                        where
+                            D: ::serde::de::Deserializer<'de>,
+                        {
+                            let value: &'de str = <&str>::deserialize(deserializer)?;
+                            Ok(match value{
+                                #(#from_string_arms,)*
+                                _ => return Err(::serde::de::Error::custom(format!("invalid enum for #name: {}", value))),
+                            })
+                        }
+                    }
                 })
             }
             TypeDesc::Object { props, add_props } => match (props.is_empty(), add_props) {
@@ -799,19 +834,25 @@ impl Type {
                                 },
                             )| {
                                 use syn::parse::Parser;
-                                let mut field = make_field(&description, ident, syn::Type::Path(typ.type_path()));
+                                let mut field = make_field(
+                                    &description,
+                                    ident,
+                                    syn::Type::Path(typ.type_path()),
+                                );
                                 field.attrs.extend(
-                                    syn::Attribute::parse_outer.parse2(quote!{
-                                        #[serde(rename=#id,default)]
-                                    })
-                                    .expect("failed to parse serde attr")
+                                    syn::Attribute::parse_outer
+                                        .parse2(quote! {
+                                            #[serde(rename=#id,default)]
+                                        })
+                                        .expect("failed to parse serde attr"),
                                 );
                                 if let TypeDesc::Int64 | TypeDesc::Uint64 = typ.type_desc {
                                     field.attrs.extend(
-                                        syn::Attribute::parse_outer.parse2(quote!{
-                                            #[serde(deserialize_with="crate::deserialize_parsed_string")]
-                                        })
-                                        .expect("failed to parse serde attr")
+                                        syn::Attribute::parse_outer
+                                            .parse2(quote! {
+                                                #[serde(with="crate::parsed_string")]
+                                            })
+                                            .expect("failed to parse serde attr"),
                                     );
                                 }
                                 field
@@ -917,7 +958,7 @@ impl TypeDesc {
             disco_type.typ.as_str(),
             disco_type.format.as_ref().map(|x| x.as_str()),
         ) {
-            ("any", None) => unimplemented!("Any"),
+            ("any", None) => TypeDesc::Any,
             ("boolean", None) => TypeDesc::Bool,
             ("integer", Some("uint32")) => TypeDesc::Uint32,
             ("integer", Some("int32")) => TypeDesc::Int32,
@@ -1114,4 +1155,26 @@ struct EnumDesc {
     description: Option<String>,
     ident: syn::Ident,
     value: String,
+}
+
+fn any_method_supports_media(resources: &[Resource]) -> bool {
+    resources.iter().any(|resource| {
+        resource.methods.iter().any(|method| {
+            method.supports_media_download
+        })
+    })
+}
+
+fn add_media_to_alt_param(params: &mut [Param]) {
+    if let Some(alt_param) = params.iter_mut().find(|p| p.id == "alt") {
+        if let Param{typ: Type{type_desc: TypeDesc::Enum(enum_desc), ..}, ..} = alt_param {
+            if enum_desc.iter().find(|d| d.value == "media").is_none() {
+                enum_desc.push(EnumDesc{
+                    description: Some("Upload/Download media content".to_owned()),
+                    ident: parse_quote!{Media},
+                    value: "media".to_owned(),
+                })
+            }
+        }
+    }
 }

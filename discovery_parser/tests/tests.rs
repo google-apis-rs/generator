@@ -22,14 +22,15 @@ fn successfully_parse_all_apis() -> Result<(), Box<dyn Error>> {
     let all_apis: ApiList = reqwest::get("https://www.googleapis.com/discovery/v1/apis")?.json()?;
     for api in &all_apis.items {
         println!("Fetching {}", api.discovery_rest_url);
+        
         let res: Result<RestDescOrErr, _> = reqwest::get(&api.discovery_rest_url)?.json();
         match res {
             Ok(RestDescOrErr::RestDesc(desc)) => {
                 successes += 1;
-                println!("{:#?}", desc);
+                //println!("{:#?}", desc);
             }
             Ok(RestDescOrErr::Err(err)) => {
-                eprintln!("{}: {:?}", api.discovery_rest_url, err);
+                //eprintln!("{}: {:?}", api.discovery_rest_url, err);
                 errors += 1;
             }
             Err(err) => {
@@ -37,6 +38,8 @@ fn successfully_parse_all_apis() -> Result<(), Box<dyn Error>> {
                 errors += 1;
             }
         }
+        
+        //let desc: DiscoveryRestDesc = reqwest::get(&api.discovery_rest_url)?.json()?;
     }
     println!("success: {}, errors: {}", successes, errors);
     Ok(())
@@ -44,7 +47,7 @@ fn successfully_parse_all_apis() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn parse_one_api() -> Result<(), Box<dyn Error>> {
-    let url = "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v1";
+    let url = "https://www.googleapis.com/discovery/v1/apis/admin/directory_v1/rest";
     println!("Fetching {}", url);
     let body: String = reqwest::get(url)?.text()?;
     std::fs::write("/tmp/content", &body)?;

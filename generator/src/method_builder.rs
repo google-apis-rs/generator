@@ -1,5 +1,5 @@
 use crate::{
-    to_ident, to_rust_typestr, to_rust_varstr, Method, Param, PropertyDesc, Type, TypeDesc,
+    to_ident, to_rust_varstr, Method, Param, PropertyDesc, Type, TypeDesc,
 };
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -7,23 +7,30 @@ use syn::parse_quote;
 
 pub(crate) fn generate(base_url: &str, global_params: &[Param], method: &Method) -> TokenStream {
     let builder_name = method.builder_name();
-    let all_params = global_params.into_iter().chain(method.params.iter());
+    let all_params = method.params.iter().chain(global_params.into_iter());
     let (required_params, optional_params): (Vec<_>, _) =
         all_params.clone().partition(|param| param.required);
 
-    let mut builder_fields: Vec<syn::Field> = required_params
-        .iter()
-        .map(|&param| {
-            let ident = &param.ident;
-            let ty: syn::Type = param.typ.type_path().into();
-            use syn::parse::Parser;
+    let mut builder_fields: Vec<syn::Field> = Vec::new();
+    if let Some(req) = method.request.as_ref() {
+        let ty: syn::Type = req.type_path().into();
+        use syn::parse::Parser;
+        builder_fields.push(
             syn::Field::parse_named
-                .parse2(quote! {
-                    #ident: #ty
-                })
-                .expect("failed to parse param field")
-        })
-        .collect();
+                .parse2(parse_quote! {request: #ty})
+                .expect("failed to parse request field"),
+        );
+    }
+    builder_fields.extend(required_params.iter().map(|&param| {
+        let ident = &param.ident;
+        let ty: syn::Type = param.typ.type_path().into();
+        use syn::parse::Parser;
+        syn::Field::parse_named
+            .parse2(quote! {
+                #ident: #ty
+            })
+            .expect("failed to parse param field")
+    }));
     builder_fields.extend(optional_params.iter().map(|&param| {
         let ident = &param.ident;
         let ty = param.typ.type_path();
@@ -58,11 +65,13 @@ pub(crate) fn generate(base_url: &str, global_params: &[Param], method: &Method)
         }
     });
 
-    let path_method = path_method(base_url, &method.path, &method.params);
-    let request_method = request_method(&method.http_method, all_params);
+    let default_path_method = path_method(&parse_quote!{_path}, base_url, &method.path, &method.params);
+    let download_path_method = path_method(&parse_quote!{_download_path}, &format!("{}download/", base_url), &method.path, &method.params);
+    let request_method = request_method(&method.http_method, method.request.as_ref(), all_params);
     let exec_method = exec_method(method.response.as_ref());
     let iterable_method_impl = iterable_method_impl(method);
     let iter_methods = iter_methods(method);
+    let download_method = download_method(method);
 
     quote! {
         #[derive(Debug,Clone)]
@@ -74,11 +83,13 @@ pub(crate) fn generate(base_url: &str, global_params: &[Param], method: &Method)
         impl<'a> #builder_name<'a> {
             #(#param_methods)*
 
+            #iter_methods
+            #download_method
             #exec_method
 
-            #path_method
+            #default_path_method
+            #download_path_method
             #request_method
-            #iter_methods
         }
 
         #iterable_method_impl
@@ -90,29 +101,36 @@ fn exec_method(response: Option<&Type>) -> TokenStream {
         Some(typ) => {
             let resp_type_path = typ.type_path();
             quote! {
-                pub fn execute<T>(&mut self) -> Result<T, Box<dyn ::std::error::Error>>
+                pub fn execute<T>(mut self) -> Result<T, Box<dyn ::std::error::Error>>
+                where
+                    T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
+                {
+                    self._execute()
+                }
+
+                pub fn execute_text(self) -> Result<String, Box<dyn ::std::error::Error>> {
+                    Ok(self._request(&self._path()).send()?.error_for_status()?.text()?)
+                }
+
+                pub fn execute_debug(self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
+                    self.execute()
+                }
+
+                fn _execute<T>(&mut self) -> Result<T, Box<dyn ::std::error::Error>>
                 where
                     T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
                 {
                     if self.fields.is_none() {
                         self.fields = Some(T::field_selector());
                     }
-                    Ok(self._request().send()?.error_for_status()?.json()?)
-                }
-
-                pub fn execute_text(&mut self) -> Result<String, Box<dyn ::std::error::Error>> {
-                    Ok(self._request().send()?.error_for_status()?.text()?)
-                }
-
-                pub fn execute_debug(&mut self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
-                    self.execute()
+                    Ok(self._request(&self._path()).send()?.error_for_status()?.json()?)
                 }
             }
         }
         None => {
             quote! {
-                pub fn execute(&mut self) -> Result<(), Box<dyn ::std::error::Error>> {
-                    self._request().send()?.error_for_status()?;
+                pub fn execute(self) -> Result<(), Box<dyn ::std::error::Error>> {
+                    self._request(&self._path()).send()?.error_for_status()?;
                     Ok(())
                 }
             }
@@ -146,7 +164,7 @@ fn param_value_method(
     }
 }
 
-fn path_method(base_url: &str, path_template: &str, params: &[Param]) -> TokenStream {
+fn path_method(method_name: &syn::Ident, base_url: &str, path_template: &str, params: &[Param]) -> TokenStream {
     use crate::path_templates::{PathAstNode, PathTemplate};
     let template_ast = PathTemplate::new(path_template)
         .expect(&format!("invalid path template: {}", path_template));
@@ -156,7 +174,7 @@ fn path_method(base_url: &str, path_template: &str, params: &[Param]) -> TokenSt
             PathAstNode::Lit(lit) => quote! {output.push_str(#lit);},
             PathAstNode::Var {
                 var_name,
-                expansion_style,
+                expansion_style: _,
             } => {
                 let param = params
                     .iter()
@@ -195,7 +213,7 @@ fn path_method(base_url: &str, path_template: &str, params: &[Param]) -> TokenSt
         })
         .collect();
     quote! {
-        fn _path(&self) -> String {
+        fn #method_name(&self) -> String {
             let mut output = #base_url.to_owned();
             #(#tokens)*
             output
@@ -218,7 +236,11 @@ fn reqwest_http_method(http_method: &str) -> syn::Path {
     }
 }
 
-fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>) -> TokenStream {
+fn request_method<'a>(
+    http_method: &str,
+    request_type: Option<&Type>,
+    params: impl Iterator<Item = &'a Param>,
+) -> TokenStream {
     let method = reqwest_http_method(http_method);
     let query_params = params
         .filter(|param| param.location == "query")
@@ -228,12 +250,20 @@ fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>
             quote! {(#id, &self.#ident)}
         });
 
+    let set_body = request_type.map(|_| {
+        quote! {
+            let req = req.json(&self.request);
+        }
+    });
+
     quote! {
-        pub fn _request(&self) -> ::reqwest::RequestBuilder {
-            let req = self.reqwest.request(#method, &self._path());
+        fn _request(&self, path: &str) -> ::reqwest::RequestBuilder {
+            let req = self.reqwest.request(#method, path);
             #(let req = req.query(&[#query_params]);)*
             // Hack until real oauth token support is implemented.
             let req = req.bearer_auth(crate::auth_token());
+            #set_body
+            eprintln!("debug_request: {:#?}", req);
             req
         }
     }
@@ -282,10 +312,10 @@ fn is_iter_method(method: &Method) -> bool {
 
 fn iterable_method_impl(method: &Method) -> TokenStream {
     if !is_iter_method(method) {
-        return quote!{};
+        return quote! {};
     }
     let builder_name = method.builder_name();
-    quote!{
+    quote! {
         impl<'a> crate::IterableMethod for #builder_name<'a> {
             fn set_page_token(&mut self, value: String) {
                 self.page_token = value.into();
@@ -295,7 +325,7 @@ fn iterable_method_impl(method: &Method) -> TokenStream {
             where
                 T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
             {
-                self.execute()
+                self._execute()
             }
         }
     }
@@ -303,22 +333,26 @@ fn iterable_method_impl(method: &Method) -> TokenStream {
 
 fn iter_methods(method: &Method) -> TokenStream {
     if !is_iter_method(method) {
-        return quote!{};
+        return quote! {};
     }
 
-    let array_props: Vec<&PropertyDesc> = if let Some(Type{type_desc: TypeDesc::Object{props, ..}, ..}) = &method.response {
-        props.values().filter(|prop| {
-            match prop.typ.type_desc {
-                TypeDesc::Array{..} => true,
+    let array_props: Vec<&PropertyDesc> = if let Some(Type {
+        type_desc: TypeDesc::Object { props, .. },
+        ..
+    }) = &method.response
+    {
+        props
+            .values()
+            .filter(|prop| match prop.typ.type_desc {
+                TypeDesc::Array { .. } => true,
                 _ => false,
-            }
-        }).collect()
+            })
+            .collect()
     } else {
         Vec::new()
     };
     let array_iter_methods = array_props.iter().map(|prop| {
         let iter_method_ident: syn::Ident = syn::parse_str(&format!("iter_{}", &prop.ident)).unwrap();
-        let prop_ident = &prop.ident;
         let prop_id = &prop.id;
         quote!{
             pub fn #iter_method_ident<T>(&'a mut self) -> impl Iterator<Item=Result<T, Box<dyn ::std::error::Error>>> + 'a
@@ -385,13 +419,29 @@ fn iter_methods(method: &Method) -> TokenStream {
         }
     });
 
-    quote!{
+    quote! {
         #(#array_iter_methods)*
         pub fn iter<T>(&'a mut self) -> impl Iterator<Item=Result<T, Box<dyn ::std::error::Error>>> + 'a
         where
             T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector + 'a,
         {
             crate::PageIter{method: self, finished: false, _phantom: ::std::default::Default::default()}
+        }
+    }
+}
+
+fn download_method(method: &Method) -> TokenStream {
+    if !method.supports_media_download {
+        return quote!{};
+    }
+    quote!{
+        pub fn download<W>(mut self, output: &mut W) -> Result<u64, Box<dyn ::std::error::Error>>
+        where
+            W: ::std::io::Write + ?Sized,
+        {
+            // TODO: this and other execute methods should probably take self by value.
+            self.alt(crate::params::Alt::Media);
+            Ok(self._request(&self._path()).send()?.error_for_status()?.copy_to(output)?)
         }
     }
 }

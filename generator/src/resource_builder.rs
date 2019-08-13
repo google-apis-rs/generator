@@ -1,5 +1,5 @@
 use crate::{
-    method_builder, to_ident, to_rust_typestr, to_rust_varstr, Param, ParamInitMethod, Resource,
+    method_builder, to_ident, to_rust_varstr, Param, ParamInitMethod, Resource,
 };
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -29,7 +29,14 @@ pub(crate) fn generate(
     let method_actions = resource.methods.iter().map(|method| {
         let method_ident = to_ident(&to_rust_varstr(&method.id));
         let method_builder_type = method.builder_name();
-        let required_args = method.params.iter().filter(|p| p.required).map(|param| {
+        let mut required_args: Vec<syn::FnArg> = Vec::new();
+        let mut method_builder_initializers: Vec<syn::FieldValue> = Vec::new();
+        if let Some(req) = method.request.as_ref() {
+            let ty = req.type_path();
+            required_args.push(parse_quote! {request: #ty});
+            method_builder_initializers.push(parse_quote! {request});
+        }
+        required_args.extend(method.params.iter().filter(|p| p.required).map(|param| {
             let name = &param.ident;
             let init_method: syn::FnArg = match param.init_method() {
                 ParamInitMethod::IntoImpl(into_typ) => parse_quote! {#name: impl Into<#into_typ>},
@@ -39,9 +46,9 @@ pub(crate) fn generate(
                 }
             };
             init_method
-        });
+        }));
         let all_params = global_params.into_iter().chain(method.params.iter());
-        let method_builder_initializers = all_params.map(|param| {
+        method_builder_initializers.extend(all_params.map(|param| {
             let name = &param.ident;
             let field_pattern: syn::FieldValue = if param.required {
                 match param.init_method() {
@@ -52,7 +59,7 @@ pub(crate) fn generate(
                 parse_quote! {#name: None}
             };
             field_pattern
-        });
+        }));
         let method_description = &method.description;
         quote! {
             #[doc = #method_description]
