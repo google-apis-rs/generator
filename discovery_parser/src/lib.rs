@@ -48,7 +48,7 @@ pub struct DiscoveryRestDesc {
     pub root_url: String,
     pub service_path: String,
     pub batch_path: String,
-    #[serde(rename="version_module")]
+    #[serde(rename = "version_module")]
     pub version_module: Option<bool>,
     pub package_path: Option<String>,
     pub labels: Option<Vec<String>>,
@@ -215,13 +215,12 @@ pub struct MethodDesc {
     pub media_upload: Option<MediaUpload>,
 }
 
-
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MediaUpload {
-    accept: Vec<String>,
-    max_size: String,
-    protocols: UploadProtocols,
+    pub accept: Vec<String>,
+    pub max_size: Option<String>,
+    pub protocols: UploadProtocols,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -234,7 +233,6 @@ pub struct UploadProtocols {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UploadProtocol {
-    multipart: bool,
-    path: String,
+    pub multipart: bool,
+    pub path: String,
 }
-

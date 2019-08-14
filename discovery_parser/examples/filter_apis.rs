@@ -40,20 +40,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for_each_api(|rest_desc| {
         for_each_resource(rest_desc, |resource| {
             for method in resource.methods.values() {
-                for (id, param) in &method.parameters {
-                    if param.location == "path" {
-                        println!(
-                            "{}: {} {} {}",
-                            id,
-                            &param.typ,
-                            param.format.as_ref().map(|x| x.as_str()).unwrap_or(""),
-                            if param.enumeration.is_empty() {
-                                ""
-                            } else {
-                                "enum"
-                            }
-                        );
-                    }
+                if method.media_upload.is_some()
+                    && method
+                        .media_upload
+                        .as_ref()
+                        .unwrap()
+                        .protocols
+                        .resumable
+                        .is_none()
+                {
+                    println!("upload without supporting resume");
                 }
             }
         });

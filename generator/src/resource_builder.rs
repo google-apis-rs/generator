@@ -1,12 +1,11 @@
-use crate::{
-    method_builder, to_ident, to_rust_varstr, Param, ParamInitMethod, Resource,
-};
+use crate::{method_builder, to_ident, to_rust_varstr, Param, ParamInitMethod, Resource};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::parse_quote;
 
 pub(crate) fn generate(
-    base_url: &str,
+    root_url: &str,
+    service_path: &str,
     global_params: &[Param],
     resource: &Resource,
 ) -> TokenStream {
@@ -20,11 +19,11 @@ pub(crate) fn generate(
     let method_builders = resource
         .methods
         .iter()
-        .map(|method| method_builder::generate(base_url, global_params, method));
+        .map(|method| method_builder::generate(root_url, service_path, global_params, method));
     let nested_resource_mods = resource
         .resources
         .iter()
-        .map(|resource| generate(base_url, global_params, resource));
+        .map(|resource| generate(root_url, service_path, global_params, resource));
 
     let method_actions = resource.methods.iter().map(|method| {
         let method_ident = to_ident(&to_rust_varstr(&method.id));

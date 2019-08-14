@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io;
-use std::process::{Child, Command, Stdio};
 use std::path::PathBuf;
+use std::process::{Child, Command, Stdio};
 
 pub enum RustFmtWriter {
     Formatted(Child),
@@ -31,7 +31,7 @@ impl RustFmtWriter {
                 } else {
                     Err("rustfmt exited with error".to_owned().into())
                 }
-            },
+            }
             RustFmtWriter::Unformatted(file) => Ok(file.sync_all()?),
         }
     }
@@ -50,7 +50,6 @@ impl io::Write for RustFmtWriter {
             RustFmtWriter::Formatted(_) => Ok(()),
             RustFmtWriter::Unformatted(file) => file.flush(),
         }
-
     }
 }
 

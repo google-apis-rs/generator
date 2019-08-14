@@ -1,11 +1,14 @@
-use crate::{
-    to_ident, to_rust_varstr, Method, Param, PropertyDesc, Type, TypeDesc,
-};
+use crate::{to_ident, to_rust_varstr, Method, Param, PropertyDesc, Type, TypeDesc};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::parse_quote;
 
-pub(crate) fn generate(base_url: &str, global_params: &[Param], method: &Method) -> TokenStream {
+pub(crate) fn generate(
+    root_url: &str,
+    service_path: &str,
+    global_params: &[Param],
+    method: &Method,
+) -> TokenStream {
     let builder_name = method.builder_name();
     let all_params = method.params.iter().chain(global_params.into_iter());
     let (required_params, optional_params): (Vec<_>, _) =
@@ -65,13 +68,19 @@ pub(crate) fn generate(base_url: &str, global_params: &[Param], method: &Method)
         }
     });
 
-    let default_path_method = path_method(&parse_quote!{_path}, base_url, &method.path, &method.params);
-    let download_path_method = path_method(&parse_quote!{_download_path}, &format!("{}download/", base_url), &method.path, &method.params);
-    let request_method = request_method(&method.http_method, method.request.as_ref(), all_params);
-    let exec_method = exec_method(method.response.as_ref());
+    let base_url = format!("{}{}", root_url, service_path);
+    let default_path_method = path_method(
+        &parse_quote! {_path},
+        &base_url,
+        &method.path,
+        &method.params,
+    );
+    let request_method = request_method(&method.http_method, all_params);
+    let exec_method = exec_method(method.request.as_ref(), method.response.as_ref());
     let iterable_method_impl = iterable_method_impl(method);
     let iter_methods = iter_methods(method);
-    let download_method = download_method(method);
+    let download_method = download_method(&base_url, method);
+    let upload_methods = upload_methods(root_url, method);
 
     quote! {
         #[derive(Debug,Clone)]
@@ -85,10 +94,10 @@ pub(crate) fn generate(base_url: &str, global_params: &[Param], method: &Method)
 
             #iter_methods
             #download_method
+            #upload_methods
             #exec_method
 
             #default_path_method
-            #download_path_method
             #request_method
         }
 
@@ -96,7 +105,12 @@ pub(crate) fn generate(base_url: &str, global_params: &[Param], method: &Method)
     }
 }
 
-fn exec_method(response: Option<&Type>) -> TokenStream {
+fn exec_method(request: Option<&Type>, response: Option<&Type>) -> TokenStream {
+    let set_body = request.map(|_| {
+        quote! {
+            let req = req.json(&self.request);
+        }
+    });
     match response {
         Some(typ) => {
             let resp_type_path = typ.type_path();
@@ -108,8 +122,11 @@ fn exec_method(response: Option<&Type>) -> TokenStream {
                     self._execute()
                 }
 
+                /// TODO: Remove once development debugging is no longer a priority.
                 pub fn execute_text(self) -> Result<String, Box<dyn ::std::error::Error>> {
-                    Ok(self._request(&self._path()).send()?.error_for_status()?.text()?)
+                    let req = self._request(&self._path());
+                    #set_body
+                    Ok(req.send()?.error_for_status()?.text()?)
                 }
 
                 pub fn execute_debug(self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
@@ -123,14 +140,18 @@ fn exec_method(response: Option<&Type>) -> TokenStream {
                     if self.fields.is_none() {
                         self.fields = Some(T::field_selector());
                     }
-                    Ok(self._request(&self._path()).send()?.error_for_status()?.json()?)
+                    let req = self._request(&self._path());
+                    #set_body
+                    Ok(req.send()?.error_for_status()?.json()?)
                 }
             }
         }
         None => {
             quote! {
                 pub fn execute(self) -> Result<(), Box<dyn ::std::error::Error>> {
-                    self._request(&self._path()).send()?.error_for_status()?;
+                    let req = self._request(&self._path());
+                    #set_body
+                    req.send()?.error_for_status()?;
                     Ok(())
                 }
             }
@@ -164,7 +185,12 @@ fn param_value_method(
     }
 }
 
-fn path_method(method_name: &syn::Ident, base_url: &str, path_template: &str, params: &[Param]) -> TokenStream {
+fn path_method(
+    method_name: &syn::Ident,
+    base_url: &str,
+    path_template: &str,
+    params: &[Param],
+) -> TokenStream {
     use crate::path_templates::{PathAstNode, PathTemplate};
     let template_ast = PathTemplate::new(path_template)
         .expect(&format!("invalid path template: {}", path_template));
@@ -236,12 +262,7 @@ fn reqwest_http_method(http_method: &str) -> syn::Path {
     }
 }
 
-fn request_method<'a>(
-    http_method: &str,
-    request_type: Option<&Type>,
-    params: impl Iterator<Item = &'a Param>,
-) -> TokenStream {
-    let method = reqwest_http_method(http_method);
+fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>) -> TokenStream {
     let query_params = params
         .filter(|param| param.location == "query")
         .map(|param| {
@@ -250,19 +271,20 @@ fn request_method<'a>(
             quote! {(#id, &self.#ident)}
         });
 
-    let set_body = request_type.map(|_| {
-        quote! {
-            let req = req.json(&self.request);
-        }
-    });
-
+    /*
+        let set_body = request_type.map(|_| {
+            quote! {
+                let req = req.json(&self.request);
+            }
+        });
+    */
+    let reqwest_method = reqwest_http_method(http_method);
     quote! {
         fn _request(&self, path: &str) -> ::reqwest::RequestBuilder {
-            let req = self.reqwest.request(#method, path);
+            let req = self.reqwest.request(#reqwest_method, path);
             #(let req = req.query(&[#query_params]);)*
             // Hack until real oauth token support is implemented.
             let req = req.bearer_auth(crate::auth_token());
-            #set_body
             eprintln!("debug_request: {:#?}", req);
             req
         }
@@ -430,18 +452,93 @@ fn iter_methods(method: &Method) -> TokenStream {
     }
 }
 
-fn download_method(method: &Method) -> TokenStream {
+fn download_method(base_url: &str, method: &Method) -> TokenStream {
     if !method.supports_media_download {
-        return quote!{};
+        return quote! {};
     }
-    quote!{
+    let download_path_method = path_method(
+        &parse_quote! {_download_path},
+        &format!("{}download/", base_url),
+        &method.path,
+        &method.params,
+    );
+    quote! {
+        #download_path_method
         pub fn download<W>(mut self, output: &mut W) -> Result<u64, Box<dyn ::std::error::Error>>
         where
             W: ::std::io::Write + ?Sized,
         {
-            // TODO: this and other execute methods should probably take self by value.
             self.alt(crate::params::Alt::Media);
             Ok(self._request(&self._path()).send()?.error_for_status()?.copy_to(output)?)
         }
+    }
+}
+
+fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
+    if let Some(media_upload) = &method.media_upload {
+        let simple_fns = media_upload.simple_path.as_ref().map(|path| {
+            let path_fn = path_method(&parse_quote!{_simple_upload_path}, base_url, path, &method.params);
+            let upload_fn = match &method.response {
+                Some(_response) => {
+                    quote!{
+                        pub fn upload<T, R>(mut self, content: R, mime_type: ::mime::Mime) -> Result<T, Box<dyn ::std::error::Error>>
+                        where
+                            T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
+                            R: ::std::io::Read + ::std::io::Seek + Send + 'static,
+                        {
+                            if self.fields.is_none() {
+                                self.fields = Some(T::field_selector());
+                            }
+                            let req = self._request(&self._simple_upload_path());
+                            let req = req.query(&[("uploadType", "multipart")]);
+                            use crate::multipart::{RelatedMultiPart, Part};
+                            // TODO: Do not read the contents of the file into memory.
+                            let mut multipart = RelatedMultiPart::new();
+                            let request_json = ::serde_json::to_vec(&self.request)?;
+                            multipart.new_part(Part::new(::mime::APPLICATION_JSON, Box::new(::std::io::Cursor::new(request_json))));
+                            multipart.new_part(Part::new(mime_type, Box::new(content)));
+                            let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()).as_str());
+                            let req = req.body(reqwest::Body::new(multipart.into_reader()));
+                            Ok(req.send()?.error_for_status()?.json()?)
+                        }
+                    }
+                },
+                None => {
+                    quote!{
+                        pub fn upload<R>(mut self, content: R, mime_type: ::mime::Mime) -> Result<(), Box<dyn ::std::error::Error>>
+                        where
+                            R: ::std::io::Read + ::std::io::Seek,
+                        {
+                            let req = self._request(&self._simple_upload_path());
+                            let req = req.query(&[("uploadType", "multipart")]);
+                            Ok(req.send()?.error_for_status()?)
+                        }
+                    }
+                }
+            };
+            quote!{
+                #path_fn
+                #upload_fn
+            }
+        });
+
+        let resumable_fns = media_upload.resumable_path.as_ref().map(|path| {
+            let path_fn = path_method(
+                &parse_quote! {_resumable_upload_path},
+                base_url,
+                path,
+                &method.params,
+            );
+            quote! {
+                #path_fn
+            }
+        });
+
+        quote! {
+            #simple_fns
+            #resumable_fns
+        }
+    } else {
+        quote! {}
     }
 }

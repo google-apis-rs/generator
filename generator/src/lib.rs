@@ -1,7 +1,7 @@
 #![recursion_limit = "256"] // for quote macro
 
 use discovery_parser::{DiscoveryRestDesc, RefOrType};
-use log::{info};
+use log::info;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use std::collections::BTreeMap;
@@ -36,6 +36,7 @@ where
     let output_file = std::fs::File::create(&src_path.join("lib.rs"))?;
     let mut rustfmt_writer = crate::rustfmt::RustFmtWriter::new(output_file)?;
     rustfmt_writer.write_all(api_desc.generate(auth_token).to_string().as_bytes())?;
+    rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;
     rustfmt_writer.close()?;
     info!("returning");
     Ok(())
@@ -108,10 +109,9 @@ impl APIDesc {
             .filter(|typ| typ.parent_path == parse_quote! {crate::params})
             .filter_map(|typ| typ.type_def());
         info!("generating resources");
-        let resource_modules = self
-            .resources
-            .iter()
-            .map(|resource| resource_builder::generate(&self.base_url(), &self.params, resource));
+        let resource_modules = self.resources.iter().map(|resource| {
+            resource_builder::generate(&self.root_url, &self.service_path, &self.params, resource)
+        });
         info!("creating resource actions");
         let resource_actions = self.resources.iter().map(|resource| {
             let resource_ident = &resource.ident;
@@ -238,10 +238,6 @@ impl APIDesc {
         }
     }
 
-    fn base_url(&self) -> String {
-        self.root_url.to_owned() + &self.service_path
-    }
-
     fn all_types(&self) -> Vec<&Type> {
         fn add_types<'a>(typ: &'a Type, out: &mut Vec<&'a Type>) {
             match &typ.type_desc {
@@ -366,7 +362,15 @@ struct Method {
     response: Option<Type>,
     scopes: Vec<String>,
     supports_media_download: bool,
-    use_media_download_service: bool,
+    media_upload: Option<MediaUpload>,
+}
+
+#[derive(Clone, Debug)]
+struct MediaUpload {
+    accept: Vec<String>,
+    max_size: Option<String>,
+    simple_path: Option<String>,
+    resumable_path: Option<String>,
 }
 
 impl Method {
@@ -424,6 +428,34 @@ impl Method {
                 (None, None) => a.ident.cmp(&b.ident),
             }
         });
+
+        let media_upload = disco_method.media_upload.as_ref().map(|media_upload| {
+            use discovery_parser::UploadProtocol as DiscoUploadProtocol;
+            let from_disco_upload_protocol = |&DiscoUploadProtocol {
+                                                  ref multipart,
+                                                  ref path,
+                                              }| {
+                if !multipart {
+                    panic!("An upload protocol doesn't support multipart.");
+                }
+                path.clone()
+            };
+            MediaUpload {
+                accept: media_upload.accept.clone(),
+                max_size: media_upload.max_size.clone(),
+                simple_path: media_upload
+                    .protocols
+                    .simple
+                    .as_ref()
+                    .map(from_disco_upload_protocol),
+                resumable_path: media_upload
+                    .protocols
+                    .resumable
+                    .as_ref()
+                    .map(from_disco_upload_protocol),
+            }
+        });
+
         Method {
             id: method_id.to_owned(),
             path: disco_method.path.clone(),
@@ -435,7 +467,7 @@ impl Method {
             response,
             scopes: disco_method.scopes.clone(),
             supports_media_download: disco_method.supports_media_download,
-            use_media_download_service: disco_method.use_media_download_service,
+            media_upload,
         }
     }
 
@@ -1159,19 +1191,28 @@ struct EnumDesc {
 
 fn any_method_supports_media(resources: &[Resource]) -> bool {
     resources.iter().any(|resource| {
-        resource.methods.iter().any(|method| {
-            method.supports_media_download
-        })
+        resource
+            .methods
+            .iter()
+            .any(|method| method.supports_media_download || method.media_upload.is_some())
     })
 }
 
 fn add_media_to_alt_param(params: &mut [Param]) {
     if let Some(alt_param) = params.iter_mut().find(|p| p.id == "alt") {
-        if let Param{typ: Type{type_desc: TypeDesc::Enum(enum_desc), ..}, ..} = alt_param {
+        if let Param {
+            typ:
+                Type {
+                    type_desc: TypeDesc::Enum(enum_desc),
+                    ..
+                },
+            ..
+        } = alt_param
+        {
             if enum_desc.iter().find(|d| d.value == "media").is_none() {
-                enum_desc.push(EnumDesc{
+                enum_desc.push(EnumDesc {
                     description: Some("Upload/Download media content".to_owned()),
-                    ident: parse_quote!{Media},
+                    ident: parse_quote! {Media},
                     value: "media".to_owned(),
                 })
             }

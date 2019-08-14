@@ -9,9 +9,12 @@ edition = "2018"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 chrono = { version = "0.4", features = ["serde"] }
 reqwest = "0.9"
 field_selector = { git = "https://github.com/ggriffiniii/google-apis" }
+mime = "0.3"
+textnonce = "0.6"
 "#;
 
 pub(crate) fn cargo_toml(crate_name: impl Into<String>) -> Document {
