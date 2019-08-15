@@ -34,6 +34,9 @@ Let's keep in mind what worked and what didn't.
    * Generating text from 'smart' files with some basic support for syntax highlighting made it quite easy to get started.
    * This was only possible through the `make` driven automation, as one would have to run multiple tools including `cargo check` to
     see if it actually worked.
+1. **Having as much code as possible available without template**
+   * particularly including `util.rs` helped to provide common code, and I would put as much code as possible into Rust-only files.
+   * code size could further be reduced by putting that code into its own crate and maintain it as such.
 1. **Performance**
    * Code generation was fast enough and could be parallelized on a per-API/CLI basis thanks to `make`.
 1. **API, Docs, and CLIs**
@@ -61,12 +64,19 @@ Let's keep in mind what worked and what didn't.
 1. **it's cumbersome to actually use a CLI**
    * Even though authentication was dealt with nicely for the most part, actually using APIs required them to be enabled via the developer console. From there one would download a file and deposit it in the right spot. Only then one could start using the CLI.
 1. **oddly keyed login tokens stored on disk per scope**
-   * due to tokens being hashed by the scope(s) they represent, chosing a different scope forced you to re-authenticate, even though another token file already included the scope you wanted.
+   * due to tokens being hashed by the scope(s) they represent, choosing a different scope forced you to re-authenticate, even though another token file already included the scope you wanted.
 1. **it took at least 6 weeks to get the first release on crates.io**
    * development wasn't the fastest, and I claim one was slowed down due to too much manual testing.
 1. **there was no way to use the CI to test CLIs to actually interact with Google APIs**
    * This was due to API usage being bound to a person, and these credentials were nothing you would want to have lying around in a public git repository.
-   * Not being able to test certain feature automatically and repeatedly takes time and reduces quality garantuees.
+   * Not being able to test certain feature automatically and repeatedly takes time and reduces quality guarantees.
+1. **Versions like 1.2.0+2019-08-23...` would additionally show the version of the Google API description, but is ignored by `cargo`** 
+   * This was done to discriminate the 'code' version from the version of the API it represents.
+   * As the `+` is ignored by `cargo`, to re-release a crate with a new version of the API, one would have to increment the patch level. However, that would force all crates to be re-released, even if their API version didn't change at all.
+   * This caused unnecessary spamming of `crates.io`, and the `+` should be a `-` to fix this.
+* **The 'fields' parameter could not be used to have smaller response types**
+   * Some [Response Types](https://docs.rs/google-sheets4/1.0.10+20190625/google_sheets4/struct.Response.html) are huge, even though with the right `field` setting, one would only receive a fraction of the data. However, one would always have to allocate big structures to with most of the optional fields set to `None`.
+   * 💡Idea 💡: Can [serde(flatten)](https://serde.rs/field-attrs.html#flatten) be used to subdivide the possible field sets in the data structure? Probably it's not known which actual fields belong to each `field` argument.
 
 
 # Technology and Architecture Sketches
@@ -75,7 +85,7 @@ Items mentioned below ideally create a link to one of the problems they slove, e
 
 ## Toolchains
 
-The _OP_ suffered a little from chosing Python and Mako, the latter being a template language mostly unknown to people. Less is more.
+The _OP_ suffered a little from choosing Python and Mako, the latter being a template language mostly unknown to people. Less is more.
 Here is the anticipated tooling. What follows is the list of tools I would add and why.
 
 * **make**
@@ -87,13 +97,6 @@ Here is the anticipated tooling. What follows is the list of tools I would add a
 * **rust-fmt**
   * Definitely needed to get idiomatically looking code.
   * _OP_ didn't have it, it wasn't a real problem, but too much time was spent making things look pretty. With `rust-fmt`, templates can be optimized for maintainability, even if the output doesn't look great initially.
-
-* **Docker (optional)** ... maybe, but probably not :D
-  * For those who have none the above tooling but docker, it's easy to run something like `make interactive-docker-environment` and be dropped into shell that can run all tools and all make targets.
-  * It's usually good to document the entire toolchain that way.
-  * Can, and probably _should_ be used by CI to validate it works.
-  * given the simplicity of the toolchain above, I'd say it truly is optional.
-
 
 # Development Goals
 
