@@ -7,8 +7,6 @@ Even though the list is ordered, they are not (yet) ordered by priority, but mer
 1. first-class documentation with cross-links and complete code-examples
 1. support all API features, including downloads and resumable uploads
 1. Convenient CLIs are provided on top of the API for use in shell scripts
-1. _safety and resilience are built-in, allowing you to create highly available tools on top of it. For example, you can trigger retries for all operations that may temporarily fail, e.g. due to network outage._
-   * **Byron thinks that** this could be naturally supported by the async ecosystem, and thus helps slim down the delegate.
 1. API and CLI generation can be customized easily to overcome issues with your particular API
    * **Byron thinks that** we cannot assume to get it right for all APIs from the start unless we actually test everything ourselves. Thus if we enable people to help themselves, it will help us further down the line.
 1. Built-in debugging and tracing allows to understand what's going on, and what's wrong.
@@ -18,6 +16,8 @@ Even though the list is ordered, they are not (yet) ordered by priority, but mer
 1. The code base is made for accepting PRs and making contributions easy
    * To stay relevant, people must contribute.
    * The original authors won't stay around forever (see [GitPython](https://github.com/gitpython-developers/GitPython))
+1. _safety and resilience_ are built-in, allowing you to create highly available tools on top of it. For example, you can trigger retries for all operations that may temporarily fail, e.g. due to network outage.
+   * **Byron thinks that** this could be naturally supported by the async ecosystem, and thus helps slim down the delegate.
 
 # Learning from the past
 
@@ -70,11 +70,14 @@ Let's keep in mind what worked and what didn't.
 1. **there was no way to use the CI to test CLIs to actually interact with Google APIs**
    * This was due to API usage being bound to a person, and these credentials were nothing you would want to have lying around in a public git repository.
    * Not being able to test certain feature automatically and repeatedly takes time and reduces quality guarantees.
+1. **tests were minimal and most testing was like "if it compiles, it's good"**
+   * The _OP_ suffered from only having a few tests, and even though Rust only compiles decent quality software, by nature, certain reasoning was just in my head. _'Why is it doing this particular thing? It seems wrong'_ would be impossible to know. 
+   * manual testing is slow and error prone
 1. **Versions like 1.2.0+2019-08-23...` would additionally show the version of the Google API description, but is ignored by `cargo`** 
    * This was done to discriminate the 'code' version from the version of the API it represents.
    * As the `+` is ignored by `cargo`, to re-release a crate with a new version of the API, one would have to increment the patch level. However, that would force all crates to be re-released, even if their API version didn't change at all.
    * This caused unnecessary spamming of `crates.io`, and the `+` should be a `-` to fix this.
-* **The 'fields' parameter could not be used to have smaller response types**
+1. **The 'fields' parameter could not be used to have smaller response types**
    * Some [Response Types](https://docs.rs/google-sheets4/1.0.10+20190625/google_sheets4/struct.Response.html) are huge, even though with the right `field` setting, one would only receive a fraction of the data. However, one would always have to allocate big structures to with most of the optional fields set to `None`.
    * 💡Idea 💡: Can [serde(flatten)](https://serde.rs/field-attrs.html#flatten) be used to subdivide the possible field sets in the data structure? Probably it's not known which actual fields belong to each `field` argument.
 
@@ -85,16 +88,15 @@ Items mentioned below ideally create a link to one of the problems they slove, e
 
 ## Toolchains
 
-The _OP_ suffered a little from choosing Python and Mako, the latter being a template language mostly unknown to people. Less is more.
 Here is the anticipated tooling. What follows is the list of tools I would add and why.
 
-* **make**
+* **make** - repeats `🌈1` 
   * I am a fan of simple makefiles, which catch dependencies between files and run a script to generate them. This served _OP_ extremely well.
   * get parallelization for free, and make transparent which programs to call and how to get work done.
   * the Makefile serves as hub keeping all commands one would run to interact with the project in any way.
-* **Cargo/Rust**
-  * All work should be done by a Rust binary
-* **rust-fmt**
+* **Cargo/Rust** - fixes `🥵4`, support `🌈1`
+  * All work should be done by a Rust binary, which helps keeping things easy with `make`. Previously, the single, magical binary was `python`, and when adding even a single additional Rust tool, one would pay with some complexity. One Rust binary with multiple sub-command seems reasonable.
+* **rust-fmt** - helps remedy `🥵8`
   * Definitely needed to get idiomatically looking code.
   * _OP_ didn't have it, it wasn't a real problem, but too much time was spent making things look pretty. With `rust-fmt`, templates can be optimized for maintainability, even if the output doesn't look great initially.
 
@@ -104,5 +106,4 @@ These should optimize for allowing a pleasant developer experience, at the begin
 
 * **TDD**
   * Everything done should be driven by at least one test which can be run automatically.
-  * **Byron thinks that** the _OP_ suffered from only having a few tests, and even though Rust only compiles decent quality software, by nature, certain reasoning was just in my head. _'Why is it doing this particular thing? It seems wrong'_ would be impossible to know. With TDD, there is a chance there will be a test for that. Also TDD speeds up development as validations don't have to be performed manually.
   * **Byron also thinks that** this is totally doable without breaking into sweat.
