@@ -285,7 +285,6 @@ fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>
             #(let req = req.query(&[#query_params]);)*
             // Hack until real oauth token support is implemented.
             let req = req.bearer_auth(crate::auth_token());
-            eprintln!("debug_request: {:#?}", req);
             req
         }
     }
@@ -497,7 +496,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                             let request_json = ::serde_json::to_vec(&self.request)?;
                             multipart.new_part(Part::new(::mime::APPLICATION_JSON, Box::new(::std::io::Cursor::new(request_json))));
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
-                            let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()).as_str());
+                            let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
                             let req = req.body(reqwest::Body::new(multipart.into_reader()));
                             Ok(req.send()?.error_for_status()?.json()?)
                         }
@@ -523,14 +522,33 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
         });
 
         let resumable_fns = media_upload.resumable_path.as_ref().map(|path| {
+            let set_body = method.request.as_ref().map(|_| {
+                quote! {
+                    let req = req.json(&self.request);
+                }
+            });
+
             let path_fn = path_method(
                 &parse_quote! {_resumable_upload_path},
                 base_url,
                 path,
                 &method.params,
             );
+            let upload_fn = quote!{
+                pub fn start_resumable_upload(self, mime_type: ::mime::Mime) -> Result<crate::ResumableUpload, Box<dyn ::std::error::Error>> {
+                    let req = self._request(&self._resumable_upload_path());
+                    let req = req.query(&[("uploadType", "resumable")]);
+                    let req = req.header(::reqwest::header::HeaderName::from_static("x-upload-content-type"), mime_type.to_string());
+                    #set_body
+                    let resp = req.send()?.error_for_status()?;
+                    let location_header = resp.headers().get(::reqwest::header::LOCATION).ok_or_else(|| format!("No LOCATION header returned when initiating resumable upload"))?;
+                    let upload_url = ::std::str::from_utf8(location_header.as_bytes())?.to_owned();
+                    Ok(crate::ResumableUpload::new(self.reqwest.clone(), upload_url))
+                }
+            };
             quote! {
                 #path_fn
+                #upload_fn
             }
         });
 
