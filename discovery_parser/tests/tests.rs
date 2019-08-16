@@ -15,7 +15,9 @@ struct ApiSpec {
     discovery_rest_url: String,
 }
 
-#[test]
+// This test takes too long to run to have it enabled by default. Uncomment it
+// when you want to sanity check logic against all apis.
+//#[test]
 fn successfully_parse_all_apis() -> Result<(), Box<dyn Error>> {
     let mut errors = 0;
     let mut successes = 0;
