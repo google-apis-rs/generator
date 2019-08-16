@@ -1,13 +1,13 @@
 use serde::{Deserialize, Deserializer};
 use std::collections::BTreeMap;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct DiscoveryError {
     pub error: ErrorMsg,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct ErrorMsg {
     pub code: u32,
@@ -15,14 +15,14 @@ pub struct ErrorMsg {
     pub status: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", untagged)]
 pub enum RestDescOrErr {
     RestDesc(DiscoveryRestDesc),
     Err(DiscoveryError),
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "strict", serde(deny_unknown_fields))]
 pub struct DiscoveryRestDesc {
@@ -63,7 +63,7 @@ pub struct DiscoveryRestDesc {
     pub methods: BTreeMap<String, MethodDesc>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", tag = "type")]
 #[cfg_attr(feature = "strict", serde(deny_unknown_fields))]
 pub struct ParamDesc {
@@ -86,14 +86,14 @@ pub struct ParamDesc {
     pub repeated: bool,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "strict", serde(deny_unknown_fields))]
 pub struct AuthDesc {
     pub oauth2: Oauth2Desc,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "strict", serde(deny_unknown_fields))]
 pub struct Oauth2Desc {
@@ -101,14 +101,14 @@ pub struct Oauth2Desc {
     pub scopes: BTreeMap<String, ScopeDesc>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "strict", serde(deny_unknown_fields))]
 pub struct ScopeDesc {
     pub description: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "strict", serde(deny_unknown_fields))]
 pub struct SchemaDesc {
@@ -118,7 +118,7 @@ pub struct SchemaDesc {
     pub typ: TypeDesc,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PropertyDesc {
     pub description: Option<String>,
@@ -127,7 +127,7 @@ pub struct PropertyDesc {
     pub typ: RefOrType<TypeDesc>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", untagged)]
 pub enum RefOrType<T> {
     #[serde(deserialize_with = "ref_target")]
@@ -149,7 +149,7 @@ where
     Ok(rt.reference)
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeDesc {
     #[serde(rename = "type")]
@@ -180,7 +180,7 @@ impl TypeDesc {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct ResourceDesc {
     #[serde(default)]
@@ -189,7 +189,7 @@ pub struct ResourceDesc {
     pub methods: BTreeMap<String, MethodDesc>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct MethodDesc {
     pub id: String,
@@ -215,7 +215,7 @@ pub struct MethodDesc {
     pub media_upload: Option<MediaUpload>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct MediaUpload {
     pub accept: Vec<String>,
@@ -223,14 +223,14 @@ pub struct MediaUpload {
     pub protocols: UploadProtocols,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct UploadProtocols {
     pub simple: Option<UploadProtocol>,
     pub resumable: Option<UploadProtocol>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct UploadProtocol {
     pub multipart: bool,
