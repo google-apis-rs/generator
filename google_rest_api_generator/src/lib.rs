@@ -626,7 +626,12 @@ impl Type {
                 let type_desc =
                     TypeDesc::from_disco_type(ident, parent_path, disco_type, all_schemas);
                 match type_desc {
-                    TypeDesc::Any => unimplemented!("Any"),
+                    TypeDesc::Any => Type {
+                        id: parse_quote!{Value},
+                        parent_path: parse_quote!{::serde_json},
+                        type_desc,
+                        via_reference: false,
+                    },
                     TypeDesc::String => Type {
                         id: parse_quote! {String},
                         parent_path: empty_type_path(),
@@ -1081,7 +1086,7 @@ impl TypeDesc {
 
     fn is_hashable(&self) -> bool {
         match self {
-            TypeDesc::Any => unimplemented!("Any"),
+            TypeDesc::Any => false,
             TypeDesc::String => true,
             TypeDesc::Bool => true,
             TypeDesc::Int32 => true,
@@ -1107,7 +1112,7 @@ impl TypeDesc {
 
     fn is_ord(&self) -> bool {
         match self {
-            TypeDesc::Any => unimplemented!("Any"),
+            TypeDesc::Any => false,
             TypeDesc::String => true,
             TypeDesc::Bool => true,
             TypeDesc::Int32 => true,
@@ -1133,7 +1138,7 @@ impl TypeDesc {
 
     fn is_eq(&self) -> bool {
         match self {
-            TypeDesc::Any => unimplemented!("Any"),
+            TypeDesc::Any => false,
             TypeDesc::String => true,
             TypeDesc::Bool => true,
             TypeDesc::Int32 => true,
