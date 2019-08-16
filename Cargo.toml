@@ -6,4 +6,5 @@ members = [
     "field_selector_derive",
     "generator",
     "uri_template_parser",
+    "mcp",
 ]
