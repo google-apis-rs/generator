@@ -119,6 +119,8 @@ Let's keep in mind what worked and what didn't.
 1. **The 'fields' parameter could not be used to have smaller response types**
    * Some [Response Types](https://docs.rs/google-sheets4/1.0.10+20190625/google_sheets4/struct.Response.html) are huge, even though with the right `field` setting, one would only receive a fraction of the data. However, one would always have to allocate big structures to with most of the optional fields set to `None`.
    * 💡Idea 💡: Can [serde(flatten)](https://serde.rs/field-attrs.html#flatten) be used to subdivide the possible field sets in the data structure? Probably it's not known which actual fields belong to each `field` argument.
+1. **the main repository is huge and massive**
+   * Not only does that slow down new clones on CI, it makes contributions harder. People might just get desinterested over the waiting. And if you ever used Github from China, you know what I mean.
 
 
 # Technology and Architecture Sketches
