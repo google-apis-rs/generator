@@ -61,7 +61,7 @@ pub(crate) fn generate(
             }
             _ => param_value_method(&fn_name, &param.ident, param.typ.type_path().into()),
         };
-        let description = &param.description;
+        let description = &param.description.as_ref().map(|s| s.as_str()).unwrap_or("");
         quote! {
             #[doc = #description]
             #fn_def
@@ -85,7 +85,7 @@ pub(crate) fn generate(
     quote! {
         #[derive(Debug,Clone)]
         pub struct #builder_name<'a> {
-            pub(super) reqwest: &'a ::reqwest::Client,
+            pub(crate) reqwest: &'a ::reqwest::Client,
             #(#builder_fields,)*
         }
 

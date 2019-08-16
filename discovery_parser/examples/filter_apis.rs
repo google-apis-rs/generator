@@ -38,20 +38,10 @@ fn count_methods<'a>(resources: impl Iterator<Item = &'a discovery_parser::Resou
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     for_each_api(|rest_desc| {
+        if !rest_desc.methods.is_empty() {
+            println!("name: {} version: {}", &rest_desc.name, &rest_desc.version);
+        }
         for_each_resource(rest_desc, |resource| {
-            for method in resource.methods.values() {
-                if method.media_upload.is_some()
-                    && method
-                        .media_upload
-                        .as_ref()
-                        .unwrap()
-                        .protocols
-                        .resumable
-                        .is_none()
-                {
-                    println!("upload without supporting resume");
-                }
-            }
         });
     })?;
     Ok(())

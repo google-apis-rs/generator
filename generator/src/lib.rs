@@ -9,6 +9,7 @@ use std::error::Error;
 use syn::parse_quote;
 
 mod cargo;
+mod method_actions;
 mod method_builder;
 mod path_templates;
 mod resource_builder;
@@ -39,6 +40,8 @@ where
     rustfmt_writer.write_all(api_desc.generate(auth_token).to_string().as_bytes())?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/resumable_upload.rs"))?;
+    rustfmt_writer.write_all(include_bytes!("../gen_include/parsed_string.rs"))?;
+    rustfmt_writer.write_all(include_bytes!("../gen_include/iter.rs"))?;
     rustfmt_writer.close()?;
     info!("returning");
     Ok(())
@@ -55,6 +58,7 @@ struct APIDesc {
     schema_types: Vec<Type>,
     params: Vec<Param>,
     resources: Vec<Resource>,
+    methods: Vec<Method>,
 }
 impl APIDesc {
     fn from_discovery(discovery_desc: &DiscoveryRestDesc) -> APIDesc {
@@ -82,12 +86,25 @@ impl APIDesc {
                 )
             })
             .collect();
+        let mut methods: Vec<Method> = discovery_desc
+            .methods
+            .iter()
+            .map(|(method_id, method_desc)| {
+                Method::from_disco_method(
+                    method_id,
+                    &parse_quote! {crate},
+                    method_desc,
+                    &discovery_desc.schemas,
+                )
+            })
+            .collect();
         if any_method_supports_media(&resources) {
             add_media_to_alt_param(&mut params);
         }
         schema_types.sort_by(|a, b| a.type_path_str().cmp(&b.type_path_str()));
         params.sort_by(|a, b| a.ident.cmp(&b.ident));
         resources.sort_by(|a, b| a.ident.cmp(&b.ident));
+        methods.sort_by(|a, b| a.id.cmp(&b.id));
         APIDesc {
             name: discovery_desc.name.clone(),
             version: discovery_desc.version.clone(),
@@ -96,6 +113,7 @@ impl APIDesc {
             schema_types,
             params,
             resources,
+            methods,
         }
     }
 
@@ -131,89 +149,15 @@ impl APIDesc {
                 }
             }
         });
+
+        let method_builders = self.methods.iter().map(|method| {
+            method_builder::generate(&self.root_url, &self.service_path, &self.params, method)
+        });
+        let method_actions = self.methods.iter().map(|method| {
+            method_actions::generate(method, &self.params)
+        });
         info!("outputting");
         quote! {
-            // A serde helper module that can be used with the `with` attribute
-            // to deserialize any string to a FromStr type and serialize any
-            // Display type to a String. Google API's encode i64, u64 values as
-            // strings.
-            mod parsed_string {
-                pub fn serialize<T, S>(value: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
-                where
-                    T: ::std::fmt::Display,
-                    S: ::serde::Serializer,
-                {
-                    use ::serde::Serialize;
-                    value.as_ref().map(|x| x.to_string()).serialize(serializer)
-                }
-
-                pub fn deserialize<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
-                where
-                    T: ::std::str::FromStr,
-                    T::Err: ::std::fmt::Display,
-                    D: ::serde::de::Deserializer<'de>,
-                {
-                    use ::serde::Deserialize;
-                    match Option::<String>::deserialize(deserializer)? {
-                        Some(x) => Ok(Some(x.parse().map_err(::serde::de::Error::custom)?)),
-                        None => Ok(None),
-                    }
-                }
-            }
-
-            trait IterableMethod: Clone {
-                fn set_page_token(&mut self, value: String);
-                fn execute<T>(&mut self) -> Result<T, Box<dyn ::std::error::Error>>
-                where
-                    T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector;
-            }
-
-            struct PageIter<'a, M, T>{
-                method: &'a mut M,
-                finished: bool,
-                _phantom: ::std::marker::PhantomData<T>,
-            }
-
-            impl<'a, M, T> Iterator for PageIter<'a, M, T>
-            where
-                M: IterableMethod,
-                T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
-            {
-                type Item = Result<T, Box<dyn ::std::error::Error>>;
-
-                fn next(&mut self) -> Option<Result<T, Box<dyn ::std::error::Error>>> {
-                    use ::field_selector::FieldSelector;
-                    #[derive(::serde::Deserialize, FieldSelector)]
-                    struct PaginatedResult<T>
-                    where
-                        T: FieldSelector,
-                    {
-                        #[serde(rename="nextPageToken")]
-                        next_page_token: Option<String>,
-
-                        #[serde(flatten)]
-                        page_contents: T,
-                    }
-
-                    if self.finished {
-                        return None;
-                    }
-
-                    let paginated_result: PaginatedResult<T> = match self.method.execute() {
-                        Ok(r) => r,
-                        Err(err) => return Some(Err(err)),
-                    };
-
-                    if let Some(next_page_token) = paginated_result.next_page_token {
-                        self.method.set_page_token(next_page_token);
-                    } else {
-                        self.finished = true;
-                    }
-
-                    Some(Ok(paginated_result.page_contents))
-                }
-            }
-
             fn auth_token() -> &'static str {
                 #auth_token
             }
@@ -235,8 +179,10 @@ impl APIDesc {
                 }
 
                 #(#resource_actions)*
+                #(#method_actions)*
             }
             #(#resource_modules)*
+            #(#method_builders)*
         }
     }
 
@@ -589,7 +535,7 @@ fn to_rust_varstr(s: &str) -> String {
 
 fn fixup(s: String) -> String {
     // TODO: add all keywords
-    if ["type", "match"].contains(&s.as_str()) {
+    if ["type", "match", "use"].contains(&s.as_str()) {
         return format!("r#{}", s);
     }
     let s: String = s
