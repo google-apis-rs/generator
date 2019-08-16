@@ -25,12 +25,13 @@ where
     info!("buidling api desc");
     let api_desc = APIDesc::from_discovery(&desc);
     info!("creating directory and Cargo.toml");
-    let project_path = base_dir.as_ref().join("foo");
+    let project_name = format!("google_{}_{}", &desc.name, &desc.version);
+    let project_path = base_dir.as_ref().join(&project_name);
     let src_path = project_path.join("src");
     std::fs::create_dir_all(&src_path)?;
     let cargo_path = project_path.join("Cargo.toml");
     let cargo_contents =
-        cargo::cargo_toml(format!("google_{}_{}", &desc.name, &desc.version)).to_string();
+        cargo::cargo_toml(&project_name).to_string();
     std::fs::write(&cargo_path, &cargo_contents)?;
     info!("writing lib");
     let output_file = std::fs::File::create(&src_path.join("lib.rs"))?;
