@@ -3,8 +3,8 @@ This project is the successor of [Google-APIS-rs](https://github.com/byron/googl
 # Overview
 
  * discovery_parser: The most fundamental translation of the google discovery
-   doscument into rust types.
- * field_selector/field_selector_derive: Includes the FieldSelector trait and a
+   document into rust types.
+ * google_field_selector/google_field_selector_derive: Includes the FieldSelector trait and a
    proc-macro to automatically derive the trait from a struct. FieldSelector
    provides a method to return a value to be used in the `fields` attribute of
    google apis. Syntax would look something like
@@ -13,7 +13,7 @@ This project is the successor of [Google-APIS-rs](https://github.com/byron/googl
    represent the full syntax as described in the RFC, but does not attempt to
    produce the rendered template output. The AST is used by the generator to
    generate rust code that renders the template.
- * generator: This is the primary purpose of this repository. Given a discovery
+ * google_rest_api_generator: This is the primary purpose of this repository. Given a discovery
    document it will produce idiomatic rust bindings to work with the API. The
    input is a discovery document and the output is rust crate at a specified
    directory.
