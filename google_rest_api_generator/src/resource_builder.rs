@@ -1,28 +1,29 @@
-use crate::{method_actions, method_builder, Param, Resource};
+use crate::{method_actions, method_builder, Param, Resource, Type};
 use proc_macro2::TokenStream;
 use quote::quote;
+use std::collections::BTreeMap;
 
 pub(crate) fn generate(
     root_url: &str,
     service_path: &str,
     global_params: &[Param],
     resource: &Resource,
+    schemas: &BTreeMap<syn::Ident, Type>,
 ) -> TokenStream {
     let ident = &resource.ident;
     let param_type_defs = resource.methods.iter().flat_map(|method| {
         method
             .params
             .iter()
-            .filter_map(|param| param.typ.type_def())
+            .filter_map(|param| param.typ.type_def(schemas))
     });
-    let method_builders = resource
-        .methods
-        .iter()
-        .map(|method| method_builder::generate(root_url, service_path, global_params, method));
+    let method_builders = resource.methods.iter().map(|method| {
+        method_builder::generate(root_url, service_path, global_params, method, schemas)
+    });
     let nested_resource_mods = resource
         .resources
         .iter()
-        .map(|resource| generate(root_url, service_path, global_params, resource));
+        .map(|resource| generate(root_url, service_path, global_params, resource, schemas));
 
     let method_actions = resource
         .methods

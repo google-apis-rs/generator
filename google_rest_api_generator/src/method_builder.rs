@@ -1,7 +1,8 @@
-use crate::{to_ident, to_rust_varstr, Method, Param, PropertyDesc, Type, TypeDesc};
+use crate::{to_ident, to_rust_varstr, Method, Param, PropertyDesc, RefOrType, Type, TypeDesc};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::str::FromStr;
+use std::collections::BTreeMap;
 use syn::parse_quote;
 
 pub(crate) fn generate(
@@ -9,6 +10,7 @@ pub(crate) fn generate(
     service_path: &str,
     global_params: &[Param],
     method: &Method,
+    schemas: &BTreeMap<syn::Ident, Type>,
 ) -> TokenStream {
     let builder_name = method.builder_name();
     let all_params = method.params.iter().chain(global_params.into_iter());
@@ -78,8 +80,8 @@ pub(crate) fn generate(
     );
     let request_method = request_method(&method.http_method, &method.scopes, all_params);
     let exec_method = exec_method(method.request.as_ref(), method.response.as_ref());
-    let iterable_method_impl = iterable_method_impl(method);
-    let iter_methods = iter_methods(method);
+    let iterable_method_impl = iterable_method_impl(method, schemas);
+    let iter_methods = iter_methods(method, schemas);
     let download_method = download_method(&base_url, method);
     let upload_methods = upload_methods(root_url, method);
 
@@ -107,7 +109,10 @@ pub(crate) fn generate(
     }
 }
 
-fn exec_method(request: Option<&Type>, response: Option<&Type>) -> TokenStream {
+fn exec_method(
+    request: Option<&RefOrType<'static>>,
+    response: Option<&RefOrType<'static>>,
+) -> TokenStream {
     let set_body = request.map(|_| {
         quote! {
             let req = req.json(&self.request);
@@ -315,7 +320,7 @@ fn request_method<'a>(
     }
 }
 
-fn is_iter_method(method: &Method) -> bool {
+fn is_iter_method(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> bool {
     // The requirements to qualify as an iterator are
     // The method needs to define a response object.
     // The response object needs to have a nextPageToken.
@@ -324,11 +329,11 @@ fn is_iter_method(method: &Method) -> bool {
         .response
         .as_ref()
         .map(|resp_type| {
-            if let TypeDesc::Object { props, .. } = &resp_type.type_desc {
+            if let TypeDesc::Object { props, .. } = &resp_type.get_type(schemas).type_desc {
                 props
                     .values()
                     .find(|PropertyDesc { id, typ, .. }| {
-                        if let TypeDesc::String = typ.type_desc {
+                        if let TypeDesc::String = typ.get_type(schemas).type_desc {
                             if id == "nextPageToken" {
                                 return true;
                             }
@@ -356,8 +361,8 @@ fn is_iter_method(method: &Method) -> bool {
     response_contains_next_page_token && params_contains_page_token
 }
 
-fn iterable_method_impl(method: &Method) -> TokenStream {
-    if !is_iter_method(method) {
+fn iterable_method_impl(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> TokenStream {
+    if !is_iter_method(method, schemas) {
         return quote! {};
     }
     let builder_name = method.builder_name();
@@ -377,26 +382,27 @@ fn iterable_method_impl(method: &Method) -> TokenStream {
     }
 }
 
-fn iter_methods(method: &Method) -> TokenStream {
-    if !is_iter_method(method) {
+fn iter_methods(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> TokenStream {
+    if !is_iter_method(method, schemas) {
         return quote! {};
     }
 
-    let array_props: Vec<&PropertyDesc> = if let Some(Type {
-        type_desc: TypeDesc::Object { props, .. },
-        ..
-    }) = &method.response
-    {
-        props
-            .values()
-            .filter(|prop| match prop.typ.type_desc {
-                TypeDesc::Array { .. } => true,
-                _ => false,
-            })
-            .collect()
-    } else {
-        Vec::new()
-    };
+    let response_type_desc: Option<&TypeDesc> = method
+        .response
+        .as_ref()
+        .map(|ref_or_type| &ref_or_type.get_type(schemas).type_desc);
+    let array_props: Vec<&PropertyDesc> =
+        if let Some(TypeDesc::Object { props, .. }) = response_type_desc {
+            props
+                .values()
+                .filter(|prop| match prop.typ.get_type(schemas).type_desc {
+                    TypeDesc::Array { .. } => true,
+                    _ => false,
+                })
+                .collect()
+        } else {
+            Vec::new()
+        };
     let array_iter_methods = array_props.iter().map(|prop| {
         let iter_method_ident: syn::Ident = syn::parse_str(&format!("iter_{}", &prop.ident)).unwrap();
         let prop_id = &prop.id;

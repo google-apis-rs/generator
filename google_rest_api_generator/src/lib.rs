@@ -1,9 +1,10 @@
 #![recursion_limit = "256"] // for quote macro
 
-use discovery_parser::{DiscoveryRestDesc, RefOrType};
+use discovery_parser::{DiscoveryRestDesc, RefOrType as DiscoRefOrType};
 use log::{debug, info};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::error::Error;
 use syn::parse_quote;
@@ -24,7 +25,7 @@ where
     P: AsRef<std::path::Path>,
 {
     use std::io::Write;
-    info!("buidling api desc");
+    info!("building api desc");
     let api_desc = APIDesc::from_discovery(discovery_desc);
     info!("creating directory and Cargo.toml");
     let project_path = base_dir.as_ref();
@@ -54,18 +55,19 @@ struct APIDesc {
     version: String,
     root_url: String,
     service_path: String,
-    schema_types: Vec<Type>,
+    schemas: BTreeMap<syn::Ident,Type>,
     params: Vec<Param>,
     resources: Vec<Resource>,
     methods: Vec<Method>,
 }
+
 impl APIDesc {
     fn from_discovery(discovery_desc: &DiscoveryRestDesc) -> APIDesc {
         debug!("collecting schema_types");
-        let mut schema_types: Vec<Type> = discovery_desc
+        let schemas: BTreeMap<syn::Ident, Type> = discovery_desc
             .schemas
             .iter()
-            .map(|(_id, schema)| Type::from_disco_schema(schema, &discovery_desc.schemas))
+            .map(|(id, schema)| (schema_id_to_ident(id), Type::from_disco_schema(schema)))
             .collect();
         debug!("collecting params");
         let mut params: Vec<Param> = discovery_desc
@@ -80,12 +82,7 @@ impl APIDesc {
             .resources
             .iter()
             .map(|(resource_id, resource_desc)| {
-                Resource::from_disco_resource(
-                    resource_id,
-                    &parse_quote! {crate},
-                    resource_desc,
-                    &discovery_desc.schemas,
-                )
+                Resource::from_disco_resource(resource_id, &parse_quote! {crate}, resource_desc)
             })
             .collect();
         debug!("collecting methods");
@@ -93,19 +90,13 @@ impl APIDesc {
             .methods
             .iter()
             .map(|(method_id, method_desc)| {
-                Method::from_disco_method(
-                    method_id,
-                    &parse_quote! {crate},
-                    method_desc,
-                    &discovery_desc.schemas,
-                )
+                Method::from_disco_method(method_id, &parse_quote! {crate}, method_desc)
             })
             .collect();
         if any_method_supports_media(&resources) {
             add_media_to_alt_param(&mut params);
         }
         debug!("sorting");
-        schema_types.sort_by(|a, b| a.type_path_str().cmp(&b.type_path_str()));
         params.sort_by(|a, b| a.ident.cmp(&b.ident));
         resources.sort_by(|a, b| a.ident.cmp(&b.ident));
         methods.sort_by(|a, b| a.id.cmp(&b.id));
@@ -114,7 +105,7 @@ impl APIDesc {
             version: discovery_desc.version.clone(),
             root_url: discovery_desc.root_url.clone(),
             service_path: discovery_desc.service_path.clone(),
-            schema_types,
+            schemas,
             params,
             resources,
             methods,
@@ -123,18 +114,31 @@ impl APIDesc {
 
     fn generate(&self) -> TokenStream {
         info!("getting all types");
-        let all_types = self.all_types();
-        let schemas_to_create = all_types
-            .iter()
-            .filter(|typ| typ.parent_path == parse_quote! {crate::schemas})
-            .filter_map(|typ| typ.type_def());
-        let params_to_create = all_types
-            .iter()
-            .filter(|typ| typ.parent_path == parse_quote! {crate::params})
-            .filter_map(|typ| typ.type_def());
+        let mut schema_type_defs = Vec::new();
+        for schema in self.schemas.values() {
+            append_nested_type_defs(
+                &RefOrType::Type(Cow::Borrowed(schema)),
+                &self.schemas,
+                &mut schema_type_defs,
+            );
+        }
+        let mut param_type_defs = Vec::new();
+        for param in &self.params {
+            append_nested_type_defs(
+                &RefOrType::Type(Cow::Borrowed(&param.typ)),
+                &self.schemas,
+                &mut param_type_defs,
+            );
+        }
         info!("generating resources");
         let resource_modules = self.resources.iter().map(|resource| {
-            resource_builder::generate(&self.root_url, &self.service_path, &self.params, resource)
+            resource_builder::generate(
+                &self.root_url,
+                &self.service_path,
+                &self.params,
+                resource,
+                &self.schemas,
+            )
         });
         info!("creating resource actions");
         let resource_actions = self.resources.iter().map(|resource| {
@@ -156,7 +160,13 @@ impl APIDesc {
         });
 
         let method_builders = self.methods.iter().map(|method| {
-            method_builder::generate(&self.root_url, &self.service_path, &self.params, method)
+            method_builder::generate(
+                &self.root_url,
+                &self.service_path,
+                &self.params,
+                method,
+                &self.schemas,
+            )
         });
         let method_actions = self
             .methods
@@ -165,10 +175,10 @@ impl APIDesc {
         info!("outputting");
         quote! {
             pub mod schemas {
-                #(#schemas_to_create)*
+                #(#schema_type_defs)*
             }
             pub mod params {
-                #(#params_to_create)*
+                #(#param_type_defs)*
             }
             pub struct Client<A> {
                 reqwest: ::reqwest::Client,
@@ -189,65 +199,47 @@ impl APIDesc {
             #(#method_builders)*
         }
     }
+}
 
-    fn all_types(&self) -> Vec<&Type> {
-        fn add_types<'a>(typ: &'a Type, out: &mut Vec<&'a Type>) {
-            if typ.via_reference {
-                return;
-            }
+fn schema_id_to_ident(id: &str) -> syn::Ident {
+    to_ident(&to_rust_typestr(id))
+}
 
-            match &typ.type_desc {
-                TypeDesc::Array { items } => {
-                    add_types(&items, out);
-                }
-                TypeDesc::Object { props, add_props } => {
-                    for prop in props.values() {
-                        add_types(&prop.typ, out);
-                    }
-                    if let Some(boxed_prop) = add_props {
-                        add_types(&boxed_prop.typ, out);
-                    }
-                }
-                _ => {}
+fn schema_parent_path() -> syn::Path {
+    parse_quote! {crate::schemas}
+}
+
+fn append_nested_type_defs(
+    ref_or_type: &RefOrType,
+    schemas: &BTreeMap<syn::Ident, Type>,
+    out: &mut Vec<TokenStream>,
+) {
+    fn add_type(
+        typ: &Type,
+        schemas: &BTreeMap<syn::Ident, Type>,
+        out: &mut Vec<TokenStream>,
+    ) {
+        match &typ.type_desc {
+            TypeDesc::Array { items } => {
+                append_nested_type_defs(&items, schemas, out);
             }
-            out.push(typ);
-        }
-        fn add_resource_types<'a>(resource: &'a Resource, out: &mut Vec<&'a Type>) {
-            for resource in &resource.resources {
-                add_resource_types(resource, out);
-            }
-            for method in &resource.methods {
-                for param in &method.params {
-                    add_types(&param.typ, out);
+            TypeDesc::Object { props, add_props } => {
+                for prop in props.values() {
+                    append_nested_type_defs(&prop.typ, schemas, out);
                 }
-                if let Some(req) = method.request.as_ref() {
-                    add_types(req, out);
-                }
-                if let Some(resp) = method.response.as_ref() {
-                    add_types(resp, out);
+                if let Some(boxed_prop) = add_props {
+                    append_nested_type_defs(&boxed_prop.typ, schemas, out);
                 }
             }
-        }
-        let mut out = Vec::new();
-        for typ in &self.schema_types {
-            add_types(typ, &mut out);
-        }
-        for param in &self.params {
-            add_types(&param.typ, &mut out);
-        }
-        for resource in &self.resources {
-            add_resource_types(resource, &mut out);
-        }
-        let type_path_cmp = |a: &&Type, b: &&Type| {
-            let a_path = a.type_path();
-            let b_path = b.type_path();
-            let a_path = quote! {#a_path}.to_string();
-            let b_path = quote! {#b_path}.to_string();
-            a_path.cmp(&b_path)
+            _ => {}
         };
-        out.sort_by(type_path_cmp);
-        out.dedup_by(|a, b| type_path_cmp(a, b) == std::cmp::Ordering::Equal);
-        out
+        if let Some(type_def) = typ.type_def(schemas) {
+            out.push(type_def);
+        }
+    }
+    match ref_or_type {
+        RefOrType::Ref(_) => {}
+        RefOrType::Type(typ) => add_type(typ, schemas, out),
     }
 }
 
@@ -264,7 +256,6 @@ impl Resource {
         resource_id: &str,
         parent_path: &syn::Path,
         disco_resource: &discovery_parser::ResourceDesc,
-        all_schemas: &BTreeMap<String, discovery_parser::SchemaDesc>,
     ) -> Resource {
         let resource_ident = to_ident(&to_rust_varstr(&resource_id));
         let mut methods: Vec<Method> = disco_resource
@@ -275,7 +266,6 @@ impl Resource {
                     method_id,
                     &parse_quote! {crate::#resource_ident},
                     method_desc,
-                    all_schemas,
                 )
             })
             .collect();
@@ -287,7 +277,6 @@ impl Resource {
                     nested_id,
                     &parse_quote! {parent_path::#resource_ident},
                     resource_desc,
-                    all_schemas,
                 )
             })
             .collect();
@@ -314,8 +303,8 @@ struct Method {
     description: Option<String>,
     param_order: Vec<String>,
     params: Vec<Param>,
-    request: Option<Type>,
-    response: Option<Type>,
+    request: Option<RefOrType<'static>>,
+    response: Option<RefOrType<'static>>,
     scopes: Vec<String>,
     supports_media_download: bool,
     media_upload: Option<MediaUpload>,
@@ -334,24 +323,21 @@ impl Method {
         method_id: &str,
         parent_path: &syn::TypePath,
         disco_method: &discovery_parser::MethodDesc,
-        all_schemas: &BTreeMap<String, discovery_parser::SchemaDesc>,
     ) -> Method {
         let request = disco_method.request.as_ref().map(|req| {
             let req_ident = to_ident(&to_rust_typestr(&format!("{}-request", method_id)));
-            Type::from_disco_ref_or_type(
+            RefOrType::from_disco_ref_or_type(
                 &req_ident,
                 &parse_quote! {#parent_path::schemas},
                 req,
-                all_schemas,
             )
         });
         let response = disco_method.response.as_ref().map(|resp| {
             let resp_ident = to_ident(&to_rust_typestr(&format!("{}-response", method_id)));
-            Type::from_disco_ref_or_type(
+            RefOrType::from_disco_ref_or_type(
                 &resp_ident,
                 &parse_quote! {#parent_path::schemas},
                 resp,
-                all_schemas,
             )
         });
 
@@ -454,7 +440,7 @@ struct Param {
 impl Param {
     fn from_disco_param(
         param_id: &str,
-        parent_path: &syn::TypePath,
+        parent_path: &syn::Path,
         disco_param: &discovery_parser::ParamDesc,
     ) -> Param {
         let ident = to_ident(&to_rust_varstr(&param_id));
@@ -465,7 +451,7 @@ impl Param {
     fn from_disco_method_param(
         method_id: &str,
         param_id: &str,
-        parent_path: &syn::TypePath,
+        parent_path: &syn::Path,
         disco_param: &discovery_parser::ParamDesc,
     ) -> Param {
         let ident = to_ident(&to_rust_varstr(param_id));
@@ -477,14 +463,13 @@ impl Param {
         id: &str,
         ident: syn::Ident,
         type_ident: syn::Ident,
-        parent_path: &syn::TypePath,
+        parent_path: &syn::Path,
         disco_param: &discovery_parser::ParamDesc,
     ) -> Param {
-        let typ = Type::from_disco_ref_or_type(
+        let typ = Type::from_disco_type(
             &type_ident,
             parent_path,
-            &RefOrType::Type(discovery_parser::TypeDesc::from_param(disco_param.clone())),
-            &BTreeMap::new(),
+            &discovery_parser::TypeDesc::from_param(disco_param.clone()),
         );
         Param {
             id: id.to_owned(),
@@ -578,165 +563,172 @@ fn make_field(doc: &Option<String>, ident: &syn::Ident, ty: syn::Type) -> syn::F
 }
 
 #[derive(Clone, Debug)]
+enum RefOrType<'a> {
+    Ref(syn::Ident),
+    Type(Cow<'a, Type>),
+}
+
+impl<'a> From<Type> for Cow<'a, Type> {
+    fn from(t: Type) -> Self {
+        Cow::Owned(t)
+    }
+}
+
+impl<'a> From<&'a Type> for Cow<'a, Type> {
+    fn from(t: &'a Type) -> Self {
+        Cow::Borrowed(t)
+    }
+}
+
+impl<'a> RefOrType<'a> {
+    fn from_disco_ref_or_type(
+        ident: &syn::Ident,
+        parent_path: &syn::Path,
+        ref_or_type: &DiscoRefOrType<discovery_parser::TypeDesc>,
+    ) -> RefOrType<'static> {
+        debug!("from_disco_ref_or_type({})", ident);
+        match ref_or_type {
+            DiscoRefOrType::Ref(reference) => RefOrType::Ref(schema_id_to_ident(reference)),
+            DiscoRefOrType::Type(disco_type) => {
+                RefOrType::Type(Type::from_disco_type(ident, parent_path, disco_type).into())
+            }
+        }
+    }
+
+    fn type_path(&self) -> syn::TypePath {
+        match self {
+            RefOrType::Ref(ident) => {
+                let parent_path = schema_parent_path();
+                parse_quote! {#parent_path::#ident}
+            }
+            RefOrType::Type(typ) => typ.type_path(),
+        }
+    }
+
+    fn get_type(&'a self, schemas: &'a BTreeMap<syn::Ident, Type>) -> &'a Type {
+        match self {
+            RefOrType::Ref(reference) => schemas.get(reference).unwrap(),
+            RefOrType::Type(typ) => typ.as_ref(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 struct Type {
     id: syn::PathSegment,
-    parent_path: syn::TypePath,
+    parent_path: syn::Path,
     type_desc: TypeDesc,
-    // via_reference indicates if this Type was in this location via a reference
-    // lookup. This typically doesn't matter, but can speed up iterating over
-    // all known types by not recursing into references knowing that they are
-    // declared elsewhere.
-    via_reference: bool,
 }
 
 impl Type {
-    fn from_disco_schema(
-        disco_schema: &discovery_parser::SchemaDesc,
-        all_schemas: &BTreeMap<String, discovery_parser::SchemaDesc>,
-    ) -> Type {
-        let ident = to_ident(&to_rust_typestr(&disco_schema.id));
-        Type::from_disco_ref_or_type(
-            &ident,
-            &parse_quote! {crate::schemas},
-            &RefOrType::Type(disco_schema.typ.clone()),
-            all_schemas,
+    fn from_disco_schema(disco_schema: &discovery_parser::SchemaDesc) -> Type {
+        Type::from_disco_type(
+            &schema_id_to_ident(&disco_schema.id),
+            &schema_parent_path(),
+            &disco_schema.typ,
         )
     }
 
-    fn from_disco_ref_or_type(
+    fn from_disco_type(
         ident: &syn::Ident,
-        parent_path: &syn::TypePath,
-        ref_or_type: &RefOrType<discovery_parser::TypeDesc>,
-        all_schemas: &BTreeMap<String, discovery_parser::SchemaDesc>,
+        parent_path: &syn::Path,
+        disco_type: &discovery_parser::TypeDesc,
     ) -> Type {
-        debug!("from_disco_ref_or_type({})", ident);
-        let empty_type_path = || syn::TypePath {
-            qself: None,
-            path: syn::Path {
-                leading_colon: None,
-                segments: syn::punctuated::Punctuated::new(),
-            },
+        let empty_type_path = syn::Path {
+            leading_colon: None,
+            segments: syn::punctuated::Punctuated::new(),
         };
-        match ref_or_type {
-            RefOrType::Ref(reference) => {
-                let reference_schema = all_schemas
-                    .get(reference)
-                    .unwrap_or_else(|| panic!("failed to lookup {} in schemas", reference));
-                let mut t = Type::from_disco_schema(reference_schema, all_schemas);
-                t.via_reference = true;
-                t
+        let type_desc = TypeDesc::from_disco_type(ident, parent_path, disco_type);
+        match type_desc {
+            TypeDesc::Any => Type {
+                id: parse_quote! {Value},
+                parent_path: parse_quote! {::serde_json},
+                type_desc,
+            },
+            TypeDesc::String => Type {
+                id: parse_quote! {String},
+                parent_path: empty_type_path.clone(),
+                type_desc,
+            },
+            TypeDesc::Bool => Type {
+                id: parse_quote! {bool},
+                parent_path: empty_type_path.clone(),
+                type_desc,
+            },
+            TypeDesc::Int32 => Type {
+                id: parse_quote! {i32},
+                parent_path: empty_type_path.clone(),
+                type_desc,
+            },
+            TypeDesc::Uint32 => Type {
+                id: parse_quote! {u32},
+                parent_path: empty_type_path.clone(),
+                type_desc,
+            },
+            TypeDesc::Float32 => Type {
+                id: parse_quote! {f32},
+                parent_path: empty_type_path.clone(),
+                type_desc,
+            },
+            TypeDesc::Int64 => Type {
+                id: parse_quote! {i64},
+                parent_path: empty_type_path.clone(),
+                type_desc,
+            },
+            TypeDesc::Uint64 => Type {
+                id: parse_quote! {u64},
+                parent_path: empty_type_path.clone(),
+                type_desc,
+            },
+            TypeDesc::Float64 => Type {
+                id: parse_quote! {f64},
+                parent_path: empty_type_path.clone(),
+                type_desc,
+            },
+            TypeDesc::Bytes => Type {
+                id: parse_quote! {Vec<u8>},
+                parent_path: empty_type_path.clone(),
+                type_desc,
+            },
+            TypeDesc::Date => Type {
+                id: parse_quote! {Date<chrono::offset::Utc>},
+                parent_path: parse_quote! {::chrono},
+                type_desc,
+            },
+            TypeDesc::DateTime => Type {
+                id: parse_quote! {DateTime<chrono::offset::Utc>},
+                parent_path: parse_quote! {::chrono},
+                type_desc,
+            },
+            TypeDesc::Enum(_) => Type {
+                id: parse_quote! {#ident},
+                parent_path: parent_path.clone(),
+                type_desc,
+            },
+            TypeDesc::Array { ref items } => {
+                let item_path = items.type_path();
+                Type {
+                    id: parse_quote! {Vec<#item_path>},
+                    parent_path: empty_type_path.clone(),
+                    type_desc,
+                }
             }
-            RefOrType::Type(disco_type) => {
-                let type_desc =
-                    TypeDesc::from_disco_type(ident, parent_path, disco_type, all_schemas);
-                match type_desc {
-                    TypeDesc::Any => Type {
-                        id: parse_quote! {Value},
-                        parent_path: parse_quote! {::serde_json},
+            TypeDesc::Object {
+                ref props,
+                ref add_props,
+            } => {
+                let add_props_type = add_props.as_ref().map(|prop| prop.typ.type_path());
+                match (props.is_empty(), add_props_type) {
+                    (true, Some(add_props_type)) => Type {
+                        id: parse_quote! {BTreeMap<String, #add_props_type>},
+                        parent_path: parse_quote! {::std::collections},
                         type_desc,
-                        via_reference: false,
                     },
-                    TypeDesc::String => Type {
-                        id: parse_quote! {String},
-                        parent_path: empty_type_path(),
-                        type_desc,
-                        via_reference: false,
-                    },
-                    TypeDesc::Bool => Type {
-                        id: parse_quote! {bool},
-                        parent_path: empty_type_path(),
-                        type_desc,
-                        via_reference: false,
-                    },
-                    TypeDesc::Int32 => Type {
-                        id: parse_quote! {i32},
-                        parent_path: empty_type_path(),
-                        type_desc,
-                        via_reference: false,
-                    },
-                    TypeDesc::Uint32 => Type {
-                        id: parse_quote! {u32},
-                        parent_path: empty_type_path(),
-                        type_desc,
-                        via_reference: false,
-                    },
-                    TypeDesc::Float32 => Type {
-                        id: parse_quote! {f32},
-                        parent_path: empty_type_path(),
-                        type_desc,
-                        via_reference: false,
-                    },
-                    TypeDesc::Int64 => Type {
-                        id: parse_quote! {i64},
-                        parent_path: empty_type_path(),
-                        type_desc,
-                        via_reference: false,
-                    },
-                    TypeDesc::Uint64 => Type {
-                        id: parse_quote! {u64},
-                        parent_path: empty_type_path(),
-                        type_desc,
-                        via_reference: false,
-                    },
-                    TypeDesc::Float64 => Type {
-                        id: parse_quote! {f64},
-                        parent_path: empty_type_path(),
-                        type_desc,
-                        via_reference: false,
-                    },
-                    TypeDesc::Bytes => Type {
-                        id: parse_quote! {Vec<u8>},
-                        parent_path: empty_type_path(),
-                        type_desc,
-                        via_reference: false,
-                    },
-                    TypeDesc::Date => Type {
-                        id: parse_quote! {Date<chrono::offset::Utc>},
-                        parent_path: parse_quote! {::chrono},
-                        type_desc,
-                        via_reference: false,
-                    },
-                    TypeDesc::DateTime => Type {
-                        id: parse_quote! {DateTime<chrono::offset::Utc>},
-                        parent_path: parse_quote! {::chrono},
-                        type_desc,
-                        via_reference: false,
-                    },
-                    TypeDesc::Enum(_) => Type {
+                    _ => Type {
                         id: parse_quote! {#ident},
                         parent_path: parent_path.clone(),
                         type_desc,
-                        via_reference: false,
                     },
-                    TypeDesc::Array { ref items } => {
-                        let item_path = items.type_path();
-                        Type {
-                            id: parse_quote! {Vec<#item_path>},
-                            parent_path: empty_type_path(),
-                            type_desc,
-                            via_reference: false,
-                        }
-                    }
-                    TypeDesc::Object {
-                        ref props,
-                        ref add_props,
-                    } => {
-                        let add_props_type = add_props.as_ref().map(|prop| prop.typ.type_path());
-                        match (props.is_empty(), add_props_type) {
-                            (true, Some(add_props_type)) => Type {
-                                id: parse_quote! {BTreeMap<String, #add_props_type>},
-                                parent_path: parse_quote! {::std::collections},
-                                type_desc,
-                                via_reference: false,
-                            },
-                            _ => Type {
-                                id: parse_quote! {#ident},
-                                parent_path: parent_path.clone(),
-                                type_desc,
-                                via_reference: false,
-                            },
-                        }
-                    }
                 }
             }
         }
@@ -745,35 +737,25 @@ impl Type {
     fn type_path(&self) -> syn::TypePath {
         let id = &self.id;
         let parent_path = &self.parent_path;
-        if parent_path.qself.is_none()
-            && parent_path.path.leading_colon.is_none()
-            && parent_path.path.segments.is_empty()
-        {
+        if parent_path.leading_colon.is_none() && parent_path.segments.is_empty() {
             parse_quote! {#id}
         } else {
             parse_quote! {#parent_path::#id}
         }
     }
 
-    fn type_path_str(&self) -> String {
-        use quote::ToTokens;
-        self.type_path().into_token_stream().to_string()
-    }
-
-    fn type_def(&self) -> Option<TokenStream> {
-        let mut derives = vec![
-            quote! {Debug},
-            quote! {Clone},
-            quote! {PartialEq},
-            quote! {PartialOrd},
-        ];
-        if self.type_desc.is_hashable() {
+    fn type_def(&self, schemas: &BTreeMap<syn::Ident, Type>) -> Option<TokenStream> {
+        let mut derives = vec![quote! {Debug}, quote! {Clone}, quote! {PartialEq}];
+        if self.nested_type_desc_fold(schemas, true, |accum, typ| accum && typ.is_hashable()) {
             derives.push(quote! {Hash});
         }
-        if self.type_desc.is_ord() {
+        if self.nested_type_desc_fold(schemas, true, |accum, typ| accum && typ.is_partial_ord()) {
+            derives.push(quote! {PartialOrd});
+        }
+        if self.nested_type_desc_fold(schemas, true, |accum, typ| accum && typ.is_ord()) {
             derives.push(quote! {Ord});
         }
-        if self.type_desc.is_eq() {
+        if self.nested_type_desc_fold(schemas, true, |accum, typ| accum && typ.is_eq()) {
             derives.push(quote! {Eq});
         }
         let name = &self.id;
@@ -853,11 +835,12 @@ impl Type {
                                     id,
                                     ident,
                                     description,
-                                    typ,
+                                    typ: ref_or_type,
                                     ..
                                 },
                             )| {
                                 use syn::parse::Parser;
+                                let typ = ref_or_type.get_type(schemas);
                                 let mut field = make_field(
                                     &description,
                                     ident,
@@ -946,6 +929,76 @@ impl Type {
             _ => None,
         }
     }
+
+    fn nested_type_desc_fold<F, B>(&self, schemas: &BTreeMap<syn::Ident, Type>, init: B, f: F) -> B
+    where
+        F: FnMut(B, &TypeDesc) -> B + Copy,
+    {
+        fn _nested_ref_or_type<'a, F, B>(
+            ref_or_type: &'a RefOrType,
+            schemas: &'a BTreeMap<syn::Ident, Type>,
+            init: B,
+            f: F,
+            already_seen: &'a [&'a syn::Ident],
+        ) -> B
+        where
+            F: FnMut(B, &TypeDesc) -> B + Copy,
+        {
+            match ref_or_type {
+                RefOrType::Ref(reference) => {
+                    if already_seen.iter().find(|&x| x == &reference).is_none() {
+                        let mut already_seen = already_seen.to_vec();
+                        already_seen.push(reference);
+                        let typ = schemas.get(reference).unwrap();
+                        _nested_type(typ, schemas, init, f, &already_seen)
+                    } else {
+                        init
+                    }
+                }
+                RefOrType::Type(typ) => _nested_type(typ, schemas, init, f, already_seen),
+            }
+        }
+        fn _nested_type<'a, F, B>(
+            typ: &'a Type,
+            schemas: &'a BTreeMap<syn::Ident, Type>,
+            mut init: B,
+            mut f: F,
+            already_seen: &'a [&'a syn::Ident],
+        ) -> B
+        where
+            F: FnMut(B, &TypeDesc) -> B + Copy,
+        {
+            match &typ.type_desc {
+                TypeDesc::Any
+                | TypeDesc::String
+                | TypeDesc::Bool
+                | TypeDesc::Int32
+                | TypeDesc::Uint32
+                | TypeDesc::Float32
+                | TypeDesc::Int64
+                | TypeDesc::Uint64
+                | TypeDesc::Float64
+                | TypeDesc::Bytes
+                | TypeDesc::Date
+                | TypeDesc::DateTime
+                | TypeDesc::Enum(_) => f(init, &typ.type_desc),
+                TypeDesc::Array { items } => {
+                    _nested_ref_or_type(items, schemas, init, f, already_seen)
+                }
+                TypeDesc::Object { props, add_props } => {
+                    if let Some(prop) = add_props {
+                        init = _nested_ref_or_type(&prop.typ, schemas, init, f, already_seen);
+                    }
+
+                    for prop in props.values() {
+                        init = _nested_ref_or_type(&prop.typ, schemas, init, f, already_seen);
+                    }
+                    init
+                }
+            }
+        }
+        _nested_type(self, schemas, init, f, &Vec::new())
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -964,7 +1017,7 @@ enum TypeDesc {
     DateTime,
     Enum(Vec<EnumDesc>),
     Array {
-        items: Box<Type>,
+        items: Box<RefOrType<'static>>,
     },
     Object {
         props: BTreeMap<syn::Ident, PropertyDesc>,
@@ -975,9 +1028,8 @@ enum TypeDesc {
 impl TypeDesc {
     fn from_disco_type(
         ident: &syn::Ident,
-        parent_path: &syn::TypePath,
+        parent_path: &syn::Path,
         disco_type: &discovery_parser::TypeDesc,
-        all_schemas: &BTreeMap<String, discovery_parser::SchemaDesc>,
     ) -> TypeDesc {
         match (
             disco_type.typ.as_str(),
@@ -1023,12 +1075,8 @@ impl TypeDesc {
             ("array", None) => {
                 if let Some(ref items) = disco_type.items {
                     let items_ident = to_ident(&to_rust_typestr(&format!("{}-items", ident)));
-                    let item_type = Type::from_disco_ref_or_type(
-                        &items_ident,
-                        &parent_path,
-                        items,
-                        all_schemas,
-                    );
+                    let item_type =
+                        RefOrType::from_disco_ref_or_type(&items_ident, &parent_path, items);
                     TypeDesc::Array {
                         items: Box::new(item_type),
                     }
@@ -1045,19 +1093,15 @@ impl TypeDesc {
                         let prop_ident = to_ident(&to_rust_varstr(&prop_id));
                         let type_ident =
                             to_ident(&to_rust_typestr(&format!("{}-{}", ident, prop_id)));
-                        let typ = Type::from_disco_ref_or_type(
-                            &type_ident,
-                            &parent_path,
-                            &typ,
-                            all_schemas,
-                        );
+                        let ref_or_type =
+                            RefOrType::from_disco_ref_or_type(&type_ident, &parent_path, &typ);
                         (
                             prop_ident.clone(),
                             PropertyDesc {
                                 id: prop_id.clone(),
                                 ident: prop_ident,
                                 description: description.clone(),
-                                typ,
+                                typ: ref_or_type,
                             },
                         )
                     })
@@ -1066,17 +1110,16 @@ impl TypeDesc {
                 let add_props = disco_type.additional_properties.as_ref().map(|prop_desc| {
                     let prop_id = format!("{}-additional-properties", &ident);
                     let type_ident = to_ident(&to_rust_typestr(&prop_id));
-                    let typ = Type::from_disco_ref_or_type(
+                    let ref_or_type = RefOrType::from_disco_ref_or_type(
                         &type_ident,
                         &parent_path,
                         &prop_desc.typ,
-                        all_schemas,
                     );
                     Box::new(PropertyDesc {
                         id: prop_id,
                         ident: parse_quote! {additional_properties},
                         description: prop_desc.description.clone(),
-                        typ,
+                        typ: ref_or_type,
                     })
                 });
                 TypeDesc::Object { props, add_props }
@@ -1103,13 +1146,8 @@ impl TypeDesc {
             TypeDesc::Date => true,
             TypeDesc::DateTime => true,
             TypeDesc::Enum(_) => true,
-            TypeDesc::Array { items } => items.type_desc.is_hashable(),
-            TypeDesc::Object { props, add_props } => {
-                add_props
-                    .as_ref()
-                    .map(|prop| prop.typ.type_desc.is_hashable())
-                    .unwrap_or(true)
-                    && props.values().all(|prop| prop.typ.type_desc.is_hashable())
+            TypeDesc::Array { .. } | TypeDesc::Object { .. } => {
+                panic!("is_hashable should only be called on non-composite types")
             }
         }
     }
@@ -1129,13 +1167,29 @@ impl TypeDesc {
             TypeDesc::Date => true,
             TypeDesc::DateTime => true,
             TypeDesc::Enum(_) => true,
-            TypeDesc::Array { items } => items.type_desc.is_ord(),
-            TypeDesc::Object { props, add_props } => {
-                add_props
-                    .as_ref()
-                    .map(|prop| prop.typ.type_desc.is_ord())
-                    .unwrap_or(true)
-                    && props.values().all(|prop| prop.typ.type_desc.is_ord())
+            TypeDesc::Array { .. } | TypeDesc::Object { .. } => {
+                panic!("is_ord should only be called on non-composite types")
+            }
+        }
+    }
+
+    fn is_partial_ord(&self) -> bool {
+        match self {
+            TypeDesc::Any => false,
+            TypeDesc::String => true,
+            TypeDesc::Bool => true,
+            TypeDesc::Int32 => true,
+            TypeDesc::Uint32 => true,
+            TypeDesc::Float32 => true,
+            TypeDesc::Int64 => true,
+            TypeDesc::Uint64 => true,
+            TypeDesc::Float64 => true,
+            TypeDesc::Bytes => true,
+            TypeDesc::Date => true,
+            TypeDesc::DateTime => true,
+            TypeDesc::Enum(_) => true,
+            TypeDesc::Array { .. } | TypeDesc::Object { .. } => {
+                panic!("is_ord should only be called on non-composite types")
             }
         }
     }
@@ -1155,13 +1209,8 @@ impl TypeDesc {
             TypeDesc::Date => true,
             TypeDesc::DateTime => true,
             TypeDesc::Enum(_) => true,
-            TypeDesc::Array { items } => items.type_desc.is_eq(),
-            TypeDesc::Object { props, add_props } => {
-                add_props
-                    .as_ref()
-                    .map(|prop| prop.typ.type_desc.is_eq())
-                    .unwrap_or(true)
-                    && props.values().all(|prop| prop.typ.type_desc.is_eq())
+            TypeDesc::Array { .. } | TypeDesc::Object { .. } => {
+                panic!("is_eq should only be called on non-composite types")
             }
         }
     }
@@ -1172,7 +1221,7 @@ struct PropertyDesc {
     id: String,
     ident: syn::Ident,
     description: Option<String>,
-    typ: Type,
+    typ: RefOrType<'static>,
 }
 
 #[derive(Clone, Debug)]

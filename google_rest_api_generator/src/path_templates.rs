@@ -37,7 +37,11 @@ impl<'a> PathAstNode<'a> {
                 let expansion_style = match expr.operator {
                     parser::Operator::Simple => ExpansionStyle::Simple,
                     parser::Operator::Reserved => ExpansionStyle::Reserved,
-                    x => return Err(format!("Unsupported uri template operator: {:?}", x)),
+                    x => {
+                        eprintln!("unsupported uri template operator: {:?}", x);
+                        ExpansionStyle::Simple
+                    },
+                    //x => return Err(format!("Unsupported uri template operator: {:?}", x)),
                 };
                 if expr.var_spec_list.len() != 1 {
                     return Err(format!(
