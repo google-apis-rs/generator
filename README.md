@@ -27,6 +27,8 @@
 
 # Development
 
+[![Build Status](https://travis-ci.org/google-apis-rs/apis.svg?branch=master)](https://travis-ci.org/google-apis-rs/apis)
+
 * `cargo run -- --help`
    * Run the master control program and see what it can do
 
