@@ -1,7 +1,7 @@
 #![recursion_limit = "256"] // for quote macro
 
 use discovery_parser::{DiscoveryRestDesc, RefOrType};
-use log::info;
+use log::{debug, info};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use std::collections::BTreeMap;
@@ -62,11 +62,13 @@ struct APIDesc {
 }
 impl APIDesc {
     fn from_discovery(discovery_desc: &DiscoveryRestDesc) -> APIDesc {
+        debug!("collecting schema_types");
         let mut schema_types: Vec<Type> = discovery_desc
             .schemas
             .iter()
             .map(|(_id, schema)| Type::from_disco_schema(schema, &discovery_desc.schemas))
             .collect();
+        debug!("collecting params");
         let mut params: Vec<Param> = discovery_desc
             .parameters
             .iter()
@@ -74,6 +76,7 @@ impl APIDesc {
                 Param::from_disco_param(param_id, &parse_quote! {crate::params}, param_desc)
             })
             .collect();
+        debug!("collecting resources");
         let mut resources: Vec<Resource> = discovery_desc
             .resources
             .iter()
@@ -86,6 +89,7 @@ impl APIDesc {
                 )
             })
             .collect();
+        debug!("collecting methods");
         let mut methods: Vec<Method> = discovery_desc
             .methods
             .iter()
@@ -101,6 +105,7 @@ impl APIDesc {
         if any_method_supports_media(&resources) {
             add_media_to_alt_param(&mut params);
         }
+        debug!("sorting");
         schema_types.sort_by(|a, b| a.type_path_str().cmp(&b.type_path_str()));
         params.sort_by(|a, b| a.ident.cmp(&b.ident));
         resources.sort_by(|a, b| a.ident.cmp(&b.ident));
@@ -606,6 +611,7 @@ impl Type {
         ref_or_type: &RefOrType<discovery_parser::TypeDesc>,
         all_schemas: &BTreeMap<String, discovery_parser::SchemaDesc>,
     ) -> Type {
+        debug!("from_disco_ref_or_type({})", ident);
         let empty_type_path = || syn::TypePath {
             qself: None,
             path: syn::Path {
