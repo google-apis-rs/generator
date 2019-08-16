@@ -18,6 +18,9 @@
 
 # Community
 
+* **[Kanban Board](https://github.com/google-apis-rs/apis/projects/1)**
+   * Learn what is currently being worked on, and what's in the backlog
+
 * **[Chat](https://gitter.im/google-apis-rs/community)**
    * Join and let us know what you think :)!
    * Talk to the devs, or see what they are talking about.
