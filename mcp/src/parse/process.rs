@@ -2,7 +2,8 @@ use super::optional_args_with_value;
 use atty;
 use clap::{value_t, ArgMatches};
 use failure::{bail, Error};
-use sheesy_tools::process::{reduce, Command, OutputMode};
+use glob;
+use sheesy_tools::process::{reduce, Command, MergeMode, OutputMode};
 
 use std::{io::stdout, path::PathBuf};
 
@@ -14,17 +15,36 @@ pub fn execute(args: &ArgMatches) -> Result<(), Error> {
     reduce(cmds, None, &mut lock).map(|_| ())
 }
 
+fn optional_args_without_value<F>(
+    args: &ArgMatches,
+    name: &'static str,
+    into: F,
+) -> Vec<(Command, usize)>
+where
+    F: Fn() -> Command,
+{
+    match args.indices_of(name) {
+        Some(v) => v.map(|i| (into(), i)).collect(),
+        None => Vec::new(),
+    }
+}
+
 pub fn context_from(args: &ArgMatches) -> Result<Vec<Command>, Error> {
     Ok({
         let mut has_seen_merge_stdin = false;
-        let mut cmds = match (args.values_of_os("file"), args.indices_of("file")) {
+        let mut cmds = match (args.values_of_os("path"), args.indices_of("path")) {
             (Some(v), Some(i)) => v
                 .map(|v| {
                     if v == "-" {
                         has_seen_merge_stdin = true;
                         Command::MergeStdin
                     } else {
-                        Command::MergePath(PathBuf::from(v))
+                        match v.to_str().map(|v| (v, v.find('='))) {
+                            Some((v, Some(idx))) => {
+                                Command::MergeValue(v[..idx].to_owned(), v[idx + 1..].to_owned())
+                            }
+                            _ => Command::MergePath(PathBuf::from(v)),
+                        }
                     }
                 })
                 .zip(i)
@@ -32,32 +52,54 @@ pub fn context_from(args: &ArgMatches) -> Result<Vec<Command>, Error> {
             (None, None) => Vec::new(),
             _ => unreachable!("expecting clap to work"),
         };
+        cmds.extend(optional_args_without_value(args, "overwrite", || {
+            Command::SetMergeMode(MergeMode::Overwrite)
+        }));
+        cmds.extend(optional_args_without_value(args, "no-overwrite", || {
+            Command::SetMergeMode(MergeMode::NoOverwrite)
+        }));
 
+        let env_cmds = optional_args_with_value(args, "environment", |s| {
+            Command::MergeEnvironment(glob::Pattern::new(s).expect("clap to work"))
+        });
+        cmds.extend(env_cmds.into_iter());
+
+        let at_cmds =
+            optional_args_with_value(args, "at", |s| Command::InsertNextMergeAt(s.to_owned()));
+        cmds.extend(at_cmds.into_iter());
         let select_cmds =
-            optional_args_with_value(args, "pointer", |s| Command::SelectToBuffer(s.to_owned()));
+            optional_args_with_value(args, "select", |s| Command::SelectNextMergeAt(s.to_owned()));
         cmds.extend(select_cmds.into_iter());
 
         cmds.sort_by_key(|&(_, index)| index);
         let mut cmds: Vec<_> = cmds.into_iter().map(|(c, _)| c).collect();
 
-        if let Ok(output_mode) = value_t!(args, "output", OutputMode) {
-            cmds.insert(0, Command::SetOutputMode(output_mode));
-        }
+        let output_mode = value_t!(args, "output", OutputMode).expect("clap to work");
+        cmds.insert(0, Command::SetOutputMode(output_mode));
 
-        if atty::isnt(atty::Stream::Stdin) && !has_seen_merge_stdin {
+        let may_read_stdin = !args.is_present("no-stdin");
+        if !may_read_stdin && has_seen_merge_stdin {
+            bail!("Cannot specify standard input explicitly with '-' and prohibit reading stdin with --no-stdin.")
+        }
+        if atty::isnt(atty::Stream::Stdin) && !has_seen_merge_stdin && may_read_stdin {
             let at_position = cmds
                 .iter()
                 .position(|cmd| match *cmd {
-                    Command::MergePath(_) | Command::SelectToBuffer(_) => true,
+                    Command::MergePath(_)
+                    | Command::MergeValue(_, _)
+                    | Command::MergeEnvironment(_) => true,
                     _ => false,
                 })
                 .unwrap_or_else(|| cmds.len());
             cmds.insert(at_position, Command::MergeStdin)
         }
-        cmds.push(Command::SerializeBuffer);
+        cmds.push(Command::Serialize);
 
         if !cmds.iter().any(|c| match *c {
-            Command::MergeStdin | Command::MergePath(_) => true,
+            Command::MergeStdin
+            | Command::MergeValue(_, _)
+            | Command::MergePath(_)
+            | Command::MergeEnvironment(_) => true,
             _ => false,
         }) {
             bail!("Please provide structured data from standard input or from a file.");

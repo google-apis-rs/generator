@@ -1,10 +1,9 @@
-use clap::AppSettings;
-use clap::ArgSettings;
-use clap::{App, Arg};
+use clap::{App, AppSettings, Arg, ArgSettings};
 
 pub fn new<'a, 'b>() -> App<'a, 'b> {
     App::new("substitute")
         .setting(AppSettings::AllowLeadingHyphen)
+        .setting(AppSettings::ColoredHelp)
         .alias("sub")
         .about("Substitutes templates using structured data. \
          The idea is to build a tree of data that is used to substitute in various templates, using multiple inputs and outputs.\

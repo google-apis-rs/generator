@@ -1,4 +1,4 @@
-use clap::{App, Arg};
+use clap::{App, AppSettings, Arg};
 use std::env;
 
 lazy_static! {
@@ -7,6 +7,7 @@ lazy_static! {
 
 pub fn new<'a, 'b>() -> App<'a, 'b> {
     App::new("completions")
+        .setting(AppSettings::ColoredHelp)
         .about("generate completions for supported shell")
         .arg({
             let arg = Arg::with_name("shell").required(SHELL.is_err()).help(

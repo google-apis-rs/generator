@@ -16,6 +16,7 @@ use clap::{
 
 fn main() {
     let app: App = app_from_crate!()
+        .setting(AppSettings::ColoredHelp)
         .setting(AppSettings::VersionlessSubcommands)
         .setting(AppSettings::DeriveDisplayOrder)
         .setting(AppSettings::SubcommandRequired)

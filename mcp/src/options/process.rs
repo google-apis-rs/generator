@@ -1,9 +1,10 @@
 use super::output_formats;
-use clap::{App, Arg, ArgSettings};
+use clap::{App, AppSettings, Arg, ArgSettings};
 use glob;
 
 pub fn new<'a, 'b>() -> App<'a, 'b> {
     App::new("process")
+        .setting(AppSettings::ColoredHelp)
         .alias("show")
         .alias("merge")
         .about(
