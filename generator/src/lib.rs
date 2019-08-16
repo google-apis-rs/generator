@@ -241,6 +241,10 @@ impl APIDesc {
 
     fn all_types(&self) -> Vec<&Type> {
         fn add_types<'a>(typ: &'a Type, out: &mut Vec<&'a Type>) {
+            if typ.via_reference {
+                return;
+            }
+
             match &typ.type_desc {
                 TypeDesc::Array { items } => {
                     add_types(&items, out);
@@ -627,6 +631,11 @@ struct Type {
     id: syn::PathSegment,
     parent_path: syn::TypePath,
     type_desc: TypeDesc,
+    // via_reference indicates if this Type was in this location via a reference
+    // lookup. This typically doesn't matter, but can speed up iterating over
+    // all known types by not recursing into references knowing that they are
+    // declared elsewhere.
+    via_reference: bool,
 }
 
 impl Type {
@@ -661,7 +670,9 @@ impl Type {
                 let reference_schema = all_schemas
                     .get(reference)
                     .unwrap_or_else(|| panic!("failed to lookup {} in schemas", reference));
-                Type::from_disco_schema(reference_schema, all_schemas)
+                let mut t = Type::from_disco_schema(reference_schema, all_schemas);
+                t.via_reference = true;
+                t
             }
             RefOrType::Type(disco_type) => {
                 let type_desc =
@@ -672,61 +683,73 @@ impl Type {
                         id: parse_quote! {String},
                         parent_path: empty_type_path(),
                         type_desc,
+                        via_reference: false,
                     },
                     TypeDesc::Bool => Type {
                         id: parse_quote! {bool},
                         parent_path: empty_type_path(),
                         type_desc,
+                        via_reference: false,
                     },
                     TypeDesc::Int32 => Type {
                         id: parse_quote! {i32},
                         parent_path: empty_type_path(),
                         type_desc,
+                        via_reference: false,
                     },
                     TypeDesc::Uint32 => Type {
                         id: parse_quote! {u32},
                         parent_path: empty_type_path(),
                         type_desc,
+                        via_reference: false,
                     },
                     TypeDesc::Float32 => Type {
                         id: parse_quote! {f32},
                         parent_path: empty_type_path(),
                         type_desc,
+                        via_reference: false,
                     },
                     TypeDesc::Int64 => Type {
                         id: parse_quote! {i64},
                         parent_path: empty_type_path(),
                         type_desc,
+                        via_reference: false,
                     },
                     TypeDesc::Uint64 => Type {
                         id: parse_quote! {u64},
                         parent_path: empty_type_path(),
                         type_desc,
+                        via_reference: false,
                     },
                     TypeDesc::Float64 => Type {
                         id: parse_quote! {f64},
                         parent_path: empty_type_path(),
                         type_desc,
+                        via_reference: false,
                     },
                     TypeDesc::Bytes => Type {
                         id: parse_quote! {Vec<u8>},
                         parent_path: empty_type_path(),
                         type_desc,
+                        via_reference: false,
                     },
                     TypeDesc::Date => Type {
                         id: parse_quote! {Date<chrono::offset::Utc>},
                         parent_path: parse_quote! {::chrono},
                         type_desc,
+                        via_reference: false,
                     },
                     TypeDesc::DateTime => Type {
                         id: parse_quote! {DateTime<chrono::offset::Utc>},
                         parent_path: parse_quote! {::chrono},
                         type_desc,
+                        via_reference: false,
                     },
                     TypeDesc::Enum(_) => Type {
                         id: parse_quote! {#ident},
                         parent_path: parent_path.clone(),
                         type_desc,
+                        via_reference: false,
                     },
                     TypeDesc::Array { ref items } => {
                         let item_path = items.type_path();
@@ -734,6 +757,7 @@ impl Type {
                             id: parse_quote! {Vec<#item_path>},
                             parent_path: empty_type_path(),
                             type_desc,
+                            via_reference: false,
                         }
                     }
                     TypeDesc::Object {
@@ -746,11 +770,13 @@ impl Type {
                                 id: parse_quote! {BTreeMap<String, #add_props_type>},
                                 parent_path: parse_quote! {::std::collections},
                                 type_desc,
+                                via_reference: false,
                             },
                             _ => Type {
                                 id: parse_quote! {#ident},
                                 parent_path: parent_path.clone(),
                                 type_desc,
+                                via_reference: false,
                             },
                         }
                     }
