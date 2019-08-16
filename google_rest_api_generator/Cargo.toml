@@ -1,5 +1,5 @@
 [package]
-name = "generator"
+name = "google_rest_api_generator"
 version = "0.1.0"
 authors = ["Glenn Griffin <ggriffiniii@gmail.com>"]
 edition = "2018"

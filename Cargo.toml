@@ -4,7 +4,7 @@ members = [
     "discovery_parser",
     "google_field_selector",
     "google_field_selector_derive",
-    "generator",
+    "google_rest_api_generator",
     "uri_template_parser",
     "mcp",
 ]
