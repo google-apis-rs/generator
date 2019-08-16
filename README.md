@@ -1,3 +1,5 @@
+This project is the successor of [Google-APIS-rs](https://github.com/byron/google-apis-rs).
+
 # Overview
 
  * discovery_parser: The most fundamental translation of the google discovery
@@ -34,6 +36,7 @@
 
 * `make`
    * See which tasks you can perform using make
+
 
 # 🛸Project Goals🛸
 
