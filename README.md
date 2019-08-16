@@ -1,4 +1,4 @@
-Overview
+# Overview
 
  * discovery_parser: The most fundamental translation of the google discovery
    doscument into rust types.
@@ -16,7 +16,19 @@ Overview
    input is a discovery document and the output is rust crate at a specified
    directory.
 
-# Byron's thoughts follow...
+# Community
+
+* **[Chat](https://gitter.im/google-apis-rs/community)**
+   * Join and let us know what you think :)!
+   * Talk to the devs, or see what they are talking about.
+
+# Development
+
+* `cargo run -- --help`
+   * Run the master control program and see what it can do
+
+* `make`
+   * See which tasks you can perform using make
 
 # 🛸Project Goals🛸
 
@@ -24,19 +36,19 @@ These are snatched from the original project (_OP_), with some adjustments and a
 Even though the list is ordered, they are not (yet) ordered by priority, but merely to make each point adressable, as in `🛸2`.
 
 1. provide an idiomatic rust implementation for Google APIs, which includes _type safety_ and native _async_ operations.
-1. first-class documentation with cross-links and complete code-examples
-1. support all API features, including downloads and resumable uploads
-1. Convenient CLIs are provided on top of the API for use in shell scripts
-1. API and CLI generation can be customized easily to overcome issues with your particular API
+2. first-class documentation with cross-links and complete code-examples
+3. support all API features, including downloads and resumable uploads
+4. Convenient CLIs are provided on top of the API for use in shell scripts
+5. API and CLI generation can be customized easily to overcome issues with your particular API
    * **Byron thinks that** we cannot assume to get it right for all APIs from the start unless we actually test everything ourselves. Thus if we enable people to help themselves, it will help us further down the line.
-1. Built-in debugging and tracing allows to understand what's going on, and what's wrong.
+6. Built-in debugging and tracing allows to understand what's going on, and what's wrong.
    * **Byron thinks that** providing full output of requests and responses when using the CLI really helped. However, this time around there might be some more logging, using `tracing` or `log` at least. Here once again it becomes interesting to see if different systems can be supported, to allow people to tailor their experience based on their needs. `cargo features` could come a long way.
-1. The code we generate defines the standard for interacting with Google services via Rust.
+7. The code we generate defines the standard for interacting with Google services via Rust.
    * Google uses these crates! They are that good! 😉 (Google uses more efficient means internally, no JSON involved!)
-1. The code base is made for accepting PRs and making contributions easy
+8. The code base is made for accepting PRs and making contributions easy
    * To stay relevant, people must contribute.
    * The original authors won't stay around forever (see [GitPython](https://github.com/gitpython-developers/GitPython))
-1. _safety and resilience_ are built-in, allowing you to create highly available tools on top of it. For example, you can trigger retries for all operations that may temporarily fail, e.g. due to network outage.
+9. _safety and resilience_ are built-in, allowing you to create highly available tools on top of it. For example, you can trigger retries for all operations that may temporarily fail, e.g. due to network outage.
    * **Byron thinks that** this could be naturally supported by the async ecosystem, and thus helps slim down the delegate.
 
 # Learning from the past
