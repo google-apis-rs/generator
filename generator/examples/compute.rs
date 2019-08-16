@@ -1,7 +1,7 @@
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    ::pretty_env_logger::init_timed();
+    ::env_logger::builder().default_format_timestamp_nanos(true).init();
     generator::generate(
         "https://www.googleapis.com/discovery/v1/apis/compute/v1/rest",
         "/tmp",
