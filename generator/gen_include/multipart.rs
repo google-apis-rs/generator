@@ -25,12 +25,13 @@ mod multipart {
         }
 
         pub(crate) fn into_reader(self) -> RelatedMultiPartReader {
+            let boundary_marker = boundary_marker(&self.boundary);
             RelatedMultiPartReader {
                 state: RelatedMultiPartReaderState::WriteBoundary {
                     start: 0,
-                    boundary: boundary_marker(&self.boundary),
+                    boundary: format!("{}\r\n", &boundary_marker),
                 },
-                boundary: self.boundary,
+                boundary: boundary_marker,
                 next_body: None,
                 parts: self.parts.into_iter(),
             }
@@ -60,8 +61,7 @@ mod multipart {
 
     enum RelatedMultiPartReaderState {
         WriteBoundary {
-            start: usize,
-            boundary: String,
+            start: usize, boundary: String,
         },
         WriteContentType {
             start: usize,
@@ -77,10 +77,11 @@ mod multipart {
             use RelatedMultiPartReaderState::*;
             let mut bytes_written: usize = 0;
             loop {
+                let rem_buf = &mut buf[bytes_written..];
                 match &mut self.state {
                     WriteBoundary { start, boundary } => {
-                        let bytes_to_copy = std::cmp::min(boundary.len() - *start, buf.len());
-                        buf[..bytes_to_copy]
+                        let bytes_to_copy = std::cmp::min(boundary.len() - *start, rem_buf.len());
+                        rem_buf[..bytes_to_copy]
                             .copy_from_slice(&boundary.as_bytes()[*start..*start + bytes_to_copy]);
                         *start += bytes_to_copy;
                         bytes_written += bytes_to_copy;
@@ -92,7 +93,7 @@ mod multipart {
                             self.next_body = Some(next_part.body);
                             self.state = WriteContentType {
                                 start: 0,
-                                content_type: format!("Content-Type: {}", next_part.content_type)
+                                content_type: format!("Content-Type: {}\r\n\r\n", next_part.content_type)
                                     .into_bytes(),
                             };
                         } else {
@@ -103,8 +104,8 @@ mod multipart {
                         start,
                         content_type,
                     } => {
-                        let bytes_to_copy = std::cmp::min(content_type.len() - *start, buf.len());
-                        buf[..bytes_to_copy]
+                        let bytes_to_copy = std::cmp::min(content_type.len() - *start, rem_buf.len());
+                        rem_buf[..bytes_to_copy]
                             .copy_from_slice(&content_type[*start..*start + bytes_to_copy]);
                         *start += bytes_to_copy;
                         bytes_written += bytes_to_copy;
@@ -117,12 +118,12 @@ mod multipart {
                         }
                     }
                     WriteBody { body } => {
-                        let written = body.read(buf)?;
+                        let written = body.read(rem_buf)?;
                         bytes_written += written;
                         if written == 0 {
                             self.state = WriteBoundary {
                                 start: 0,
-                                boundary: self.boundary.clone(),
+                                boundary: format!("\r\n{}\r\n", &self.boundary),
                             };
                         } else {
                             break;
@@ -135,10 +136,9 @@ mod multipart {
     }
 
     fn boundary_marker(boundary: &str) -> String {
-        let mut marker = String::with_capacity(boundary.len() + 4);
+        let mut marker = String::with_capacity(boundary.len() + 2);
         marker.push_str("--");
         marker.push_str(boundary);
-        marker.push_str("\r\n");
         marker
     }
 }

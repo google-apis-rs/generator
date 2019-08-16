@@ -37,6 +37,7 @@ where
     let mut rustfmt_writer = crate::rustfmt::RustFmtWriter::new(output_file)?;
     rustfmt_writer.write_all(api_desc.generate(auth_token).to_string().as_bytes())?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;
+    rustfmt_writer.write_all(include_bytes!("../gen_include/resumable_upload.rs"))?;
     rustfmt_writer.close()?;
     info!("returning");
     Ok(())
@@ -228,7 +229,7 @@ impl APIDesc {
             impl Client {
                 pub fn new() -> Self {
                     Client{
-                        reqwest: ::reqwest::Client::new(),
+                        reqwest: ::reqwest::Client::builder().timeout(None).build().unwrap(),
                     }
                 }
 
@@ -438,7 +439,15 @@ impl Method {
                 if !multipart {
                     panic!("An upload protocol doesn't support multipart.");
                 }
-                path.clone()
+                // Many (all?) upload paths start with a '/' which when appended
+                // with rootUrl will result in duplicate '/'s. Remove a starting
+                // '/' in the upload path to address this.
+                let path = if path.starts_with('/') {
+                    &path[1..]
+                } else {
+                    path.as_str()
+                };
+                path.to_owned()
             };
             MediaUpload {
                 accept: media_upload.accept.clone(),
@@ -914,6 +923,7 @@ impl Type {
                         );
                         fields.push(field);
                     }
+                    derives.push(quote! {Default});
                     derives.push(quote! {::serde::Deserialize});
                     derives.push(quote! {::serde::Serialize});
                     Some(quote! {
