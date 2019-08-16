@@ -24,9 +24,10 @@ pub(crate) fn generate(
         .iter()
         .map(|resource| generate(root_url, service_path, global_params, resource));
 
-    let method_actions = resource.methods.iter().map(|method| {
-        method_actions::generate(method, global_params)
-    });
+    let method_actions = resource
+        .methods
+        .iter()
+        .map(|method| method_actions::generate(method, global_params));
     let sub_resource_actions = resource.resources.iter().map(|sub_resource| {
         let sub_resource_ident = &sub_resource.ident;
         let sub_action_ident = sub_resource.action_type_name();

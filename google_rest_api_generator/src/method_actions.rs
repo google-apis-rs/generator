@@ -1,4 +1,4 @@
-use crate::{to_ident, to_rust_varstr, Param, ParamInitMethod, Method};
+use crate::{to_ident, to_rust_varstr, Method, Param, ParamInitMethod};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::parse_quote;
@@ -37,7 +37,11 @@ pub(crate) fn generate(method: &Method, global_params: &[Param]) -> TokenStream 
         };
         field_pattern
     }));
-    let method_description = &method.description.as_ref().map(|s| s.as_str()).unwrap_or("");
+    let method_description = &method
+        .description
+        .as_ref()
+        .map(|s| s.as_str())
+        .unwrap_or("");
     quote! {
         #[doc = #method_description]
         pub fn #method_ident(&self#(, #required_args)*) -> #method_builder_type {

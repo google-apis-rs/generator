@@ -15,24 +15,24 @@ mod path_templates;
 mod resource_builder;
 mod rustfmt;
 
-pub fn generate<U, P>(discovery_url: U, base_dir: P, auth_token: &str) -> Result<(), Box<dyn Error>>
+pub fn generate<P>(
+    api_name: &str,
+    discovery_desc: &DiscoveryRestDesc,
+    base_dir: P,
+    auth_token: &str,
+) -> Result<(), Box<dyn Error>>
 where
-    U: reqwest::IntoUrl,
     P: AsRef<std::path::Path>,
 {
     use std::io::Write;
-    info!("getting discovery doc");
-    let desc: DiscoveryRestDesc = reqwest::get(discovery_url)?.json()?;
     info!("buidling api desc");
-    let api_desc = APIDesc::from_discovery(&desc);
+    let api_desc = APIDesc::from_discovery(discovery_desc);
     info!("creating directory and Cargo.toml");
-    let project_name = format!("google_{}_{}", &desc.name, &desc.version);
-    let project_path = base_dir.as_ref().join(&project_name);
+    let project_path = base_dir.as_ref().join(&api_name);
     let src_path = project_path.join("src");
     std::fs::create_dir_all(&src_path)?;
     let cargo_path = project_path.join("Cargo.toml");
-    let cargo_contents =
-        cargo::cargo_toml(&project_name).to_string();
+    let cargo_contents = cargo::cargo_toml(api_name).to_string();
     std::fs::write(&cargo_path, &cargo_contents)?;
     info!("writing lib");
     let output_file = std::fs::File::create(&src_path.join("lib.rs"))?;
@@ -153,9 +153,10 @@ impl APIDesc {
         let method_builders = self.methods.iter().map(|method| {
             method_builder::generate(&self.root_url, &self.service_path, &self.params, method)
         });
-        let method_actions = self.methods.iter().map(|method| {
-            method_actions::generate(method, &self.params)
-        });
+        let method_actions = self
+            .methods
+            .iter()
+            .map(|method| method_actions::generate(method, &self.params));
         info!("outputting");
         quote! {
             fn auth_token() -> &'static str {
