@@ -32,8 +32,8 @@ fn expand_derive_field_selector(input: &DeriveInput) -> Result<TokenStream2, Box
     );
     Ok(quote! {
         const #dummy_const: () = {
-            extern crate field_selector as _field_selector;
-            impl #impl_generics _field_selector::FieldSelector for #ident #ty_generics #where_clause {
+            extern crate google_field_selector as _google_field_selector;
+            impl #impl_generics _google_field_selector::FieldSelector for #ident #ty_generics #where_clause {
                 fn field_selector_with_ident(ident: &str, selector: &mut String) {
                     match selector.chars().rev().nth(0) {
                         Some(',') | None => {},

@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use field_selector::FieldSelector;
+use google_field_selector::FieldSelector;
 use serde::Deserialize;
 use std::collections::HashMap;
 

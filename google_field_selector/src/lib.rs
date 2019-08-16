@@ -1,4 +1,4 @@
-pub use field_selector_derive::FieldSelector;
+pub use google_field_selector_derive::FieldSelector;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
 /// FieldSelector provides a google api compatible field selector. This value can
 /// be provided in the "fields" attribute of many google api's to request which
