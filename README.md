@@ -12,7 +12,7 @@ Even though the list is ordered, they are not (yet) ordered by priority, but mer
 1. Built-in debugging and tracing allows to understand what's going on, and what's wrong.
    * **Byron thinks that** providing full output of requests and responses when using the CLI really helped. However, this time around there might be some more logging, using `tracing` or `log` at least. Here once again it becomes interesting to see if different systems can be supported, to allow people to tailor their experience based on their needs. `cargo features` could come a long way.
 1. The code we generate defines the standard for interacting with Google services via Rust.
-   * Google uses these crates! They are that good!
+   * Google uses these crates! They are that good! 😉 (Google uses more efficient means internally, no JSON involved!)
 1. The code base is made for accepting PRs and making contributions easy
    * To stay relevant, people must contribute.
    * The original authors won't stay around forever (see [GitPython](https://github.com/gitpython-developers/GitPython))
@@ -61,6 +61,8 @@ Let's keep in mind what worked and what didn't.
    * Even though they worked, it was another thing that had to be installed by `make`, and could just fail [for some](https://github.com/Byron/google-apis-rs/issues/234)
 1. **arbitrary smartness**
    * In order to fix issues with the type system and make numbers more easily usable by converting "strings" into integers/floats, what worked in one API broke another.
+1. **artificial strupidity when dealing with dates and time**
+   * as opposed to trying to be smart with numbers, we were not converting the uniformly represented date formats into something like `chrono::*`.
 1. **it's cumbersome to actually use a CLI**
    * Even though authentication was dealt with nicely for the most part, actually using APIs required them to be enabled via the developer console. From there one would download a file and deposit it in the right spot. Only then one could start using the CLI.
 1. **oddly keyed login tokens stored on disk per scope**
@@ -73,7 +75,7 @@ Let's keep in mind what worked and what didn't.
 1. **tests were minimal and most testing was like "if it compiles, it's good"**
    * The _OP_ suffered from only having a few tests, and even though Rust only compiles decent quality software, by nature, certain reasoning was just in my head. _'Why is it doing this particular thing? It seems wrong'_ would be impossible to know. 
    * manual testing is slow and error prone
-1. **Versions like 1.2.0+2019-08-23...` would additionally show the version of the Google API description, but is ignored by `cargo`** 
+1. **Versions like 1.2.0+2019-08-23...` would additionally show the version of the Google API description, but is ignored by cargo`** 
    * This was done to discriminate the 'code' version from the version of the API it represents.
    * As the `+` is ignored by `cargo`, to re-release a crate with a new version of the API, one would have to increment the patch level. However, that would force all crates to be re-released, even if their API version didn't change at all.
    * This caused unnecessary spamming of `crates.io`, and the `+` should be a `-` to fix this.
@@ -94,6 +96,7 @@ Here is the anticipated tooling. What follows is the list of tools I would add a
   * I am a fan of simple makefiles, which catch dependencies between files and run a script to generate them. This served _OP_ extremely well.
   * get parallelization for free, and make transparent which programs to call and how to get work done.
   * the Makefile serves as hub keeping all commands one would run to interact with the project in any way.
+  * It helps to generate crates only when needed, and can help manage publishing of crates while avoiding trying to upload duplicates.
 * **Cargo/Rust** - fixes `🥵4`, support `🌈1`
   * All work should be done by a Rust binary, which helps keeping things easy with `make`. Previously, the single, magical binary was `python`, and when adding even a single additional Rust tool, one would pay with some complexity. One Rust binary with multiple sub-command seems reasonable.
 * **rust-fmt** - helps remedy `🥵8`
@@ -104,6 +107,9 @@ Here is the anticipated tooling. What follows is the list of tools I would add a
 
 These should optimize for allowing a pleasant developer experience, at the beginning of the project as well as things stabilize. They should support the project goals or at least not hinder them. For example, settings things up in a way that is hard to use to the average person would be in the way of allowing folks to 'easily' fix issues they encounter.
 
-* **TDD**
+* **TDD** (supports )
   * Everything done should be driven by at least one test which can be run automatically.
   * **Byron also thinks that** this is totally doable without breaking into sweat.
+* **Journey Testing**
+    
+
