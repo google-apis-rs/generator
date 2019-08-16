@@ -1,0 +1,1 @@
+Files in this directory are included verbatim in the generated lib.rs file. Thus they compile in the context of the generated code, not in the context of the this (the generator) crate.

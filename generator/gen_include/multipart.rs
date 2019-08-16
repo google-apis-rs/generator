@@ -1,7 +1,3 @@
-// The contents of this file are appended to the bottom of the generated lib.rs.
-// Meaning it needs to compile in the context of the generated crate, not within
-// the generator itself.
-
 mod multipart {
     pub(crate) struct RelatedMultiPart {
         parts: Vec<Part>,
