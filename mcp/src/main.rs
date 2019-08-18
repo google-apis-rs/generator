@@ -9,9 +9,8 @@ mod options;
 use options::Args;
 use options::SubCommand::*;
 
-fn main() {
-    let args: Args = Args::from_args();
-
+#[paw::main]
+fn main(args: Args) {
     let res = match args.cmd {
         Completions(args) => cmds::completions::generate(Args::clap(), args),
         FetchSpecs(args) => cmds::fetch_specs::execute(args),

@@ -16,5 +16,6 @@ itertools = "0.8.0"
 atty = "0.2.13"
 glob = "0.3.0"
 failure-tools = "4.0.2"
-structopt = "0.2.18"
+structopt = { version = "0.2.18", features = [ "paw" ] }
 discovery_parser = { path = "../discovery_parser" }
+paw = "1.0.0"
