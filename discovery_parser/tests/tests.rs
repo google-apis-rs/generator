@@ -15,9 +15,11 @@ struct ApiSpec {
     discovery_rest_url: String,
 }
 
+
 // This test takes too long to run to have it enabled by default. Uncomment it
 // when you want to sanity check logic against all apis.
 //#[test]
+#[allow(dead_code)]
 fn successfully_parse_all_apis() -> Result<(), Box<dyn Error>> {
     let mut errors = 0;
     let mut successes = 0;
@@ -27,11 +29,11 @@ fn successfully_parse_all_apis() -> Result<(), Box<dyn Error>> {
 
         let res: Result<RestDescOrErr, _> = reqwest::get(&api.discovery_rest_url)?.json();
         match res {
-            Ok(RestDescOrErr::RestDesc(desc)) => {
+            Ok(RestDescOrErr::RestDesc(_desc)) => {
                 successes += 1;
                 //println!("{:#?}", desc);
             }
-            Ok(RestDescOrErr::Err(err)) => {
+            Ok(RestDescOrErr::Err(_err)) => {
                 //eprintln!("{}: {:?}", api.discovery_rest_url, err);
                 errors += 1;
             }

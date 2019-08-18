@@ -4,7 +4,9 @@ DISCOVERY_APIS_JSON = etc/discovery-apis-v1.json
 
 help:
 	$(info -- Targets for development -----------------------------------------------------------)
+	$(info run all the tests          | run all tests for the 'master control program')
 	$(info mcp-tests                  | run all tests for the 'master control program')
+	$(info cargo-tests                | run all tests driven by cargo)
 	$(info -- Targets for files we depend on ----------------------------------------------------)
 	$(info discovery-apis             | Fetch the list of available Google APIs)
 	$(info --------------------------------------------------------------------------------------)
@@ -25,5 +27,10 @@ discovery-apis: $(DISCOVERY_APIS_JSON)
 
 mcp-tests: $(MCPD)
 	tests/mcp/journey-tests.sh $<
+
+cargo-tests:
+	cargo test --lib --all
+
+tests: mcp-tests cargo-tests
 	
 

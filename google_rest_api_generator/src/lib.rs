@@ -633,8 +633,8 @@ impl Type {
                     TypeDesc::from_disco_type(ident, parent_path, disco_type, all_schemas);
                 match type_desc {
                     TypeDesc::Any => Type {
-                        id: parse_quote!{Value},
-                        parent_path: parse_quote!{::serde_json},
+                        id: parse_quote! {Value},
+                        parent_path: parse_quote! {::serde_json},
                         type_desc,
                         via_reference: false,
                     },

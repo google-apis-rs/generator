@@ -1,7 +1,6 @@
 use discovery_parser::DiscoveryRestDesc;
 use reqwest;
 use serde::Deserialize;
-use std::collections::BTreeSet;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -27,7 +26,9 @@ fn count_resources<'a>(
         .sum()
 }
 
-fn count_methods<'a>(resources: impl Iterator<Item = &'a discovery_parser::ResourceDesc>) -> usize {
+fn count_methods<'a>(
+    resources: impl Iterator<Item = &'a discovery_parser::ResourceDesc>,
+) -> usize {
     resources
         .map(|resource| {
             let sub_methods: usize = count_methods(resource.resources.values());
@@ -41,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if !rest_desc.methods.is_empty() {
             println!("name: {} version: {}", &rest_desc.name, &rest_desc.version);
         }
-        for_each_resource(rest_desc, |resource| {});
+        for_each_resource(rest_desc, |_resource| {});
     })?;
     Ok(())
 }
