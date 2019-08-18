@@ -15,7 +15,6 @@ struct ApiSpec {
     discovery_rest_url: String,
 }
 
-
 // This test takes too long to run to have it enabled by default. Uncomment it
 // when you want to sanity check logic against all apis.
 //#[test]

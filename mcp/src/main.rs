@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate lazy_static;
+use structopt::StructOpt;
 
 const PROGRAM_NAME: &str = "mcp";
 
@@ -14,6 +15,17 @@ use clap::{
     ArgMatches,
 };
 
+mod cmds {
+    pub mod fetch_specs {
+        use clap::ArgMatches;
+        use failure::Error;
+
+        pub fn execute(_args: &ArgMatches) -> Result<(), Error> {
+            unimplemented!("fetch specs")
+        }
+    }
+}
+
 fn main() {
     let app: App = app_from_crate!()
         .setting(AppSettings::ColoredHelp)
@@ -24,7 +36,8 @@ fn main() {
         .after_help("Also join us on gitter: https://gitter.im/google-apis-rs/community")
         .subcommand(crate::options::substitute::new())
         .subcommand(crate::options::process::new())
-        .subcommand(crate::options::completions::new());
+        .subcommand(crate::options::completions::new())
+        .subcommand(crate::options::fetch_specs::Args::clap());
     let app_clone = app.clone();
     let matches: ArgMatches = app.get_matches();
 
@@ -32,7 +45,8 @@ fn main() {
         ("completions", Some(args)) => parse::completions::generate(app_clone, args),
         ("process", Some(args)) => parse::process::execute(args),
         ("substitute", Some(args)) => parse::substitute::execute(args),
-        _ => panic!("Expected clap to prevent this"),
+        ("fetch-specs", Some(args)) => cmds::fetch_specs::execute(args),
+        cmd => unimplemented!("need to deal with {:#?}", cmd),
     };
 
     failure_tools::ok_or_exit(res);

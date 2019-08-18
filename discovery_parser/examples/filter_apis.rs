@@ -26,9 +26,7 @@ fn count_resources<'a>(
         .sum()
 }
 
-fn count_methods<'a>(
-    resources: impl Iterator<Item = &'a discovery_parser::ResourceDesc>,
-) -> usize {
+fn count_methods<'a>(resources: impl Iterator<Item = &'a discovery_parser::ResourceDesc>) -> usize {
     resources
         .map(|resource| {
             let sub_methods: usize = count_methods(resource.resources.values());

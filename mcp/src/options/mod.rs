@@ -3,5 +3,6 @@ pub fn output_formats() -> &'static [&'static str] {
 }
 
 pub mod completions;
+pub mod fetch_specs;
 pub mod process;
 pub mod substitute;
