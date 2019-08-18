@@ -17,6 +17,7 @@ This project is the successor of [Google-APIS-rs](https://github.com/byron/googl
    document it will produce idiomatic rust bindings to work with the API. The
    input is a discovery document and the output is rust crate at a specified
    directory.
+ * mcp: a program with subcommands to do all the work. Calls to it are orchestrated with `make`
 
 # Community
 
