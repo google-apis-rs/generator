@@ -15,9 +15,6 @@ SUCCESSFULLY=0
 fixture="$root/fixtures"
 snapshot="$root/snapshots"
 
-# shellcheck source=./tests/included-stateless-merge.sh
-source "$root/included-stateless-process.sh"
-
 # shellcheck source=./tests/included-stateless-substitute.sh
 source "$root/included-stateless-substitute.sh"
 

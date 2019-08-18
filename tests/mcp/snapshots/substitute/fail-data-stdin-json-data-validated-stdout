@@ -1,0 +1,6 @@
+error: Found argument 'substitute' which wasn't expected, or isn't valid in this context
+
+USAGE:
+    mcp <SUBCOMMAND>
+
+For more information try --help
