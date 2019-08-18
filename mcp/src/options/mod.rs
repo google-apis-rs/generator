@@ -22,6 +22,7 @@ pub enum SubCommand {
     /// generate completions for supported shells
     Completions(completions::Args),
     #[structopt(name = "substitute")]
+    #[structopt(raw(alias = "\"sub\""))]
     /// Substitutes templates using structured data.
     Substitute(substitute::Args),
 }

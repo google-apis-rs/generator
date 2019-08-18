@@ -7,7 +7,6 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
 #[structopt(raw(setting = "structopt::clap::AppSettings::AllowLeadingHyphen"))]
-#[structopt(raw(alias = "\"sub\""))]
 /// Substitutes templates using structured data.
 ///
 /// The idea is to build a tree of data that is used to substitute in various templates, using multiple inputs and outputs.

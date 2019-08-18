@@ -122,7 +122,7 @@ title "'substitute' subcommand"
           it "succeeds" && {
             echo "the-answer: 42" | \
             WITH_SNAPSHOT="$snapshot/data-stdin-yaml-multi-template-to-same-file-explicit-separator" \
-            expect_run $SUCCESSFULLY "$exe" substitute -s $'---\n' "$template/the-answer.hbs:$PWD/output" "$template/the-answer.hbs:$PWD/output"
+            expect_run $SUCCESSFULLY "$exe" substitute -s=$'---\n' "$template/the-answer.hbs:$PWD/output" "$template/the-answer.hbs:$PWD/output"
           }
           it "produces the expected output" && {
             expect_snapshot "$snapshot/data-stdin-yaml-multi-template-to-same-file-explicit-separator-output" output
