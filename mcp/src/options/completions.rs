@@ -1,23 +1,10 @@
-use clap::{App, AppSettings, Arg};
-use std::env;
+use std::ffi::OsString;
+use structopt::StructOpt;
 
-lazy_static! {
-    static ref SHELL: Result<String, env::VarError> = env::var("SHELL");
-}
-
-pub fn new<'a, 'b>() -> App<'a, 'b> {
-    App::new("completions")
-        .setting(AppSettings::ColoredHelp)
-        .about("generate completions for supported shell")
-        .arg({
-            let arg = Arg::with_name("shell").required(SHELL.is_err()).help(
-                "The name of the shell, or the path to the shell as exposed by the \
-                 $SHELL variable.",
-            );
-            if let Ok(shell) = SHELL.as_ref() {
-                arg.default_value(shell)
-            } else {
-                arg
-            }
-        })
+#[derive(Debug, StructOpt)]
+#[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
+pub struct Args {
+    /// The name of the shell, or the path to the shell as exposed by the $SHELL variable
+    #[structopt(parse(from_os_str))]
+    pub shell: OsString,
 }
