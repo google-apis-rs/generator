@@ -15,7 +15,7 @@ fn main() {
     let res = match args.cmd {
         Completions(args) => cmds::completions::generate(Args::clap(), args),
         FetchSpecs(args) => cmds::fetch_specs::execute(args),
-        Substitute(_args) => unimplemented!(),
+        Substitute(args) => cmds::substitute::execute(args),
     };
     failure_tools::ok_or_exit(res);
 }
