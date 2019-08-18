@@ -19,7 +19,6 @@ pub fn generate<P>(
     api_name: &str,
     discovery_desc: &DiscoveryRestDesc,
     base_dir: P,
-    auth_token: &str,
 ) -> Result<(), Box<dyn Error>>
 where
     P: AsRef<std::path::Path>,
@@ -37,7 +36,7 @@ where
     info!("writing lib");
     let output_file = std::fs::File::create(&src_path.join("lib.rs"))?;
     let mut rustfmt_writer = crate::rustfmt::RustFmtWriter::new(output_file)?;
-    rustfmt_writer.write_all(api_desc.generate(auth_token).to_string().as_bytes())?;
+    rustfmt_writer.write_all(api_desc.generate().to_string().as_bytes())?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/resumable_upload.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/parsed_string.rs"))?;
@@ -122,7 +121,7 @@ impl APIDesc {
         }
     }
 
-    fn generate(&self, auth_token: &str) -> TokenStream {
+    fn generate(&self) -> TokenStream {
         info!("getting all types");
         let all_types = self.all_types();
         let schemas_to_create = all_types
@@ -147,9 +146,10 @@ impl APIDesc {
             );
             quote! {
                 #[doc= #description]
-                pub fn #resource_ident(&self) -> crate::#resource_ident::#action_ident {
+                pub fn #resource_ident(&self) -> crate::#resource_ident::#action_ident<A> {
                     crate::#resource_ident::#action_ident{
                         reqwest: &self.reqwest,
+                        auth: &self.auth
                     }
                 }
             }
@@ -164,23 +164,21 @@ impl APIDesc {
             .map(|method| method_actions::generate(method, &self.params));
         info!("outputting");
         quote! {
-            fn auth_token() -> &'static str {
-                #auth_token
-            }
-
             pub mod schemas {
                 #(#schemas_to_create)*
             }
             pub mod params {
                 #(#params_to_create)*
             }
-            pub struct Client{
+            pub struct Client<A> {
                 reqwest: ::reqwest::Client,
+                auth: ::std::sync::Mutex<A>,
             }
-            impl Client {
-                pub fn new() -> Self {
-                    Client{
+            impl<A: yup_oauth2::GetToken> Client<A> {
+                pub fn new(auth: A) -> Self {
+                    Client {
                         reqwest: ::reqwest::Client::builder().timeout(None).build().unwrap(),
+                        auth: ::std::sync::Mutex::new(auth),
                     }
                 }
 

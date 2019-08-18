@@ -15,6 +15,7 @@ reqwest = "0.9"
 field_selector = { git = "https://github.com/ggriffiniii/google-apis" }
 mime = "0.3"
 textnonce = "0.6"
+yup-oauth2 = "2"
 "#;
 
 pub(crate) fn cargo_toml(crate_name: impl Into<String>) -> Document {

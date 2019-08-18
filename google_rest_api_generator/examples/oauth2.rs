@@ -15,7 +15,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         &project_name,
         &desc,
         "/tmp",
-        &std::env::args().nth(1).unwrap(),
     )?;
     Ok(())
 }
