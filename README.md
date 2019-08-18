@@ -2,22 +2,36 @@ This project is the successor of [Google-APIS-rs](https://github.com/byron/googl
 
 # Overview
 
- * discovery_parser: The most fundamental translation of the google discovery
-   document into rust types.
- * google_field_selector/google_field_selector_derive: Includes the FieldSelector trait and a
-   proc-macro to automatically derive the trait from a struct. FieldSelector
-   provides a method to return a value to be used in the `fields` attribute of
-   google apis. Syntax would look something like
-   `kind,items(title,characteristics/length)`
- * uri_template_parser: Parse uri templates (RFC 6570) into an AST. The AST can
-   represent the full syntax as described in the RFC, but does not attempt to
-   produce the rendered template output. The AST is used by the generator to
-   generate rust code that renders the template.
- * google_rest_api_generator: This is the primary purpose of this repository. Given a discovery
-   document it will produce idiomatic rust bindings to work with the API. The
-   input is a discovery document and the output is rust crate at a specified
-   directory.
- * mcp: a program with subcommands to do all the work. Calls to it are orchestrated with `make`
+ * **ci/**
+   * A bunch of scripts to be run by CI, as provided by [trust][trust].
+ * **discovery_parser/**
+   * The most fundamental translation of the google discovery
+     document into rust types.
+ * **etc/**
+   * contains all configuration and data files used as input to generate APIs and CLIs.
+ * **google_field_selector/google_field_selector_derive/**
+   * Includes the FieldSelector trait and a
+     proc-macro to automatically derive the trait from a struct. FieldSelector
+     provides a method to return a value to be used in the `fields` attribute of
+     google apis. Syntax would look something like
+     `kind,items(title,characteristics/length)`.
+ * **google_rest_api_generator/**
+   * This is the primary purpose of this repository. Given a discovery
+     document it will produce idiomatic rust bindings to work with the API. The
+     input is a discovery document and the output is rust crate at a specified
+     directory.
+ * **mcp/**
+   * a program with subcommands to do all the work. Calls to it are orchestrated with `make`.
+ * **tests/**
+   * contains all integration and journey tests.
+ * **uri_template_parser/**
+   * Parse uri templates (RFC 6570) into an AST. The AST can
+     represent the full syntax as described in the RFC, but does not attempt to
+     produce the rendered template output. The AST is used by the generator to
+     generate rust code that renders the template.
+
+[trust]: https://github.com/japaric/trust
+
 
 # Community
 
