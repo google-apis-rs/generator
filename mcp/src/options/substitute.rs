@@ -1,62 +1,59 @@
-use clap::{App, AppSettings, Arg, ArgSettings};
+use clap::{App, Arg, ArgSettings};
+use std::ffi::OsString;
+use structopt::StructOpt;
 
-pub fn new<'a, 'b>() -> App<'a, 'b> {
+#[derive(Debug, StructOpt)]
+#[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
+#[structopt(raw(setting = "structopt::clap::AppSettings::AllowLeadingHyphen"))]
+#[structopt(raw(alias = "\"sub\""))]
+/// Substitutes templates using structured data.
+///
+/// The idea is to build a tree of data that is used to substitute in various templates, using multiple inputs and outputs.
+/// That way, secrets (like credentials) can be extracted from the vault just once and used wherever needed without them touching disk.
+/// Liquid is used as template engine, and it's possible to refer to and inherit from other templates by their file-stem.
+/// Read more on their website at https://shopify.github.io/liquid .
+pub struct Args {
+    #[structopt(raw(set = "ArgSettings::RequireEquals"))]
+    #[structopt(short = "e", long = "engine", name = "name", default_value = "liquid")]
+    #[structopt(raw(possible_values = r#"&["handlebars", "liquid"]"#))]
+    /// The choice of engine used for the substitution.
+    ///
+    /// 'liquid', is coming with batteries included and very good at handling
+    /// one template at a time.
+    /// 'handlebars' supports referencing other templates using partials, which
+    /// is useful for sharing of common functionality.
+    engine: String,
+
+    #[structopt(parse(from_os_str))]
+    #[structopt(raw(set = "ArgSettings::RequireEquals"))]
+    #[structopt(
+        short = "s",
+        long = "separator",
+        name = "separator",
+        default_value = "\n"
+    )]
+    /// The string to use to separate multiple documents that are written to the same stream.
+    ///
+    /// This can be useful to output a multi-document YAML file from multiple input templates
+    /// to stdout if the separator is '---'.
+    /// The separator is also used when writing multiple templates into the same file, like in 'a:out b:out'.
+    separator: OsString,
+
+    #[structopt(raw(set = "ArgSettings::RequireEquals"))]
+    #[structopt(raw(use_delimiter = "true"))]
+    #[structopt(
+        long = "replace",
+        value_delimiter = ":",
+        value_name = "find-this:replace-with-that"
+    )]
+    /// A simple find & replace for values for the string data to be placed into the template. \
+    /// The word to find is the first specified argument, the second one is the word to replace it with, \
+    /// e.g. -r=foo:bar.
+    replacements: Vec<String>,
+}
+
+pub fn _new<'a, 'b>() -> App<'a, 'b> {
     App::new("substitute")
-        .setting(AppSettings::AllowLeadingHyphen)
-        .setting(AppSettings::ColoredHelp)
-        .alias("sub")
-        .about("Substitutes templates using structured data. \
-         The idea is to build a tree of data that is used to substitute in various templates, using multiple inputs and outputs.\
-         That way, secrets (like credentials) can be extracted from the vault just once and used wherever needed without them touching disk.\
-         Liquid is used as template engine, and it's possible to refer to and inherit from other templates by their file-stem. \
-         Read more on their website at https://shopify.github.io/liquid .")
-        .arg(
-            Arg::with_name("engine")
-                .set(ArgSettings::RequireEquals)
-                .required(false)
-                .multiple(false)
-                .takes_value(true)
-                .long("engine")
-                .value_name("name")
-                .short("e")
-                .default_value("liquid")
-                .possible_values(&["handlebars", "liquid"])
-                .help("The choice of engine used for the substitution. Valid values are 'handlebars' and \
-               'liquid'. \
-               'liquid', the default, is coming with batteries included and very good at handling
-               one template at a time.
-               'handlebars' supports referencing other templates using partials, which \
-               is useful for sharing of common functionality.")
-        )
-        .arg(
-            Arg::with_name("separator")
-                .set(ArgSettings::RequireEquals)
-                .required(false)
-                .multiple(false)
-                .takes_value(true)
-                .long("separator")
-                .short("s")
-                .default_value("\n")
-                .value_name("separator")
-                .help("The string to use to separate multiple documents that are written to the same stream. \
-                    This can be useful to output a multi-document YAML file from multiple input templates \
-                    to stdout if the separator is '---'. \
-                    The separator is also used when writing multiple templates into the same file, like in 'a:out b:out'.")
-        )
-        .arg(
-            Arg::with_name("replace")
-                .set(ArgSettings::RequireEquals)
-                .long("replace")
-                .takes_value(true)
-                .value_name("find-this:replace-with-that")
-                .required(false)
-                .multiple(true)
-                .use_delimiter(true)
-                .value_delimiter(":")
-                .help("A simple find & replace for values for the string data to be placed into the template. \
-               The word to find is the first specified argument, the second one is the word to replace it with, \
-               e.g. -r=foo:bar.")
-        )
         .arg(
             Arg::with_name("validate")
                 .required(false)

@@ -3,7 +3,6 @@ use failure::{bail, Error};
 use itertools::Itertools;
 use sheesy_tools::substitute::{Engine, Spec, StreamOrPath};
 
-use super::required_os_arg;
 use sheesy_tools::substitute::substitute;
 use std::ffi::OsString;
 
@@ -17,7 +16,7 @@ pub struct Context {
     pub specs: Vec<Spec>,
 }
 
-pub fn context_from(args: &ArgMatches) -> Result<Context, Error> {
+pub fn _context_from(args: &ArgMatches) -> Result<Context, Error> {
     Ok(Context {
         replacements: {
             let replace_cmds = args
@@ -28,7 +27,7 @@ pub fn context_from(args: &ArgMatches) -> Result<Context, Error> {
             }
             replace_cmds.into_iter().tuples().collect()
         },
-        separator: required_os_arg(args, "separator")?,
+        separator: OsString::new(),
         engine: args.value_of("engine").expect("clap to work").parse()?,
         validate: args.is_present("validate"),
         data: args
@@ -41,8 +40,8 @@ pub fn context_from(args: &ArgMatches) -> Result<Context, Error> {
     })
 }
 
-pub fn execute(args: &ArgMatches) -> Result<(), Error> {
-    let context = context_from(args)?;
+pub fn _execute(args: &ArgMatches) -> Result<(), Error> {
+    let context = _context_from(args)?;
     substitute(
         context.engine,
         &context.data,
