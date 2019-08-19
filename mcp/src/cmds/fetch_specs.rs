@@ -5,8 +5,7 @@ use discovery_parser::{
 };
 use failure::{bail, format_err, Error, ResultExt};
 use log::{error, info};
-use std::path::Path;
-use std::{convert::TryFrom, convert::TryInto, fmt, fs};
+use std::{convert::TryFrom, convert::TryInto, fmt, fs, path::Path, time::Instant};
 
 #[derive(Debug, PartialEq, Eq)]
 struct Id<'a> {
@@ -87,6 +86,7 @@ pub fn execute(
             )
         })?)?;
 
+    let time = Instant::now();
     for api in apis
         .items
         .iter()
@@ -103,7 +103,12 @@ pub fn execute(
     {
         info!("Successfully processed ${:?}", api)
     }
-    unimplemented!("fetch specs")
+    info!(
+        "Processed {} specs in {}s",
+        apis.items.len(),
+        time.elapsed().as_secs()
+    );
+    Ok(())
 }
 
 #[cfg(test)]
