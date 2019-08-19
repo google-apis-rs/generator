@@ -300,20 +300,16 @@ fn request_method<'a>(
             quote! {(#id, &self.#ident)}
         });
 
-    /*
-        let set_body = request_type.map(|_| {
-            quote! {
-                let req = req.json(&self.request);
-            }
-        });
-    */
     let http_method = ::reqwest::Method::from_str(http_method)
         .expect(format!("unknown http method: {}", http_method).as_str());
     let reqwest_method = reqwest_http_method(&http_method);
     let auth = method_auth_scope(&http_method, scopes).map(|scope| {
         quote! {
             let mut auth = self.auth.lock().unwrap();
-            let req = req.bearer_auth(auth.token::<_, &str>(&[#scope]).unwrap().access_token);
+            let fut = auth.token(vec![#scope]);
+            let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
+            let token = runtime.block_on(fut).unwrap().access_token;
+            let req = req.bearer_auth(&token);
         }
     });
     quote! {
