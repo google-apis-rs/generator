@@ -10,36 +10,39 @@ use rayon::prelude::*;
 use std::{convert::TryFrom, convert::TryInto, fs, path::Path, time::Instant};
 
 #[derive(Debug, PartialEq, Eq)]
-struct Id<'a> {
-    name: &'a str,
-    version: &'a str,
+struct Id {
+    name: String,
+    version: String,
 }
 
-impl<'a> TryFrom<&'a str> for Id<'a> {
+impl TryFrom<&str> for Id {
     type Error = Error;
 
-    fn try_from(s: &'a str) -> Result<Id<'a>, Error> {
+    fn try_from(s: &str) -> Result<Id, Error> {
         let mut tokens = s.rsplit(':');
         match (tokens.next(), tokens.next()) {
-            (Some(version), Some(name)) => Ok(Id { name, version }),
+            (Some(v), Some(n)) => Ok(Id {
+                name: n.into(),
+                version: v.into(),
+            }),
             _ => bail!("Could not parse '{}' as id like 'name:version'", s),
         }
     }
 }
 
 #[derive(Debug)]
-struct Api<'a> {
-    id: Id<'a>,
-    url: &'a str,
+struct Api {
+    id: Id,
+    url: String,
 }
 
-impl<'a> TryFrom<&'a Item> for Api<'a> {
+impl<'a> TryFrom<&'a Item> for Api {
     type Error = Error;
 
-    fn try_from(value: &'a Item) -> Result<Api<'a>, Error> {
+    fn try_from(value: &Item) -> Result<Api, Error> {
         Ok(Api {
             id: value.id.as_str().try_into()?,
-            url: &value.discovery_rest_url,
+            url: value.discovery_rest_url.clone(),
         })
     }
 }
@@ -79,10 +82,10 @@ fn logged_write<P: AsRef<Path>, C: AsRef<[u8]>>(
 }
 
 fn write_artifacts<'a>(
-    (api, spec): (Api<'a>, DiscoveryRestDesc),
+    (api, spec): (Api, DiscoveryRestDesc),
     output_dir: &Path,
-) -> Result<Api<'a>, Error> {
-    let output_dir = output_dir.join(api.id.name).join(api.id.version);
+) -> Result<Api, Error> {
+    let output_dir = output_dir.join(&api.id.name).join(&api.id.version);
     fs::create_dir_all(&output_dir).with_context(|_| {
         format_err!(
             "Could not create artifact output directory at '{}'",
@@ -121,7 +124,7 @@ pub fn execute(
         .map(Api::try_from)
         .filter_map(log_error_and_continue)
         .map(|api| {
-            reqwest::get(api.url)
+            reqwest::get(&api.url)
                 .with_context(|_| format_err!("Could not fetch spec from '{}'", api.url))
                 .and_then(|mut r: reqwest::Response| {
                     let res: RestDescOrErr = r.json().with_context(|_| {
@@ -159,8 +162,8 @@ mod tests {
         fn valid_ids_work() {
             assert_eq!(
                 Id {
-                    name: "name",
-                    version: "version"
+                    name: "name".into(),
+                    version: "version".into()
                 },
                 Id::try_from("name:version").unwrap()
             )
