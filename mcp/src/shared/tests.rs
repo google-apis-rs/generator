@@ -9,6 +9,7 @@ mod sanitized_name {
     }
     #[test]
     fn it_strips_numbers_off_the_tail() {
+        // specifically for adexchangebuyer , actually
         assert_eq!(sanitized_name("foo2"), "foo");
         assert_eq!(sanitized_name("foo20"), "foo")
     }

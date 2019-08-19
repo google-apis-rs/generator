@@ -23,7 +23,7 @@ pub fn make_target(name: &str, version: &str) -> Result<String, Error> {
 }
 
 pub fn parse_version(version: &str) -> Result<String, Error> {
-    fn inner(version: &str) -> Result<String, Error> {
+    let inner = |version: &str| {
         if version.len() < 2 {
             bail!("version string too small");
         }
@@ -67,7 +67,7 @@ pub fn parse_version(version: &str) -> Result<String, Error> {
             ));
         }
         transform_version(version)
-    }
+    };
     inner(version).map_err(|e| format_err!("invalid version '{}': {}", version, e))
 }
 
