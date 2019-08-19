@@ -37,7 +37,7 @@ pub(crate) fn generate(
         );
         quote! {
             #[doc = #description]
-            pub fn #sub_resource_ident(&self) -> #sub_resource_ident::#sub_action_ident {
+            pub fn #sub_resource_ident(&self) -> #sub_resource_ident::#sub_action_ident<A> {
                 #sub_resource_ident::#sub_action_ident
             }
         }
@@ -49,10 +49,11 @@ pub(crate) fn generate(
                 #(#param_type_defs)*
             }
 
-            pub struct #action_ident<'a> {
+            pub struct #action_ident<'a, A> {
                 pub(super) reqwest: &'a reqwest::Client,
+                pub(super) auth: &'a std::sync::Mutex<A>,
             }
-            impl<'a> #action_ident<'a> {
+            impl<'a, A: yup_oauth2::GetToken> #action_ident<'a, A> {
                 #(#method_actions)*
                 #(#sub_resource_actions)*
             }

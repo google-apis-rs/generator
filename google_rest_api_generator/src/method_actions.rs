@@ -44,9 +44,10 @@ pub(crate) fn generate(method: &Method, global_params: &[Param]) -> TokenStream 
         .unwrap_or("");
     quote! {
         #[doc = #method_description]
-        pub fn #method_ident(&self#(, #required_args)*) -> #method_builder_type {
+        pub fn #method_ident(&self#(, #required_args)*) -> #method_builder_type<A> {
             #method_builder_type{
                 reqwest: &self.reqwest,
+                auth: &self.auth,
                 #(#method_builder_initializers,)*
             }
         }

@@ -1,6 +1,7 @@
 use crate::{to_ident, to_rust_varstr, Method, Param, PropertyDesc, Type, TypeDesc};
 use proc_macro2::TokenStream;
 use quote::quote;
+use std::str::FromStr;
 use syn::parse_quote;
 
 pub(crate) fn generate(
@@ -75,7 +76,7 @@ pub(crate) fn generate(
         &method.path,
         &method.params,
     );
-    let request_method = request_method(&method.http_method, all_params);
+    let request_method = request_method(&method.http_method, &method.scopes, all_params);
     let exec_method = exec_method(method.request.as_ref(), method.response.as_ref());
     let iterable_method_impl = iterable_method_impl(method);
     let iter_methods = iter_methods(method);
@@ -84,12 +85,13 @@ pub(crate) fn generate(
 
     quote! {
         #[derive(Debug,Clone)]
-        pub struct #builder_name<'a> {
+        pub struct #builder_name<'a, A> {
             pub(crate) reqwest: &'a ::reqwest::Client,
+            pub(crate) auth: &'a ::std::sync::Mutex<A>,
             #(#builder_fields,)*
         }
 
-        impl<'a> #builder_name<'a> {
+        impl<'a, A: yup_oauth2::GetToken> #builder_name<'a, A> {
             #(#param_methods)*
 
             #iter_methods
@@ -247,22 +249,40 @@ fn path_method(
     }
 }
 
-fn reqwest_http_method(http_method: &str) -> syn::Path {
-    match http_method {
-        "GET" => parse_quote! {::reqwest::Method::GET},
-        "POST" => parse_quote! {::reqwest::Method::POST},
-        "PUT" => parse_quote! {::reqwest::Method::PUT},
-        "DELETE" => parse_quote! {::reqwest::Method::DELETE},
-        "HEAD" => parse_quote! {::reqwest::Method::HEAD},
-        "OPTIONS" => parse_quote! {::reqwest::Method::OPTIONS},
-        "CONNECT" => parse_quote! {::reqwest::Method::CONNECT},
-        "PATCH" => parse_quote! {::reqwest::Method::PATCH},
-        "TRACE" => parse_quote! {::reqwest::Method::TRACE},
+fn reqwest_http_method(http_method: &::reqwest::Method) -> syn::Path {
+    match *http_method {
+        ::reqwest::Method::GET => parse_quote! {::reqwest::Method::GET},
+        ::reqwest::Method::POST => parse_quote! {::reqwest::Method::POST},
+        ::reqwest::Method::PUT => parse_quote! {::reqwest::Method::PUT},
+        ::reqwest::Method::DELETE => parse_quote! {::reqwest::Method::DELETE},
+        ::reqwest::Method::HEAD => parse_quote! {::reqwest::Method::HEAD},
+        ::reqwest::Method::OPTIONS => parse_quote! {::reqwest::Method::OPTIONS},
+        ::reqwest::Method::CONNECT => parse_quote! {::reqwest::Method::CONNECT},
+        ::reqwest::Method::PATCH => parse_quote! {::reqwest::Method::PATCH},
+        ::reqwest::Method::TRACE => parse_quote! {::reqwest::Method::TRACE},
         _ => panic!("unknown http method: {}", http_method),
     }
 }
 
-fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>) -> TokenStream {
+fn method_auth_scope<'a>(
+    http_method: &::reqwest::Method,
+    scopes: &'a [String],
+) -> Option<&'a str> {
+    scopes.get(0).map(|default| {
+        if http_method.is_safe() {
+            scopes.iter().find(|scope| scope.contains("readonly"))
+        } else {
+            None
+        }
+        .unwrap_or(default).as_str()
+    })
+}
+
+fn request_method<'a>(
+    http_method: &str,
+    scopes: &[String],
+    params: impl Iterator<Item = &'a Param>,
+) -> TokenStream {
     let query_params = params
         .filter(|param| param.location == "query")
         .map(|param| {
@@ -278,13 +298,20 @@ fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>
             }
         });
     */
-    let reqwest_method = reqwest_http_method(http_method);
+    let http_method = ::reqwest::Method::from_str(http_method)
+        .expect(format!("unknown http method: {}", http_method).as_str());
+    let reqwest_method = reqwest_http_method(&http_method);
+    let auth = method_auth_scope(&http_method, scopes).map(|scope| {
+        quote! {
+            let mut auth = self.auth.lock().unwrap();
+            let req = req.bearer_auth(auth.token::<_, &str>(&[#scope]).unwrap().access_token);
+        }
+    });
     quote! {
         fn _request(&self, path: &str) -> ::reqwest::RequestBuilder {
             let req = self.reqwest.request(#reqwest_method, path);
             #(let req = req.query(&[#query_params]);)*
-            // Hack until real oauth token support is implemented.
-            let req = req.bearer_auth(crate::auth_token());
+            #auth
             req
         }
     }
@@ -337,7 +364,7 @@ fn iterable_method_impl(method: &Method) -> TokenStream {
     }
     let builder_name = method.builder_name();
     quote! {
-        impl<'a> crate::IterableMethod for #builder_name<'a> {
+        impl<'a, A: yup_oauth2::GetToken> crate::IterableMethod for #builder_name<'a, A> {
             fn set_page_token(&mut self, value: String) {
                 self.page_token = value.into();
             }
