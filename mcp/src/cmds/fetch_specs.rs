@@ -7,11 +7,12 @@ use log::info;
 use rayon::prelude::*;
 use std::{fs, path::Path, time::Instant};
 
-fn write_artifacts<'a>(
+fn write_artifacts(
+    api: &Api,
     spec: DiscoveryRestDesc,
     output_dir: &Path,
 ) -> Result<DiscoveryRestDesc, Error> {
-    let output_dir = output_dir.join(&spec.name).join(&spec.version);
+    let output_dir = output_dir.join(&api.gen_dir);
     fs::create_dir_all(&output_dir).with_context(|_| {
         format_err!(
             "Could not create artifact output directory at '{}'",
@@ -65,9 +66,9 @@ pub fn execute(
     index
         .api
         .par_iter()
-        .map(fetch_spec)
+        .map(|api| fetch_spec(api).map(|r| (api, r)))
         .filter_map(log_error_and_continue)
-        .map(|v| write_artifacts(v, &output_directory))
+        .map(|(api, v)| write_artifacts(api, v, &output_directory))
         .filter_map(log_error_and_continue)
         .for_each(|api| info!("Successfully processed {}:{}", api.name, api.version));
     info!(

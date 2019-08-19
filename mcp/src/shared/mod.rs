@@ -4,6 +4,7 @@ use discovery_parser::generated::{ApiIndexV1, Item};
 use failure::{bail, format_err, Error};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
+use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize)]
 pub struct MappedIndex {
@@ -13,6 +14,7 @@ pub struct MappedIndex {
 #[derive(Serialize, Deserialize)]
 pub struct Api {
     pub name: String,
+    pub gen_dir: PathBuf,
     pub crate_name: String,
     pub make_target: String,
     pub rest_url: String,
@@ -22,8 +24,10 @@ impl TryFrom<Item> for Api {
     type Error = Error;
 
     fn try_from(value: Item) -> Result<Self, Self::Error> {
+        let name = sanitized_name(&value.name).into();
         Ok(Api {
-            name: sanitized_name(&value.name).into(),
+            gen_dir: PathBuf::from(&name).join(&value.version),
+            name,
             rest_url: value.discovery_rest_url,
             crate_name: crate_name(&value.name, &value.version)?,
             make_target: make_target(&value.name, &value.version)?,
