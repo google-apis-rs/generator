@@ -10,8 +10,8 @@ help:
 	$(info mcp-tests                  | run all tests for the 'master control program')
 	$(info cargo-tests                | run all tests driven by cargo)
 	$(info -- Targets for files we depend on ----------------------------------------------------)
-	$(info fetch-api-specs            | fetch all apis our discovery document knows, and store them in $(API_DIR))
-	$(info api-index                  | fetch the list of available Google APIs)
+	$(info update-all-metadata        | invalidate all specifications from google and fetch the latest versions
+	$(info fetch-api-specs            | fetch all apis our local discovery document knows, and store them in $(API_DIR))
 	$(info --------------------------------------------------------------------------------------)
 
 always:
@@ -24,6 +24,10 @@ $(MCP): always
 
 $(API_INDEX_JSON):
 	curl -S https://www.googleapis.com/discovery/v1/apis > $@
+
+update-all-metadata:
+	rm $(API_INDEX_JSON)
+	$(MAKE) fetch-api-specs
 
 discovery_parser/src/discovery.rs: $(API_INDEX_JSON)
 	# quicktype version 15.0.199 known to be working
