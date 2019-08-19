@@ -13,7 +13,7 @@ WITH_FAILURE=1
 SUCCESSFULLY=0
 
 fixture="$root/fixtures"
-snapshot="$root/snapshots"
+snapshot="$root/shared.snapshots"
 
 # shellcheck source=./tests/included-stateless-substitute.sh
 source "$root/included-stateless-substitute.sh"
