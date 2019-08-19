@@ -1,9 +1,7 @@
 use super::util::{log_error_and_continue, logged_write};
-use crate::options::fetch_specs::Args;
-use discovery_parser::{
-    generated::{ApiIndexV1, Item},
-    DiscoveryRestDesc, RestDescOrErr,
-};
+use crate::shared::Api;
+use crate::{options::fetch_specs::Args, shared::MappedIndex};
+use discovery_parser::{DiscoveryRestDesc, RestDescOrErr};
 use failure::{format_err, Error, ResultExt};
 use log::info;
 use rayon::prelude::*;
@@ -32,39 +30,40 @@ fn write_artifacts<'a>(
     Ok(spec)
 }
 
-fn fetch_spec(api: &Item) -> Result<DiscoveryRestDesc, Error> {
-    reqwest::get(&api.discovery_rest_url)
-        .with_context(|_| format_err!("Could not fetch spec from '{}'", api.discovery_rest_url))
+fn fetch_spec(api: &Api) -> Result<DiscoveryRestDesc, Error> {
+    reqwest::get(&api.rest_url)
+        .with_context(|_| format_err!("Could not fetch spec from '{}'", api.rest_url))
         .map_err(Error::from)
         .and_then(|mut r: reqwest::Response| {
             let res: RestDescOrErr = r.json().with_context(|_| {
-                format_err!("Could not deserialize spec at '{}'", api.discovery_rest_url)
+                format_err!("Could not deserialize spec at '{}'", api.rest_url)
             })?;
             match res {
                 RestDescOrErr::RestDesc(v) => Ok(v),
                 RestDescOrErr::Err(err) => Err(format_err!("{:?}", err.error)),
             }
         })
-        .with_context(|_| format_err!("Error fetching spec from '{}'", api.discovery_rest_url))
+        .with_context(|_| format_err!("Error fetching spec from '{}'", api.rest_url))
         .map_err(Into::into)
 }
 
 pub fn execute(
     Args {
-        discovery_json_path,
+        mapped_index_path,
         output_directory,
     }: Args,
 ) -> Result<(), Error> {
-    let apis: ApiIndexV1 =
-        serde_json::from_str(&fs::read_to_string(&discovery_json_path).with_context(|_| {
+    let index: MappedIndex =
+        serde_json::from_str(&fs::read_to_string(&mapped_index_path).with_context(|_| {
             format_err!(
                 "Could not read api index at '{}'",
-                discovery_json_path.display()
+                mapped_index_path.display()
             )
         })?)?;
 
     let time = Instant::now();
-    apis.items
+    index
+        .api
         .par_iter()
         .map(fetch_spec)
         .filter_map(log_error_and_continue)
@@ -73,7 +72,7 @@ pub fn execute(
         .for_each(|api| info!("Successfully processed {}:{}", api.name, api.version));
     info!(
         "Fetched {} specs in {}s",
-        apis.items.len(),
+        index.api.len(),
         time.elapsed().as_secs()
     );
     Ok(())

@@ -58,7 +58,7 @@ discovery_parser/src/discovery.rs: $(API_INDEX_JSON)
 api-index: $(API_INDEX_JSON) $(GEN_MAKEFILE)
 
 fetch-api-specs: api-index $(MCP) $(GEN_DIR)
-	$(MCP) fetch-api-specs $(API_INDEX_JSON) $(GEN_DIR)
+	$(MCP) fetch-api-specs $(API_INDEX_MAPPED_JSON) $(GEN_DIR)
 
 mcp-tests: $(MCPD)
 	tests/mcp/journey-tests.sh $<

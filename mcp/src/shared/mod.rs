@@ -1,6 +1,47 @@
 //! This module, in some way or form, should contain all logic used to generate names.
 //! These must be reused throughout the library.
+use discovery_parser::generated::{ApiIndexV1, Item};
 use failure::{bail, format_err, Error};
+use serde::{Deserialize, Serialize};
+use std::convert::TryFrom;
+
+#[derive(Serialize, Deserialize)]
+pub struct MappedIndex {
+    pub api: Vec<Api>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Api {
+    pub name: String,
+    pub crate_name: String,
+    pub make_target: String,
+    pub rest_url: String,
+}
+
+impl TryFrom<Item> for Api {
+    type Error = Error;
+
+    fn try_from(value: Item) -> Result<Self, Self::Error> {
+        Ok(Api {
+            name: sanitized_name(&value.name).into(),
+            rest_url: value.discovery_rest_url,
+            crate_name: crate_name(&value.name, &value.version)?,
+            make_target: make_target(&value.name, &value.version)?,
+        })
+    }
+}
+
+impl MappedIndex {
+    pub fn from_index(index: ApiIndexV1) -> Result<Self, Error> {
+        Ok(MappedIndex {
+            api: index
+                .items
+                .into_iter()
+                .map(Api::try_from)
+                .collect::<Result<Vec<_>, Error>>()?,
+        })
+    }
+}
 
 pub fn crate_name(name: &str, version: &str) -> Result<String, Error> {
     make_target(name, version).map(|n| format!("google-{}", n))

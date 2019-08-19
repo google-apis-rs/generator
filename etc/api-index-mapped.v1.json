@@ -1,0 +1,1528 @@
+{
+  "api": [
+    {
+      "name": "abusiveexperiencereport",
+      "crate_name": "google-abusiveexperiencereport1",
+      "make_target": "abusiveexperiencereport1",
+      "rest_url": "https://abusiveexperiencereport.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "acceleratedmobilepageurl",
+      "crate_name": "google-acceleratedmobilepageurl1",
+      "make_target": "acceleratedmobilepageurl1",
+      "rest_url": "https://acceleratedmobilepageurl.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "accessapproval",
+      "crate_name": "google-accessapproval1_beta1",
+      "make_target": "accessapproval1_beta1",
+      "rest_url": "https://accessapproval.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "accesscontextmanager",
+      "crate_name": "google-accesscontextmanager1_beta",
+      "make_target": "accesscontextmanager1_beta",
+      "rest_url": "https://accesscontextmanager.googleapis.com/$discovery/rest?version=v1beta"
+    },
+    {
+      "name": "accesscontextmanager",
+      "crate_name": "google-accesscontextmanager1",
+      "make_target": "accesscontextmanager1",
+      "rest_url": "https://accesscontextmanager.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "adexchangebuyer",
+      "crate_name": "google-adexchangebuyer1d2",
+      "make_target": "adexchangebuyer1d2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/adexchangebuyer/v1.2/rest"
+    },
+    {
+      "name": "adexchangebuyer",
+      "crate_name": "google-adexchangebuyer1d3",
+      "make_target": "adexchangebuyer1d3",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/adexchangebuyer/v1.3/rest"
+    },
+    {
+      "name": "adexchangebuyer",
+      "crate_name": "google-adexchangebuyer1d4",
+      "make_target": "adexchangebuyer1d4",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/adexchangebuyer/v1.4/rest"
+    },
+    {
+      "name": "adexchangebuyer",
+      "crate_name": "google-adexchangebuyer2_beta1",
+      "make_target": "adexchangebuyer2_beta1",
+      "rest_url": "https://adexchangebuyer.googleapis.com/$discovery/rest?version=v2beta1"
+    },
+    {
+      "name": "adexperiencereport",
+      "crate_name": "google-adexperiencereport1",
+      "make_target": "adexperiencereport1",
+      "rest_url": "https://adexperiencereport.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "admin",
+      "crate_name": "google-admin1_datatransfer",
+      "make_target": "admin1_datatransfer",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/admin/datatransfer_v1/rest"
+    },
+    {
+      "name": "admin",
+      "crate_name": "google-admin1_directory",
+      "make_target": "admin1_directory",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/admin/directory_v1/rest"
+    },
+    {
+      "name": "admin",
+      "crate_name": "google-admin1_reports",
+      "make_target": "admin1_reports",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/admin/reports_v1/rest"
+    },
+    {
+      "name": "adsense",
+      "crate_name": "google-adsense1d4",
+      "make_target": "adsense1d4",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/adsense/v1.4/rest"
+    },
+    {
+      "name": "adsensehost",
+      "crate_name": "google-adsensehost4d1",
+      "make_target": "adsensehost4d1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/adsensehost/v4.1/rest"
+    },
+    {
+      "name": "alertcenter",
+      "crate_name": "google-alertcenter1_beta1",
+      "make_target": "alertcenter1_beta1",
+      "rest_url": "https://alertcenter.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "analytics",
+      "crate_name": "google-analytics2d4",
+      "make_target": "analytics2d4",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/analytics/v2.4/rest"
+    },
+    {
+      "name": "analytics",
+      "crate_name": "google-analytics3",
+      "make_target": "analytics3",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/analytics/v3/rest"
+    },
+    {
+      "name": "analyticsreporting",
+      "crate_name": "google-analyticsreporting4",
+      "make_target": "analyticsreporting4",
+      "rest_url": "https://analyticsreporting.googleapis.com/$discovery/rest?version=v4"
+    },
+    {
+      "name": "androiddeviceprovisioning",
+      "crate_name": "google-androiddeviceprovisioning1",
+      "make_target": "androiddeviceprovisioning1",
+      "rest_url": "https://androiddeviceprovisioning.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "androidenterprise",
+      "crate_name": "google-androidenterprise1",
+      "make_target": "androidenterprise1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/androidenterprise/v1/rest"
+    },
+    {
+      "name": "androidmanagement",
+      "crate_name": "google-androidmanagement1",
+      "make_target": "androidmanagement1",
+      "rest_url": "https://androidmanagement.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "androidpublisher",
+      "crate_name": "google-androidpublisher1",
+      "make_target": "androidpublisher1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/androidpublisher/v1/rest"
+    },
+    {
+      "name": "androidpublisher",
+      "crate_name": "google-androidpublisher1d1",
+      "make_target": "androidpublisher1d1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/androidpublisher/v1.1/rest"
+    },
+    {
+      "name": "androidpublisher",
+      "crate_name": "google-androidpublisher2",
+      "make_target": "androidpublisher2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/androidpublisher/v2/rest"
+    },
+    {
+      "name": "androidpublisher",
+      "crate_name": "google-androidpublisher3",
+      "make_target": "androidpublisher3",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/androidpublisher/v3/rest"
+    },
+    {
+      "name": "appengine",
+      "crate_name": "google-appengine1_alpha",
+      "make_target": "appengine1_alpha",
+      "rest_url": "https://appengine.googleapis.com/$discovery/rest?version=v1alpha"
+    },
+    {
+      "name": "appengine",
+      "crate_name": "google-appengine1_beta",
+      "make_target": "appengine1_beta",
+      "rest_url": "https://appengine.googleapis.com/$discovery/rest?version=v1beta"
+    },
+    {
+      "name": "appengine",
+      "crate_name": "google-appengine1",
+      "make_target": "appengine1",
+      "rest_url": "https://appengine.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "appengine",
+      "crate_name": "google-appengine1_beta4",
+      "make_target": "appengine1_beta4",
+      "rest_url": "https://appengine.googleapis.com/$discovery/rest?version=v1beta4"
+    },
+    {
+      "name": "appengine",
+      "crate_name": "google-appengine1_beta5",
+      "make_target": "appengine1_beta5",
+      "rest_url": "https://appengine.googleapis.com/$discovery/rest?version=v1beta5"
+    },
+    {
+      "name": "appsactivity",
+      "crate_name": "google-appsactivity1",
+      "make_target": "appsactivity1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/appsactivity/v1/rest"
+    },
+    {
+      "name": "appstate",
+      "crate_name": "google-appstate1",
+      "make_target": "appstate1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/appstate/v1/rest"
+    },
+    {
+      "name": "bigquery",
+      "crate_name": "google-bigquery2",
+      "make_target": "bigquery2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/bigquery/v2/rest"
+    },
+    {
+      "name": "bigquerydatatransfer",
+      "crate_name": "google-bigquerydatatransfer1",
+      "make_target": "bigquerydatatransfer1",
+      "rest_url": "https://bigquerydatatransfer.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "bigtableadmin",
+      "crate_name": "google-bigtableadmin1",
+      "make_target": "bigtableadmin1",
+      "rest_url": "https://bigtableadmin.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "bigtableadmin",
+      "crate_name": "google-bigtableadmin2",
+      "make_target": "bigtableadmin2",
+      "rest_url": "https://bigtableadmin.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "binaryauthorization",
+      "crate_name": "google-binaryauthorization1_beta1",
+      "make_target": "binaryauthorization1_beta1",
+      "rest_url": "https://binaryauthorization.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "blogger",
+      "crate_name": "google-blogger2",
+      "make_target": "blogger2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/blogger/v2/rest"
+    },
+    {
+      "name": "blogger",
+      "crate_name": "google-blogger3",
+      "make_target": "blogger3",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/blogger/v3/rest"
+    },
+    {
+      "name": "books",
+      "crate_name": "google-books1",
+      "make_target": "books1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/books/v1/rest"
+    },
+    {
+      "name": "calendar",
+      "crate_name": "google-calendar3",
+      "make_target": "calendar3",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"
+    },
+    {
+      "name": "chat",
+      "crate_name": "google-chat1",
+      "make_target": "chat1",
+      "rest_url": "https://chat.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "civicinfo",
+      "crate_name": "google-civicinfo2",
+      "make_target": "civicinfo2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/civicinfo/v2/rest"
+    },
+    {
+      "name": "classroom",
+      "crate_name": "google-classroom1",
+      "make_target": "classroom1",
+      "rest_url": "https://classroom.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "cloudasset",
+      "crate_name": "google-cloudasset1",
+      "make_target": "cloudasset1",
+      "rest_url": "https://cloudasset.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "cloudasset",
+      "crate_name": "google-cloudasset1_beta1",
+      "make_target": "cloudasset1_beta1",
+      "rest_url": "https://cloudasset.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "cloudbilling",
+      "crate_name": "google-cloudbilling1",
+      "make_target": "cloudbilling1",
+      "rest_url": "https://cloudbilling.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "cloudbuild",
+      "crate_name": "google-cloudbuild1_alpha1",
+      "make_target": "cloudbuild1_alpha1",
+      "rest_url": "https://cloudbuild.googleapis.com/$discovery/rest?version=v1alpha1"
+    },
+    {
+      "name": "cloudbuild",
+      "crate_name": "google-cloudbuild1",
+      "make_target": "cloudbuild1",
+      "rest_url": "https://cloudbuild.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "clouddebugger",
+      "crate_name": "google-clouddebugger2",
+      "make_target": "clouddebugger2",
+      "rest_url": "https://clouddebugger.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "clouderrorreporting",
+      "crate_name": "google-clouderrorreporting1_beta1",
+      "make_target": "clouderrorreporting1_beta1",
+      "rest_url": "https://clouderrorreporting.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "cloudfunctions",
+      "crate_name": "google-cloudfunctions1",
+      "make_target": "cloudfunctions1",
+      "rest_url": "https://cloudfunctions.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "cloudfunctions",
+      "crate_name": "google-cloudfunctions1_beta2",
+      "make_target": "cloudfunctions1_beta2",
+      "rest_url": "https://cloudfunctions.googleapis.com/$discovery/rest?version=v1beta2"
+    },
+    {
+      "name": "cloudidentity",
+      "crate_name": "google-cloudidentity1",
+      "make_target": "cloudidentity1",
+      "rest_url": "https://cloudidentity.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "cloudidentity",
+      "crate_name": "google-cloudidentity1_beta1",
+      "make_target": "cloudidentity1_beta1",
+      "rest_url": "https://cloudidentity.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "cloudiot",
+      "crate_name": "google-cloudiot1_alpha1",
+      "make_target": "cloudiot1_alpha1",
+      "rest_url": "https://cloudiot.googleapis.com/$discovery/rest?version=v1alpha1"
+    },
+    {
+      "name": "cloudiot",
+      "crate_name": "google-cloudiot1",
+      "make_target": "cloudiot1",
+      "rest_url": "https://cloudiot.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "cloudkms",
+      "crate_name": "google-cloudkms1",
+      "make_target": "cloudkms1",
+      "rest_url": "https://cloudkms.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "cloudprivatecatalog",
+      "crate_name": "google-cloudprivatecatalog1_beta1",
+      "make_target": "cloudprivatecatalog1_beta1",
+      "rest_url": "https://cloudprivatecatalog.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "cloudprivatecatalogproducer",
+      "crate_name": "google-cloudprivatecatalogproducer1_beta1",
+      "make_target": "cloudprivatecatalogproducer1_beta1",
+      "rest_url": "https://cloudprivatecatalogproducer.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "cloudprofiler",
+      "crate_name": "google-cloudprofiler2",
+      "make_target": "cloudprofiler2",
+      "rest_url": "https://cloudprofiler.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "cloudresourcemanager",
+      "crate_name": "google-cloudresourcemanager1",
+      "make_target": "cloudresourcemanager1",
+      "rest_url": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "cloudresourcemanager",
+      "crate_name": "google-cloudresourcemanager1_beta1",
+      "make_target": "cloudresourcemanager1_beta1",
+      "rest_url": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "cloudresourcemanager",
+      "crate_name": "google-cloudresourcemanager2",
+      "make_target": "cloudresourcemanager2",
+      "rest_url": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "cloudresourcemanager",
+      "crate_name": "google-cloudresourcemanager2_beta1",
+      "make_target": "cloudresourcemanager2_beta1",
+      "rest_url": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v2beta1"
+    },
+    {
+      "name": "cloudscheduler",
+      "crate_name": "google-cloudscheduler1",
+      "make_target": "cloudscheduler1",
+      "rest_url": "https://cloudscheduler.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "cloudscheduler",
+      "crate_name": "google-cloudscheduler1_beta1",
+      "make_target": "cloudscheduler1_beta1",
+      "rest_url": "https://cloudscheduler.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "cloudsearch",
+      "crate_name": "google-cloudsearch1",
+      "make_target": "cloudsearch1",
+      "rest_url": "https://cloudsearch.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "cloudshell",
+      "crate_name": "google-cloudshell1_alpha1",
+      "make_target": "cloudshell1_alpha1",
+      "rest_url": "https://cloudshell.googleapis.com/$discovery/rest?version=v1alpha1"
+    },
+    {
+      "name": "cloudshell",
+      "crate_name": "google-cloudshell1",
+      "make_target": "cloudshell1",
+      "rest_url": "https://cloudshell.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "cloudtasks",
+      "crate_name": "google-cloudtasks2",
+      "make_target": "cloudtasks2",
+      "rest_url": "https://cloudtasks.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "cloudtasks",
+      "crate_name": "google-cloudtasks2_beta2",
+      "make_target": "cloudtasks2_beta2",
+      "rest_url": "https://cloudtasks.googleapis.com/$discovery/rest?version=v2beta2"
+    },
+    {
+      "name": "cloudtasks",
+      "crate_name": "google-cloudtasks2_beta3",
+      "make_target": "cloudtasks2_beta3",
+      "rest_url": "https://cloudtasks.googleapis.com/$discovery/rest?version=v2beta3"
+    },
+    {
+      "name": "cloudtrace",
+      "crate_name": "google-cloudtrace2_alpha1",
+      "make_target": "cloudtrace2_alpha1",
+      "rest_url": "https://cloudtrace.googleapis.com/$discovery/rest?version=v2alpha1"
+    },
+    {
+      "name": "cloudtrace",
+      "crate_name": "google-cloudtrace1",
+      "make_target": "cloudtrace1",
+      "rest_url": "https://cloudtrace.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "cloudtrace",
+      "crate_name": "google-cloudtrace2",
+      "make_target": "cloudtrace2",
+      "rest_url": "https://cloudtrace.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "commentanalyzer",
+      "crate_name": "google-commentanalyzer1_alpha1",
+      "make_target": "commentanalyzer1_alpha1",
+      "rest_url": "https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1"
+    },
+    {
+      "name": "composer",
+      "crate_name": "google-composer1",
+      "make_target": "composer1",
+      "rest_url": "https://composer.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "composer",
+      "crate_name": "google-composer1_beta1",
+      "make_target": "composer1_beta1",
+      "rest_url": "https://composer.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "compute",
+      "crate_name": "google-computealpha",
+      "make_target": "computealpha",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/compute/alpha/rest"
+    },
+    {
+      "name": "compute",
+      "crate_name": "google-computebeta",
+      "make_target": "computebeta",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/compute/beta/rest"
+    },
+    {
+      "name": "compute",
+      "crate_name": "google-compute1",
+      "make_target": "compute1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/compute/v1/rest"
+    },
+    {
+      "name": "container",
+      "crate_name": "google-container1",
+      "make_target": "container1",
+      "rest_url": "https://container.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "container",
+      "crate_name": "google-container1_beta1",
+      "make_target": "container1_beta1",
+      "rest_url": "https://container.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "containeranalysis",
+      "crate_name": "google-containeranalysis1_alpha1",
+      "make_target": "containeranalysis1_alpha1",
+      "rest_url": "https://containeranalysis.googleapis.com/$discovery/rest?version=v1alpha1"
+    },
+    {
+      "name": "containeranalysis",
+      "crate_name": "google-containeranalysis1_beta1",
+      "make_target": "containeranalysis1_beta1",
+      "rest_url": "https://containeranalysis.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "content",
+      "crate_name": "google-content2",
+      "make_target": "content2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/content/v2/rest"
+    },
+    {
+      "name": "content",
+      "crate_name": "google-content2d1",
+      "make_target": "content2d1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/content/v2.1/rest"
+    },
+    {
+      "name": "customsearch",
+      "crate_name": "google-customsearch1",
+      "make_target": "customsearch1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/customsearch/v1/rest"
+    },
+    {
+      "name": "dataflow",
+      "crate_name": "google-dataflow1_b3",
+      "make_target": "dataflow1_b3",
+      "rest_url": "https://dataflow.googleapis.com/$discovery/rest?version=v1b3"
+    },
+    {
+      "name": "datafusion",
+      "crate_name": "google-datafusion1_beta1",
+      "make_target": "datafusion1_beta1",
+      "rest_url": "https://datafusion.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "dataproc",
+      "crate_name": "google-dataproc1",
+      "make_target": "dataproc1",
+      "rest_url": "https://dataproc.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "dataproc",
+      "crate_name": "google-dataproc1_beta2",
+      "make_target": "dataproc1_beta2",
+      "rest_url": "https://dataproc.googleapis.com/$discovery/rest?version=v1beta2"
+    },
+    {
+      "name": "datastore",
+      "crate_name": "google-datastore1",
+      "make_target": "datastore1",
+      "rest_url": "https://datastore.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "datastore",
+      "crate_name": "google-datastore1_beta1",
+      "make_target": "datastore1_beta1",
+      "rest_url": "https://datastore.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "datastore",
+      "crate_name": "google-datastore1_beta3",
+      "make_target": "datastore1_beta3",
+      "rest_url": "https://datastore.googleapis.com/$discovery/rest?version=v1beta3"
+    },
+    {
+      "name": "deploymentmanager",
+      "crate_name": "google-deploymentmanageralpha",
+      "make_target": "deploymentmanageralpha",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/deploymentmanager/alpha/rest"
+    },
+    {
+      "name": "deploymentmanager",
+      "crate_name": "google-deploymentmanager2_beta",
+      "make_target": "deploymentmanager2_beta",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/deploymentmanager/v2beta/rest"
+    },
+    {
+      "name": "deploymentmanager",
+      "crate_name": "google-deploymentmanager2",
+      "make_target": "deploymentmanager2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/deploymentmanager/v2/rest"
+    },
+    {
+      "name": "dfareporting",
+      "crate_name": "google-dfareporting3d1",
+      "make_target": "dfareporting3d1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/dfareporting/v3.1/rest"
+    },
+    {
+      "name": "dfareporting",
+      "crate_name": "google-dfareporting3d2",
+      "make_target": "dfareporting3d2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/dfareporting/v3.2/rest"
+    },
+    {
+      "name": "dfareporting",
+      "crate_name": "google-dfareporting3d3",
+      "make_target": "dfareporting3d3",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/dfareporting/v3.3/rest"
+    },
+    {
+      "name": "dialogflow",
+      "crate_name": "google-dialogflow2",
+      "make_target": "dialogflow2",
+      "rest_url": "https://dialogflow.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "dialogflow",
+      "crate_name": "google-dialogflow2_beta1",
+      "make_target": "dialogflow2_beta1",
+      "rest_url": "https://dialogflow.googleapis.com/$discovery/rest?version=v2beta1"
+    },
+    {
+      "name": "digitalassetlinks",
+      "crate_name": "google-digitalassetlinks1",
+      "make_target": "digitalassetlinks1",
+      "rest_url": "https://digitalassetlinks.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "discovery",
+      "crate_name": "google-discovery1",
+      "make_target": "discovery1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/discovery/v1/rest"
+    },
+    {
+      "name": "dlp",
+      "crate_name": "google-dlp2",
+      "make_target": "dlp2",
+      "rest_url": "https://dlp.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "dns",
+      "crate_name": "google-dns1",
+      "make_target": "dns1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/dns/v1/rest"
+    },
+    {
+      "name": "dns",
+      "crate_name": "google-dns1_beta2",
+      "make_target": "dns1_beta2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/dns/v1beta2/rest"
+    },
+    {
+      "name": "dns",
+      "crate_name": "google-dns2_beta1",
+      "make_target": "dns2_beta1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/dns/v2beta1/rest"
+    },
+    {
+      "name": "docs",
+      "crate_name": "google-docs1",
+      "make_target": "docs1",
+      "rest_url": "https://docs.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "doubleclickbidmanager",
+      "crate_name": "google-doubleclickbidmanager1",
+      "make_target": "doubleclickbidmanager1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/doubleclickbidmanager/v1/rest"
+    },
+    {
+      "name": "doubleclicksearch",
+      "crate_name": "google-doubleclicksearch2",
+      "make_target": "doubleclicksearch2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/doubleclicksearch/v2/rest"
+    },
+    {
+      "name": "drive",
+      "crate_name": "google-drive2",
+      "make_target": "drive2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/drive/v2/rest"
+    },
+    {
+      "name": "drive",
+      "crate_name": "google-drive3",
+      "make_target": "drive3",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
+    },
+    {
+      "name": "driveactivity",
+      "crate_name": "google-driveactivity2",
+      "make_target": "driveactivity2",
+      "rest_url": "https://driveactivity.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "factchecktools",
+      "crate_name": "google-factchecktools1_alpha1",
+      "make_target": "factchecktools1_alpha1",
+      "rest_url": "https://factchecktools.googleapis.com/$discovery/rest?version=v1alpha1"
+    },
+    {
+      "name": "fcm",
+      "crate_name": "google-fcm1",
+      "make_target": "fcm1",
+      "rest_url": "https://fcm.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "file",
+      "crate_name": "google-file1",
+      "make_target": "file1",
+      "rest_url": "https://file.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "file",
+      "crate_name": "google-file1_beta1",
+      "make_target": "file1_beta1",
+      "rest_url": "https://file.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "firebase",
+      "crate_name": "google-firebase1_beta1",
+      "make_target": "firebase1_beta1",
+      "rest_url": "https://firebase.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "firebasedynamiclinks",
+      "crate_name": "google-firebasedynamiclinks1",
+      "make_target": "firebasedynamiclinks1",
+      "rest_url": "https://firebasedynamiclinks.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "firebasehosting",
+      "crate_name": "google-firebasehosting1_beta1",
+      "make_target": "firebasehosting1_beta1",
+      "rest_url": "https://firebasehosting.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "firebaserules",
+      "crate_name": "google-firebaserules1",
+      "make_target": "firebaserules1",
+      "rest_url": "https://firebaserules.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "firestore",
+      "crate_name": "google-firestore1",
+      "make_target": "firestore1",
+      "rest_url": "https://firestore.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "firestore",
+      "crate_name": "google-firestore1_beta1",
+      "make_target": "firestore1_beta1",
+      "rest_url": "https://firestore.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "firestore",
+      "crate_name": "google-firestore1_beta2",
+      "make_target": "firestore1_beta2",
+      "rest_url": "https://firestore.googleapis.com/$discovery/rest?version=v1beta2"
+    },
+    {
+      "name": "fitness",
+      "crate_name": "google-fitness1",
+      "make_target": "fitness1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/fitness/v1/rest"
+    },
+    {
+      "name": "fusiontables",
+      "crate_name": "google-fusiontables1",
+      "make_target": "fusiontables1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/fusiontables/v1/rest"
+    },
+    {
+      "name": "fusiontables",
+      "crate_name": "google-fusiontables2",
+      "make_target": "fusiontables2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/fusiontables/v2/rest"
+    },
+    {
+      "name": "games",
+      "crate_name": "google-games1",
+      "make_target": "games1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/games/v1/rest"
+    },
+    {
+      "name": "gamesConfiguration",
+      "crate_name": "google-gamesConfiguration1_configuration",
+      "make_target": "gamesConfiguration1_configuration",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/gamesConfiguration/v1configuration/rest"
+    },
+    {
+      "name": "gamesManagement",
+      "crate_name": "google-gamesManagement1_management",
+      "make_target": "gamesManagement1_management",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/gamesManagement/v1management/rest"
+    },
+    {
+      "name": "genomics",
+      "crate_name": "google-genomics1_alpha2",
+      "make_target": "genomics1_alpha2",
+      "rest_url": "https://genomics.googleapis.com/$discovery/rest?version=v1alpha2"
+    },
+    {
+      "name": "genomics",
+      "crate_name": "google-genomics2_alpha1",
+      "make_target": "genomics2_alpha1",
+      "rest_url": "https://genomics.googleapis.com/$discovery/rest?version=v2alpha1"
+    },
+    {
+      "name": "genomics",
+      "crate_name": "google-genomics1",
+      "make_target": "genomics1",
+      "rest_url": "https://genomics.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "gmail",
+      "crate_name": "google-gmail1",
+      "make_target": "gmail1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
+    },
+    {
+      "name": "groupsmigration",
+      "crate_name": "google-groupsmigration1",
+      "make_target": "groupsmigration1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/groupsmigration/v1/rest"
+    },
+    {
+      "name": "groupssettings",
+      "crate_name": "google-groupssettings1",
+      "make_target": "groupssettings1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/groupssettings/v1/rest"
+    },
+    {
+      "name": "healthcare",
+      "crate_name": "google-healthcare1_alpha2",
+      "make_target": "healthcare1_alpha2",
+      "rest_url": "https://healthcare.googleapis.com/$discovery/rest?version=v1alpha2"
+    },
+    {
+      "name": "healthcare",
+      "crate_name": "google-healthcare1_beta1",
+      "make_target": "healthcare1_beta1",
+      "rest_url": "https://healthcare.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "iam",
+      "crate_name": "google-iam1",
+      "make_target": "iam1",
+      "rest_url": "https://iam.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "iamcredentials",
+      "crate_name": "google-iamcredentials1",
+      "make_target": "iamcredentials1",
+      "rest_url": "https://iamcredentials.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "iap",
+      "crate_name": "google-iap1",
+      "make_target": "iap1",
+      "rest_url": "https://iap.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "iap",
+      "crate_name": "google-iap1_beta1",
+      "make_target": "iap1_beta1",
+      "rest_url": "https://iap.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "identitytoolkit",
+      "crate_name": "google-identitytoolkit3",
+      "make_target": "identitytoolkit3",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/identitytoolkit/v3/rest"
+    },
+    {
+      "name": "indexing",
+      "crate_name": "google-indexing3",
+      "make_target": "indexing3",
+      "rest_url": "https://indexing.googleapis.com/$discovery/rest?version=v3"
+    },
+    {
+      "name": "jobs",
+      "crate_name": "google-jobs3_p1beta1",
+      "make_target": "jobs3_p1beta1",
+      "rest_url": "https://jobs.googleapis.com/$discovery/rest?version=v3p1beta1"
+    },
+    {
+      "name": "jobs",
+      "crate_name": "google-jobs2",
+      "make_target": "jobs2",
+      "rest_url": "https://jobs.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "jobs",
+      "crate_name": "google-jobs3",
+      "make_target": "jobs3",
+      "rest_url": "https://jobs.googleapis.com/$discovery/rest?version=v3"
+    },
+    {
+      "name": "kgsearch",
+      "crate_name": "google-kgsearch1",
+      "make_target": "kgsearch1",
+      "rest_url": "https://kgsearch.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "language",
+      "crate_name": "google-language1",
+      "make_target": "language1",
+      "rest_url": "https://language.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "language",
+      "crate_name": "google-language1_beta1",
+      "make_target": "language1_beta1",
+      "rest_url": "https://language.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "language",
+      "crate_name": "google-language1_beta2",
+      "make_target": "language1_beta2",
+      "rest_url": "https://language.googleapis.com/$discovery/rest?version=v1beta2"
+    },
+    {
+      "name": "libraryagent",
+      "crate_name": "google-libraryagent1",
+      "make_target": "libraryagent1",
+      "rest_url": "https://libraryagent.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "licensing",
+      "crate_name": "google-licensing1",
+      "make_target": "licensing1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/licensing/v1/rest"
+    },
+    {
+      "name": "logging",
+      "crate_name": "google-logging2",
+      "make_target": "logging2",
+      "rest_url": "https://logging.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "manufacturers",
+      "crate_name": "google-manufacturers1",
+      "make_target": "manufacturers1",
+      "rest_url": "https://manufacturers.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "mirror",
+      "crate_name": "google-mirror1",
+      "make_target": "mirror1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/mirror/v1/rest"
+    },
+    {
+      "name": "ml",
+      "crate_name": "google-ml1",
+      "make_target": "ml1",
+      "rest_url": "https://ml.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "monitoring",
+      "crate_name": "google-monitoring3_p1alpha1",
+      "make_target": "monitoring3_p1alpha1",
+      "rest_url": "https://monitoring.googleapis.com/$discovery/rest?version=v3p1alpha1"
+    },
+    {
+      "name": "monitoring",
+      "crate_name": "google-monitoring3",
+      "make_target": "monitoring3",
+      "rest_url": "https://monitoring.googleapis.com/$discovery/rest?version=v3"
+    },
+    {
+      "name": "oauth",
+      "crate_name": "google-oauth1",
+      "make_target": "oauth1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/oauth2/v1/rest"
+    },
+    {
+      "name": "oauth",
+      "crate_name": "google-oauth2",
+      "make_target": "oauth2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/oauth2/v2/rest"
+    },
+    {
+      "name": "osconfig",
+      "crate_name": "google-osconfig1_alpha1",
+      "make_target": "osconfig1_alpha1",
+      "rest_url": "https://osconfig.googleapis.com/$discovery/rest?version=v1alpha1"
+    },
+    {
+      "name": "osconfig",
+      "crate_name": "google-osconfig1_alpha2",
+      "make_target": "osconfig1_alpha2",
+      "rest_url": "https://osconfig.googleapis.com/$discovery/rest?version=v1alpha2"
+    },
+    {
+      "name": "oslogin",
+      "crate_name": "google-oslogin1_alpha",
+      "make_target": "oslogin1_alpha",
+      "rest_url": "https://oslogin.googleapis.com/$discovery/rest?version=v1alpha"
+    },
+    {
+      "name": "oslogin",
+      "crate_name": "google-oslogin1_beta",
+      "make_target": "oslogin1_beta",
+      "rest_url": "https://oslogin.googleapis.com/$discovery/rest?version=v1beta"
+    },
+    {
+      "name": "oslogin",
+      "crate_name": "google-oslogin1",
+      "make_target": "oslogin1",
+      "rest_url": "https://oslogin.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "pagespeedonline",
+      "crate_name": "google-pagespeedonline1",
+      "make_target": "pagespeedonline1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/pagespeedonline/v1/rest"
+    },
+    {
+      "name": "pagespeedonline",
+      "crate_name": "google-pagespeedonline2",
+      "make_target": "pagespeedonline2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/pagespeedonline/v2/rest"
+    },
+    {
+      "name": "pagespeedonline",
+      "crate_name": "google-pagespeedonline4",
+      "make_target": "pagespeedonline4",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/pagespeedonline/v4/rest"
+    },
+    {
+      "name": "pagespeedonline",
+      "crate_name": "google-pagespeedonline5",
+      "make_target": "pagespeedonline5",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/pagespeedonline/v5/rest"
+    },
+    {
+      "name": "people",
+      "crate_name": "google-people1",
+      "make_target": "people1",
+      "rest_url": "https://people.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "playcustomapp",
+      "crate_name": "google-playcustomapp1",
+      "make_target": "playcustomapp1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/playcustomapp/v1/rest"
+    },
+    {
+      "name": "plus",
+      "crate_name": "google-plus1",
+      "make_target": "plus1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/plus/v1/rest"
+    },
+    {
+      "name": "plusDomains",
+      "crate_name": "google-plusDomains1",
+      "make_target": "plusDomains1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/plusDomains/v1/rest"
+    },
+    {
+      "name": "poly",
+      "crate_name": "google-poly1",
+      "make_target": "poly1",
+      "rest_url": "https://poly.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "proximitybeacon",
+      "crate_name": "google-proximitybeacon1_beta1",
+      "make_target": "proximitybeacon1_beta1",
+      "rest_url": "https://proximitybeacon.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "pubsub",
+      "crate_name": "google-pubsub1_beta1a",
+      "make_target": "pubsub1_beta1a",
+      "rest_url": "https://pubsub.googleapis.com/$discovery/rest?version=v1beta1a"
+    },
+    {
+      "name": "pubsub",
+      "crate_name": "google-pubsub1",
+      "make_target": "pubsub1",
+      "rest_url": "https://pubsub.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "pubsub",
+      "crate_name": "google-pubsub1_beta2",
+      "make_target": "pubsub1_beta2",
+      "rest_url": "https://pubsub.googleapis.com/$discovery/rest?version=v1beta2"
+    },
+    {
+      "name": "redis",
+      "crate_name": "google-redis1",
+      "make_target": "redis1",
+      "rest_url": "https://redis.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "redis",
+      "crate_name": "google-redis1_beta1",
+      "make_target": "redis1_beta1",
+      "rest_url": "https://redis.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "remotebuildexecution",
+      "crate_name": "google-remotebuildexecution1_alpha",
+      "make_target": "remotebuildexecution1_alpha",
+      "rest_url": "https://remotebuildexecution.googleapis.com/$discovery/rest?version=v1alpha"
+    },
+    {
+      "name": "remotebuildexecution",
+      "crate_name": "google-remotebuildexecution1",
+      "make_target": "remotebuildexecution1",
+      "rest_url": "https://remotebuildexecution.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "remotebuildexecution",
+      "crate_name": "google-remotebuildexecution2",
+      "make_target": "remotebuildexecution2",
+      "rest_url": "https://remotebuildexecution.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "replicapool",
+      "crate_name": "google-replicapool1_beta1",
+      "make_target": "replicapool1_beta1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/replicapool/v1beta1/rest"
+    },
+    {
+      "name": "reseller",
+      "crate_name": "google-reseller1",
+      "make_target": "reseller1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/reseller/v1/rest"
+    },
+    {
+      "name": "run",
+      "crate_name": "google-run1_alpha1",
+      "make_target": "run1_alpha1",
+      "rest_url": "https://run.googleapis.com/$discovery/rest?version=v1alpha1"
+    },
+    {
+      "name": "run",
+      "crate_name": "google-run1",
+      "make_target": "run1",
+      "rest_url": "https://run.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "runtimeconfig",
+      "crate_name": "google-runtimeconfig1",
+      "make_target": "runtimeconfig1",
+      "rest_url": "https://runtimeconfig.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "runtimeconfig",
+      "crate_name": "google-runtimeconfig1_beta1",
+      "make_target": "runtimeconfig1_beta1",
+      "rest_url": "https://runtimeconfig.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "safebrowsing",
+      "crate_name": "google-safebrowsing4",
+      "make_target": "safebrowsing4",
+      "rest_url": "https://safebrowsing.googleapis.com/$discovery/rest?version=v4"
+    },
+    {
+      "name": "script",
+      "crate_name": "google-script1",
+      "make_target": "script1",
+      "rest_url": "https://script.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "searchconsole",
+      "crate_name": "google-searchconsole1",
+      "make_target": "searchconsole1",
+      "rest_url": "https://searchconsole.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "securitycenter",
+      "crate_name": "google-securitycenter1_p1alpha1",
+      "make_target": "securitycenter1_p1alpha1",
+      "rest_url": "https://securitycenter.googleapis.com/$discovery/rest?version=v1p1alpha1"
+    },
+    {
+      "name": "securitycenter",
+      "crate_name": "google-securitycenter1",
+      "make_target": "securitycenter1",
+      "rest_url": "https://securitycenter.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "securitycenter",
+      "crate_name": "google-securitycenter1_beta1",
+      "make_target": "securitycenter1_beta1",
+      "rest_url": "https://securitycenter.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "servicebroker",
+      "crate_name": "google-servicebroker1_alpha1",
+      "make_target": "servicebroker1_alpha1",
+      "rest_url": "https://servicebroker.googleapis.com/$discovery/rest?version=v1alpha1"
+    },
+    {
+      "name": "servicebroker",
+      "crate_name": "google-servicebroker1",
+      "make_target": "servicebroker1",
+      "rest_url": "https://servicebroker.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "servicebroker",
+      "crate_name": "google-servicebroker1_beta1",
+      "make_target": "servicebroker1_beta1",
+      "rest_url": "https://servicebroker.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "serviceconsumermanagement",
+      "crate_name": "google-serviceconsumermanagement1",
+      "make_target": "serviceconsumermanagement1",
+      "rest_url": "https://serviceconsumermanagement.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "servicecontrol",
+      "crate_name": "google-servicecontrol1",
+      "make_target": "servicecontrol1",
+      "rest_url": "https://servicecontrol.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "servicemanagement",
+      "crate_name": "google-servicemanagement1",
+      "make_target": "servicemanagement1",
+      "rest_url": "https://servicemanagement.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "servicenetworking",
+      "crate_name": "google-servicenetworking1_beta",
+      "make_target": "servicenetworking1_beta",
+      "rest_url": "https://servicenetworking.googleapis.com/$discovery/rest?version=v1beta"
+    },
+    {
+      "name": "servicenetworking",
+      "crate_name": "google-servicenetworking1",
+      "make_target": "servicenetworking1",
+      "rest_url": "https://servicenetworking.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "serviceusage",
+      "crate_name": "google-serviceusage1",
+      "make_target": "serviceusage1",
+      "rest_url": "https://serviceusage.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "serviceusage",
+      "crate_name": "google-serviceusage1_beta1",
+      "make_target": "serviceusage1_beta1",
+      "rest_url": "https://serviceusage.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "sheets",
+      "crate_name": "google-sheets4",
+      "make_target": "sheets4",
+      "rest_url": "https://sheets.googleapis.com/$discovery/rest?version=v4"
+    },
+    {
+      "name": "siteVerification",
+      "crate_name": "google-siteVerification1",
+      "make_target": "siteVerification1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/siteVerification/v1/rest"
+    },
+    {
+      "name": "slides",
+      "crate_name": "google-slides1",
+      "make_target": "slides1",
+      "rest_url": "https://slides.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "sourcerepo",
+      "crate_name": "google-sourcerepo1",
+      "make_target": "sourcerepo1",
+      "rest_url": "https://sourcerepo.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "spanner",
+      "crate_name": "google-spanner1",
+      "make_target": "spanner1",
+      "rest_url": "https://spanner.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "speech",
+      "crate_name": "google-speech1_p1beta1",
+      "make_target": "speech1_p1beta1",
+      "rest_url": "https://speech.googleapis.com/$discovery/rest?version=v1p1beta1"
+    },
+    {
+      "name": "speech",
+      "crate_name": "google-speech1",
+      "make_target": "speech1",
+      "rest_url": "https://speech.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "sqladmin",
+      "crate_name": "google-sqladmin1_beta4",
+      "make_target": "sqladmin1_beta4",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/sqladmin/v1beta4/rest"
+    },
+    {
+      "name": "storage",
+      "crate_name": "google-storage1",
+      "make_target": "storage1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/storage/v1/rest"
+    },
+    {
+      "name": "storage",
+      "crate_name": "google-storage1_beta1",
+      "make_target": "storage1_beta1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/storage/v1beta1/rest"
+    },
+    {
+      "name": "storage",
+      "crate_name": "google-storage1_beta2",
+      "make_target": "storage1_beta2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/storage/v1beta2/rest"
+    },
+    {
+      "name": "storagetransfer",
+      "crate_name": "google-storagetransfer1",
+      "make_target": "storagetransfer1",
+      "rest_url": "https://storagetransfer.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "streetviewpublish",
+      "crate_name": "google-streetviewpublish1",
+      "make_target": "streetviewpublish1",
+      "rest_url": "https://streetviewpublish.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "surveys",
+      "crate_name": "google-surveys2",
+      "make_target": "surveys2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/surveys/v2/rest"
+    },
+    {
+      "name": "tagmanager",
+      "crate_name": "google-tagmanager1",
+      "make_target": "tagmanager1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/tagmanager/v1/rest"
+    },
+    {
+      "name": "tagmanager",
+      "crate_name": "google-tagmanager2",
+      "make_target": "tagmanager2",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/tagmanager/v2/rest"
+    },
+    {
+      "name": "tasks",
+      "crate_name": "google-tasks1",
+      "make_target": "tasks1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest"
+    },
+    {
+      "name": "testing",
+      "crate_name": "google-testing1",
+      "make_target": "testing1",
+      "rest_url": "https://testing.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "texttospeech",
+      "crate_name": "google-texttospeech1",
+      "make_target": "texttospeech1",
+      "rest_url": "https://texttospeech.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "texttospeech",
+      "crate_name": "google-texttospeech1_beta1",
+      "make_target": "texttospeech1_beta1",
+      "rest_url": "https://texttospeech.googleapis.com/$discovery/rest?version=v1beta1"
+    },
+    {
+      "name": "toolresults",
+      "crate_name": "google-toolresults1_beta3",
+      "make_target": "toolresults1_beta3",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/toolresults/v1beta3/rest"
+    },
+    {
+      "name": "tpu",
+      "crate_name": "google-tpu1_alpha1",
+      "make_target": "tpu1_alpha1",
+      "rest_url": "https://tpu.googleapis.com/$discovery/rest?version=v1alpha1"
+    },
+    {
+      "name": "tpu",
+      "crate_name": "google-tpu1",
+      "make_target": "tpu1",
+      "rest_url": "https://tpu.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "translate",
+      "crate_name": "google-translate2",
+      "make_target": "translate2",
+      "rest_url": "https://translation.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "translate",
+      "crate_name": "google-translate3_beta1",
+      "make_target": "translate3_beta1",
+      "rest_url": "https://translation.googleapis.com/$discovery/rest?version=v3beta1"
+    },
+    {
+      "name": "urlshortener",
+      "crate_name": "google-urlshortener1",
+      "make_target": "urlshortener1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/urlshortener/v1/rest"
+    },
+    {
+      "name": "vault",
+      "crate_name": "google-vault1",
+      "make_target": "vault1",
+      "rest_url": "https://vault.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "videointelligence",
+      "crate_name": "google-videointelligence1_p1beta1",
+      "make_target": "videointelligence1_p1beta1",
+      "rest_url": "https://videointelligence.googleapis.com/$discovery/rest?version=v1p1beta1"
+    },
+    {
+      "name": "videointelligence",
+      "crate_name": "google-videointelligence1_p2beta1",
+      "make_target": "videointelligence1_p2beta1",
+      "rest_url": "https://videointelligence.googleapis.com/$discovery/rest?version=v1p2beta1"
+    },
+    {
+      "name": "videointelligence",
+      "crate_name": "google-videointelligence1_p3beta1",
+      "make_target": "videointelligence1_p3beta1",
+      "rest_url": "https://videointelligence.googleapis.com/$discovery/rest?version=v1p3beta1"
+    },
+    {
+      "name": "videointelligence",
+      "crate_name": "google-videointelligence1",
+      "make_target": "videointelligence1",
+      "rest_url": "https://videointelligence.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "videointelligence",
+      "crate_name": "google-videointelligence1_beta2",
+      "make_target": "videointelligence1_beta2",
+      "rest_url": "https://videointelligence.googleapis.com/$discovery/rest?version=v1beta2"
+    },
+    {
+      "name": "vision",
+      "crate_name": "google-vision1_p1beta1",
+      "make_target": "vision1_p1beta1",
+      "rest_url": "https://vision.googleapis.com/$discovery/rest?version=v1p1beta1"
+    },
+    {
+      "name": "vision",
+      "crate_name": "google-vision1_p2beta1",
+      "make_target": "vision1_p2beta1",
+      "rest_url": "https://vision.googleapis.com/$discovery/rest?version=v1p2beta1"
+    },
+    {
+      "name": "vision",
+      "crate_name": "google-vision1",
+      "make_target": "vision1",
+      "rest_url": "https://vision.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "webfonts",
+      "crate_name": "google-webfonts1",
+      "make_target": "webfonts1",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/webfonts/v1/rest"
+    },
+    {
+      "name": "webmasters",
+      "crate_name": "google-webmasters3",
+      "make_target": "webmasters3",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/webmasters/v3/rest"
+    },
+    {
+      "name": "websecurityscanner",
+      "crate_name": "google-websecurityscanner1_alpha",
+      "make_target": "websecurityscanner1_alpha",
+      "rest_url": "https://websecurityscanner.googleapis.com/$discovery/rest?version=v1alpha"
+    },
+    {
+      "name": "websecurityscanner",
+      "crate_name": "google-websecurityscanner1_beta",
+      "make_target": "websecurityscanner1_beta",
+      "rest_url": "https://websecurityscanner.googleapis.com/$discovery/rest?version=v1beta"
+    },
+    {
+      "name": "websecurityscanner",
+      "crate_name": "google-websecurityscanner1",
+      "make_target": "websecurityscanner1",
+      "rest_url": "https://websecurityscanner.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "youtube",
+      "crate_name": "google-youtube3",
+      "make_target": "youtube3",
+      "rest_url": "https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest"
+    },
+    {
+      "name": "youtubeAnalytics",
+      "crate_name": "google-youtubeAnalytics1",
+      "make_target": "youtubeAnalytics1",
+      "rest_url": "https://youtubeanalytics.googleapis.com/$discovery/rest?version=v1"
+    },
+    {
+      "name": "youtubeAnalytics",
+      "crate_name": "google-youtubeAnalytics2",
+      "make_target": "youtubeAnalytics2",
+      "rest_url": "https://youtubeanalytics.googleapis.com/$discovery/rest?version=v2"
+    },
+    {
+      "name": "youtubereporting",
+      "crate_name": "google-youtubereporting1",
+      "make_target": "youtubereporting1",
+      "rest_url": "https://youtubereporting.googleapis.com/$discovery/rest?version=v1"
+    }
+  ]
+}
