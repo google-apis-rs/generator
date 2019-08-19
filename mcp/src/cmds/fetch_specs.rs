@@ -1,7 +1,7 @@
 use crate::options::fetch_specs::Args;
 use discovery_parser::{
     generated::{DiscoveryApisV1, Item},
-    DiscoveryRestDesc,
+    DiscoveryRestDesc, RestDescOrErr,
 };
 use failure::{bail, format_err, Error, ResultExt};
 use failure_tools::print_causes;
@@ -100,10 +100,15 @@ pub fn execute(
         .map(|api| {
             reqwest::get(api.url)
                 .with_context(|_| format_err!("Could not fetch spec from '{}'", api.url))
-                .and_then(|mut r| {
-                    r.json().with_context(|_| {
+                .and_then(|mut r: reqwest::Response| {
+                    let res: RestDescOrErr = r.json().with_context(|_| {
                         format_err!("Could not deserialize spec at '{}'", api.url)
-                    })
+                    })?;
+                    match res {
+                        RestDescOrErr::RestDesc(v) => Ok(v),
+                        RestDescOrErr::Err(err) => Err(format_err!("{:?}", err.error))
+                            .with_context(|_| format_err!("Server responded with an error")),
+                    }
                 })
                 .map(|spec: DiscoveryRestDesc| (api, spec))
         })
