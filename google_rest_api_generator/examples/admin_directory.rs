@@ -1,6 +1,7 @@
 use discovery_parser::DiscoveryRestDesc;
 use google_rest_api_generator as generator;
 use std::error::Error;
+use std::path::Path;
 
 fn main() -> Result<(), Box<dyn Error>> {
     ::env_logger::builder()
@@ -11,6 +12,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             .error_for_status()?
             .json()?;
     let project_name = format!("google_{}_{}", &desc.name, &desc.version);
-    generator::generate(&project_name, &desc, "/tmp")?;
+    generator::generate(&project_name, &desc, Path::new("/tmp").join(&project_name))?;
     Ok(())
 }
