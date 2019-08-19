@@ -3,6 +3,8 @@ MCP = target/release/mcp
 .PHONY = always # TODO: one day we should be precise, and provide actual dependencies so 'make' can be smart
 API_INDEX_JSON = etc/api-index.v1.json
 GEN_DIR = gen
+MAKEFILE_TPL = templates/Makefile.liquid
+GEN_MAKEFILE = $(GEN_DIR)/Makefile
 
 help:
 	$(info -- Targets for development -----------------------------------------------------------)
@@ -12,6 +14,7 @@ help:
 	$(info -- Targets for files we depend on ----------------------------------------------------)
 	$(info update-all-metadata        | invalidate all specifications from google and fetch the latest versions
 	$(info fetch-api-specs            | fetch all apis our local discovery document knows, and store them in $(GEN_DIR))
+	$(info generate-gen-makefile      | a makefile containing useful targets to build and test generated crates)
 	$(info -- Everything Else -------------------------------------------------------------------)
 	$(info pull-generated             | be sure the generated repository is latest)
 	$(info --------------------------------------------------------------------------------------)
@@ -53,5 +56,8 @@ cargo-tests:
 	cargo test --lib --bin mcp --all --examples
 
 tests: mcp-tests cargo-tests
-	
 
+$(GEN_MAKEFILE): $(API_INDEX_JSON) $(MCPD) $(GEN_DIR) $(MAKEFILE_TPL) 
+	$(MCPD) substitute $(MAKEFILE_TPL):$@ < $(API_INDEX_JSON)
+	
+generate-gen-makefile: $(GEN_MAKEFILE)
