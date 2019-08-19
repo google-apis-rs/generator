@@ -27,7 +27,7 @@ where
     info!("buidling api desc");
     let api_desc = APIDesc::from_discovery(discovery_desc);
     info!("creating directory and Cargo.toml");
-    let project_path = base_dir.as_ref().join(&api_name);
+    let project_path = base_dir.as_ref();
     let src_path = project_path.join("src");
     std::fs::create_dir_all(&src_path)?;
     let cargo_path = project_path.join("Cargo.toml");
