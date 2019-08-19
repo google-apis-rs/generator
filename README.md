@@ -1,4 +1,4 @@
-This project is the successor of [Google-APIS-rs](https://github.com/byron/google-apis-rs).
+This project is the successor of [Google-APIS-rs](https://github.com/byron/oogle-apis-rs).
 
 # Overview
 
@@ -35,7 +35,7 @@ This project is the successor of [Google-APIS-rs](https://github.com/byron/googl
 
 # Community
 
-* **[Kanban Board](https://github.com/google-apis-rs/apis/projects/1)**
+* **[Kanban Board](https://github.com/google-apis-rs/generator/projects/1)**
    * Learn what is currently being worked on, and what's in the backlog
 
 * **[Chat](https://gitter.im/google-apis-rs/community)**
@@ -44,7 +44,7 @@ This project is the successor of [Google-APIS-rs](https://github.com/byron/googl
 
 # Development
 
-[![Build Status](https://travis-ci.org/google-apis-rs/apis.svg?branch=master)](https://travis-ci.org/google-apis-rs/apis)
+[![Build Status](https://travis-ci.org/google-apis-rs/generator.svg?branch=master)](https://travis-ci.org/google-apis-rs/generator)
 
 * `cargo run -- --help`
    * Run the master control program and see what it can do
