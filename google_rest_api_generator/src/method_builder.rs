@@ -264,17 +264,15 @@ fn reqwest_http_method(http_method: &::reqwest::Method) -> syn::Path {
     }
 }
 
-fn method_auth_scope<'a>(
-    http_method: &::reqwest::Method,
-    scopes: &'a [String],
-) -> Option<&'a str> {
+fn method_auth_scope<'a>(http_method: &::reqwest::Method, scopes: &'a [String]) -> Option<&'a str> {
     scopes.get(0).map(|default| {
         if http_method.is_safe() {
             scopes.iter().find(|scope| scope.contains("readonly"))
         } else {
             None
         }
-        .unwrap_or(default).as_str()
+        .unwrap_or(default)
+        .as_str()
     })
 }
 

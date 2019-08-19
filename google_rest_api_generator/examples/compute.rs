@@ -11,10 +11,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             .error_for_status()?
             .json()?;
     let project_name = format!("google_{}_{}", &desc.name, &desc.version);
-    generator::generate(
-        &project_name,
-        &desc,
-        "/tmp",
-    )?;
+    generator::generate(&project_name, &desc, "/tmp")?;
     Ok(())
 }
