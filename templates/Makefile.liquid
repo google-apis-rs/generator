@@ -3,10 +3,15 @@ MCP = ../target/release/mcp
 help:
 	$(info -- Target ----------------------------------------------------------------------------)
 	$(info gen-all             | generate all libraries and CLIs)
+	$(info cargo-all           | pass args with ARGS="check" for example)
 	$(info --------------------------------------------------------------------------------------)
 
-gen-all: {%- for item in api -%}{{item.make_target}} {% endfor %}
+gen-all: {% for item in api -%}{{item.make_target}} {% endfor %}
+cargo-all: {% for item in api -%}{{item.make_target}}-cargo {% endfor %}
+
 {% for item in api %}
 {{item.make_target}}: {{item.spec_file}}
 	$(MCP) generate $< {{item.gen_dir}}
+{{item.make_target}}-cargo: {{item.make_target}}
+	cd {{item.gen_dir}} && cargo $(ARGS)
 {% endfor %}
