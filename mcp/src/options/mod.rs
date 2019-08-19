@@ -15,9 +15,9 @@ pub struct Args {
 
 #[derive(StructOpt, Debug)]
 pub enum SubCommand {
-    #[structopt(name = "fetch-apis")]
+    #[structopt(name = "fetch-api-specs")]
     /// Fetch all API specs, in parallel
-    FetchSpecs(fetch_specs::Args),
+    FetchApiSpecs(fetch_specs::Args),
     #[structopt(name = "completions")]
     /// generate completions for supported shells
     Completions(completions::Args),

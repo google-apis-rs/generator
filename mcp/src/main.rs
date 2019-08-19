@@ -13,7 +13,7 @@ use options::SubCommand::*;
 fn main(args: Args) {
     let res = match args.cmd {
         Completions(args) => cmds::completions::generate(Args::clap(), args),
-        FetchSpecs(args) => cmds::fetch_specs::execute(args),
+        FetchApiSpecs(args) => cmds::fetch_specs::execute(args),
         Substitute(args) => cmds::substitute::execute(args),
     };
     failure_tools::ok_or_exit(res);
