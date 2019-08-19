@@ -12,11 +12,12 @@ help:
 	$(info mcp-tests                  | run all tests for the 'master control program')
 	$(info cargo-tests                | run all tests driven by cargo)
 	$(info -- Targets for files we depend on ----------------------------------------------------)
-	$(info update-all-metadata        | invalidate all specifications from google and fetch the latest versions
+	$(info update-all-metadata        | invalidate all specifications from google and fetch the latest versions)
 	$(info fetch-api-specs            | fetch all apis our local discovery document knows, and store them in $(GEN_DIR))
 	$(info generate-gen-makefile      | a makefile containing useful targets to build and test generated crates)
 	$(info -- Everything Else -------------------------------------------------------------------)
-	$(info pull-generated             | be sure the generated repository is latest)
+	$(info pull-generated             | be sure the 'generated' repository is latest)
+	$(info update-generated-fixtures  | update everything that was generated in <this> repository)
 	$(info --------------------------------------------------------------------------------------)
 
 always:
@@ -40,13 +41,19 @@ update-all-metadata:
 	rm $(API_INDEX_JSON)
 	$(MAKE) fetch-api-specs
 
+update-generated-fixtures: tests/mcp/fixtures/shared/known-versions discovery_parser/src/discovery.rs
+
+tests/mcp/fixtures/shared/known-versions: $(API_INDEX_JSON)
+	# version 1.6 known to be working
+	jq -r '.items[].version' < $(API_INDEX_JSON) | sort | uniq > $@
+
 discovery_parser/src/discovery.rs: $(API_INDEX_JSON)
-	# quicktype version 15.0.199 known to be working
+	# version 15.0.199 known to be working
 	quicktype --lang rust --visibility=public $(API_INDEX_JSON) > $@
 
-api-index: $(API_INDEX_JSON)
+api-index: $(API_INDEX_JSON) $(GEN_MAKEFILE)
 
-fetch-api-specs: $(API_INDEX_JSON) $(MCP) $(GEN_DIR)
+fetch-api-specs: api-index $(MCP) $(GEN_DIR)
 	$(MCP) fetch-api-specs $(API_INDEX_JSON) $(GEN_DIR)
 
 mcp-tests: $(MCPD)

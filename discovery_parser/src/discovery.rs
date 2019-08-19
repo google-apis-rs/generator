@@ -12,7 +12,7 @@
 // }
 
 #[derive(Serialize, Deserialize)]
-pub struct DiscoveryApisV1 {
+pub struct ApiIndexV1 {
     #[serde(rename = "kind")]
     pub kind: String,
 

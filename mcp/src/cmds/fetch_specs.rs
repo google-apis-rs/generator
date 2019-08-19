@@ -1,6 +1,6 @@
 use crate::options::fetch_specs::Args;
 use discovery_parser::{
-    generated::{DiscoveryApisV1, Item},
+    generated::{ApiIndexV1, Item},
     DiscoveryRestDesc, RestDescOrErr,
 };
 use failure::{format_err, Error, ResultExt};
@@ -89,7 +89,7 @@ pub fn execute(
         output_directory,
     }: Args,
 ) -> Result<(), Error> {
-    let apis: DiscoveryApisV1 =
+    let apis: ApiIndexV1 =
         serde_json::from_str(&fs::read_to_string(&discovery_json_path).with_context(|_| {
             format_err!(
                 "Could not read api index at '{}'",
