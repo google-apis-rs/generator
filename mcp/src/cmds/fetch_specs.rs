@@ -4,9 +4,10 @@ use discovery_parser::{
     DiscoveryRestDesc,
 };
 use failure::{bail, format_err, Error, ResultExt};
+use failure_tools::print_causes;
 use log::{error, info};
 use rayon::prelude::*;
-use std::{convert::TryFrom, convert::TryInto, fmt, fs, path::Path, time::Instant};
+use std::{convert::TryFrom, convert::TryInto, fs, path::Path, time::Instant};
 
 #[derive(Debug, PartialEq, Eq)]
 struct Id<'a> {
@@ -43,11 +44,15 @@ impl<'a> TryFrom<&'a Item> for Api<'a> {
     }
 }
 
-fn log_error_and_continue<T, E: fmt::Display>(r: Result<T, E>) -> Option<T> {
+fn log_error_and_continue<T, E: Into<Error>>(r: Result<T, E>) -> Option<T> {
     match r {
         Ok(v) => Some(v),
         Err(e) => {
-            error!("{}", e);
+            let e = e.into();
+            let mut buf = Vec::new();
+            let e_display = e.to_string();
+            print_causes(e, &mut buf);
+            error!("{}", String::from_utf8(buf).unwrap_or(e_display));
             None
         }
     }
@@ -94,7 +99,12 @@ pub fn execute(
         .filter_map(log_error_and_continue)
         .map(|api| {
             reqwest::get(api.url)
-                .and_then(|mut r| r.json())
+                .with_context(|_| format_err!("Could not fetch spec from '{}'", api.url))
+                .and_then(|mut r| {
+                    r.json().with_context(|_| {
+                        format_err!("Could not deserialize spec at '{}'", api.url)
+                    })
+                })
                 .map(|spec: DiscoveryRestDesc| (api, spec))
         })
         .filter_map(log_error_and_continue)
