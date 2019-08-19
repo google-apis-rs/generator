@@ -58,6 +58,26 @@ fn log_error_and_continue<T, E: Into<Error>>(r: Result<T, E>) -> Option<T> {
     }
 }
 
+fn logged_write<P: AsRef<Path>, C: AsRef<[u8]>>(
+    path: P,
+    contents: C,
+    kind: &str,
+) -> Result<(), Error> {
+    fs::write(path.as_ref(), contents).with_context(|_| {
+        format_err!(
+            "Could not write {kind} file at '{}'",
+            path.as_ref().display(),
+            kind = kind,
+        )
+    })?;
+    info!(
+        "Wrote file {kind} at '{}'",
+        path.as_ref().display(),
+        kind = kind
+    );
+    Ok(())
+}
+
 fn write_artifacts<'a>(
     (api, spec): (Api<'a>, DiscoveryRestDesc),
     output_dir: &Path,
@@ -73,8 +93,11 @@ fn write_artifacts<'a>(
     let spec_path = output_dir.join("spec.json");
     // TODO: if no additional processing is done on the data, just pass it as String to avoid
     // ser-de. This is not relevant for performance, but can simplify code a bit.
-    fs::write(&spec_path, serde_json::to_string_pretty(&spec)?.as_bytes())
-        .with_context(|_| format_err!("Could not write spec file at '{}'", spec_path.display()))?;
+    logged_write(
+        &spec_path,
+        serde_json::to_string_pretty(&spec)?.as_bytes(),
+        "spec",
+    )?;
     Ok(api)
 }
 
@@ -110,6 +133,7 @@ pub fn execute(
                             .with_context(|_| format_err!("Server responded with an error")),
                     }
                 })
+                .with_context(|_| format_err!("Error fetching spec from '{}'", api.url))
                 .map(|spec: DiscoveryRestDesc| (api, spec))
         })
         .filter_map(log_error_and_continue)
