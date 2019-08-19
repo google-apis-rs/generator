@@ -1,5 +1,6 @@
 use super::util::logged_write;
 use crate::options::map_index::Args;
+use crate::shared::{crate_name, make_target};
 use discovery_parser::generated::{ApiIndexV1, Item};
 use failure::{format_err, Error, ResultExt};
 use serde::Serialize;
@@ -21,8 +22,8 @@ impl TryFrom<Item> for Api {
 
     fn try_from(value: Item) -> Result<Self, Self::Error> {
         Ok(Api {
-            crate_name: value.name.clone(),
-            make_target: value.name.clone(),
+            crate_name: crate_name(&value.name, &value.version)?,
+            make_target: make_target(&value.name, &value.version)?,
         })
     }
 }

@@ -18,3 +18,6 @@ Cargo.lock
 
 # The folder containing all generated output
 /gen/
+
+# Snapshots by insta
+*.snap.new
