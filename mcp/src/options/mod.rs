@@ -25,6 +25,9 @@ pub enum SubCommand {
     #[structopt(name = "completions")]
     /// generate completions for supported shells
     Completions(completions::Args),
+    #[structopt(name = "generate")]
+    /// generate APIs and CLIs for a Google API specification
+    Generate(generate::Args),
     #[structopt(name = "substitute")]
     #[structopt(raw(alias = "\"sub\""))]
     /// Substitutes templates using structured data.
@@ -33,4 +36,5 @@ pub enum SubCommand {
 
 pub mod completions;
 pub mod fetch_specs;
+pub mod generate;
 pub mod substitute;
