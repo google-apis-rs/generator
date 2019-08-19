@@ -9,6 +9,10 @@ use structopt::StructOpt;
 #[structopt(raw(setting = "structopt::clap::AppSettings::VersionlessSubcommands"))]
 #[structopt(raw(setting = "structopt::clap::AppSettings::DeriveDisplayOrder"))]
 pub struct Args {
+    /// The desired log level.
+    #[structopt(short = "l", long = "log-level", default_value = "INFO")]
+    #[structopt(raw(possible_values = r#"&["INFO", "ERROR", "DEBUG"]"#))]
+    pub log_level: log::Level,
     #[structopt(subcommand)]
     pub(crate) cmd: SubCommand,
 }
