@@ -3,6 +3,7 @@
     {
       "name": "abusiveexperiencereport",
       "gen_dir": "abusiveexperiencereport/v1",
+      "spec_file": "abusiveexperiencereport/v1/spec.json",
       "crate_name": "google-abusiveexperiencereport1",
       "make_target": "abusiveexperiencereport1",
       "rest_url": "https://abusiveexperiencereport.googleapis.com/$discovery/rest?version=v1"
@@ -10,6 +11,7 @@
     {
       "name": "acceleratedmobilepageurl",
       "gen_dir": "acceleratedmobilepageurl/v1",
+      "spec_file": "acceleratedmobilepageurl/v1/spec.json",
       "crate_name": "google-acceleratedmobilepageurl1",
       "make_target": "acceleratedmobilepageurl1",
       "rest_url": "https://acceleratedmobilepageurl.googleapis.com/$discovery/rest?version=v1"
@@ -17,6 +19,7 @@
     {
       "name": "accessapproval",
       "gen_dir": "accessapproval/v1beta1",
+      "spec_file": "accessapproval/v1beta1/spec.json",
       "crate_name": "google-accessapproval1_beta1",
       "make_target": "accessapproval1_beta1",
       "rest_url": "https://accessapproval.googleapis.com/$discovery/rest?version=v1beta1"
@@ -24,6 +27,7 @@
     {
       "name": "accesscontextmanager",
       "gen_dir": "accesscontextmanager/v1beta",
+      "spec_file": "accesscontextmanager/v1beta/spec.json",
       "crate_name": "google-accesscontextmanager1_beta",
       "make_target": "accesscontextmanager1_beta",
       "rest_url": "https://accesscontextmanager.googleapis.com/$discovery/rest?version=v1beta"
@@ -31,6 +35,7 @@
     {
       "name": "accesscontextmanager",
       "gen_dir": "accesscontextmanager/v1",
+      "spec_file": "accesscontextmanager/v1/spec.json",
       "crate_name": "google-accesscontextmanager1",
       "make_target": "accesscontextmanager1",
       "rest_url": "https://accesscontextmanager.googleapis.com/$discovery/rest?version=v1"
@@ -38,6 +43,7 @@
     {
       "name": "adexchangebuyer",
       "gen_dir": "adexchangebuyer/v1.2",
+      "spec_file": "adexchangebuyer/v1.2/spec.json",
       "crate_name": "google-adexchangebuyer1d2",
       "make_target": "adexchangebuyer1d2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/adexchangebuyer/v1.2/rest"
@@ -45,6 +51,7 @@
     {
       "name": "adexchangebuyer",
       "gen_dir": "adexchangebuyer/v1.3",
+      "spec_file": "adexchangebuyer/v1.3/spec.json",
       "crate_name": "google-adexchangebuyer1d3",
       "make_target": "adexchangebuyer1d3",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/adexchangebuyer/v1.3/rest"
@@ -52,6 +59,7 @@
     {
       "name": "adexchangebuyer",
       "gen_dir": "adexchangebuyer/v1.4",
+      "spec_file": "adexchangebuyer/v1.4/spec.json",
       "crate_name": "google-adexchangebuyer1d4",
       "make_target": "adexchangebuyer1d4",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/adexchangebuyer/v1.4/rest"
@@ -59,6 +67,7 @@
     {
       "name": "adexchangebuyer",
       "gen_dir": "adexchangebuyer/v2beta1",
+      "spec_file": "adexchangebuyer/v2beta1/spec.json",
       "crate_name": "google-adexchangebuyer2_beta1",
       "make_target": "adexchangebuyer2_beta1",
       "rest_url": "https://adexchangebuyer.googleapis.com/$discovery/rest?version=v2beta1"
@@ -66,6 +75,7 @@
     {
       "name": "adexperiencereport",
       "gen_dir": "adexperiencereport/v1",
+      "spec_file": "adexperiencereport/v1/spec.json",
       "crate_name": "google-adexperiencereport1",
       "make_target": "adexperiencereport1",
       "rest_url": "https://adexperiencereport.googleapis.com/$discovery/rest?version=v1"
@@ -73,6 +83,7 @@
     {
       "name": "admin",
       "gen_dir": "admin/datatransfer_v1",
+      "spec_file": "admin/datatransfer_v1/spec.json",
       "crate_name": "google-admin1_datatransfer",
       "make_target": "admin1_datatransfer",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/admin/datatransfer_v1/rest"
@@ -80,6 +91,7 @@
     {
       "name": "admin",
       "gen_dir": "admin/directory_v1",
+      "spec_file": "admin/directory_v1/spec.json",
       "crate_name": "google-admin1_directory",
       "make_target": "admin1_directory",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/admin/directory_v1/rest"
@@ -87,6 +99,7 @@
     {
       "name": "admin",
       "gen_dir": "admin/reports_v1",
+      "spec_file": "admin/reports_v1/spec.json",
       "crate_name": "google-admin1_reports",
       "make_target": "admin1_reports",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/admin/reports_v1/rest"
@@ -94,6 +107,7 @@
     {
       "name": "adsense",
       "gen_dir": "adsense/v1.4",
+      "spec_file": "adsense/v1.4/spec.json",
       "crate_name": "google-adsense1d4",
       "make_target": "adsense1d4",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/adsense/v1.4/rest"
@@ -101,6 +115,7 @@
     {
       "name": "adsensehost",
       "gen_dir": "adsensehost/v4.1",
+      "spec_file": "adsensehost/v4.1/spec.json",
       "crate_name": "google-adsensehost4d1",
       "make_target": "adsensehost4d1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/adsensehost/v4.1/rest"
@@ -108,6 +123,7 @@
     {
       "name": "alertcenter",
       "gen_dir": "alertcenter/v1beta1",
+      "spec_file": "alertcenter/v1beta1/spec.json",
       "crate_name": "google-alertcenter1_beta1",
       "make_target": "alertcenter1_beta1",
       "rest_url": "https://alertcenter.googleapis.com/$discovery/rest?version=v1beta1"
@@ -115,6 +131,7 @@
     {
       "name": "analytics",
       "gen_dir": "analytics/v2.4",
+      "spec_file": "analytics/v2.4/spec.json",
       "crate_name": "google-analytics2d4",
       "make_target": "analytics2d4",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/analytics/v2.4/rest"
@@ -122,6 +139,7 @@
     {
       "name": "analytics",
       "gen_dir": "analytics/v3",
+      "spec_file": "analytics/v3/spec.json",
       "crate_name": "google-analytics3",
       "make_target": "analytics3",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/analytics/v3/rest"
@@ -129,6 +147,7 @@
     {
       "name": "analyticsreporting",
       "gen_dir": "analyticsreporting/v4",
+      "spec_file": "analyticsreporting/v4/spec.json",
       "crate_name": "google-analyticsreporting4",
       "make_target": "analyticsreporting4",
       "rest_url": "https://analyticsreporting.googleapis.com/$discovery/rest?version=v4"
@@ -136,6 +155,7 @@
     {
       "name": "androiddeviceprovisioning",
       "gen_dir": "androiddeviceprovisioning/v1",
+      "spec_file": "androiddeviceprovisioning/v1/spec.json",
       "crate_name": "google-androiddeviceprovisioning1",
       "make_target": "androiddeviceprovisioning1",
       "rest_url": "https://androiddeviceprovisioning.googleapis.com/$discovery/rest?version=v1"
@@ -143,6 +163,7 @@
     {
       "name": "androidenterprise",
       "gen_dir": "androidenterprise/v1",
+      "spec_file": "androidenterprise/v1/spec.json",
       "crate_name": "google-androidenterprise1",
       "make_target": "androidenterprise1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/androidenterprise/v1/rest"
@@ -150,6 +171,7 @@
     {
       "name": "androidmanagement",
       "gen_dir": "androidmanagement/v1",
+      "spec_file": "androidmanagement/v1/spec.json",
       "crate_name": "google-androidmanagement1",
       "make_target": "androidmanagement1",
       "rest_url": "https://androidmanagement.googleapis.com/$discovery/rest?version=v1"
@@ -157,6 +179,7 @@
     {
       "name": "androidpublisher",
       "gen_dir": "androidpublisher/v1",
+      "spec_file": "androidpublisher/v1/spec.json",
       "crate_name": "google-androidpublisher1",
       "make_target": "androidpublisher1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/androidpublisher/v1/rest"
@@ -164,6 +187,7 @@
     {
       "name": "androidpublisher",
       "gen_dir": "androidpublisher/v1.1",
+      "spec_file": "androidpublisher/v1.1/spec.json",
       "crate_name": "google-androidpublisher1d1",
       "make_target": "androidpublisher1d1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/androidpublisher/v1.1/rest"
@@ -171,6 +195,7 @@
     {
       "name": "androidpublisher",
       "gen_dir": "androidpublisher/v2",
+      "spec_file": "androidpublisher/v2/spec.json",
       "crate_name": "google-androidpublisher2",
       "make_target": "androidpublisher2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/androidpublisher/v2/rest"
@@ -178,6 +203,7 @@
     {
       "name": "androidpublisher",
       "gen_dir": "androidpublisher/v3",
+      "spec_file": "androidpublisher/v3/spec.json",
       "crate_name": "google-androidpublisher3",
       "make_target": "androidpublisher3",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/androidpublisher/v3/rest"
@@ -185,6 +211,7 @@
     {
       "name": "appengine",
       "gen_dir": "appengine/v1alpha",
+      "spec_file": "appengine/v1alpha/spec.json",
       "crate_name": "google-appengine1_alpha",
       "make_target": "appengine1_alpha",
       "rest_url": "https://appengine.googleapis.com/$discovery/rest?version=v1alpha"
@@ -192,6 +219,7 @@
     {
       "name": "appengine",
       "gen_dir": "appengine/v1beta",
+      "spec_file": "appengine/v1beta/spec.json",
       "crate_name": "google-appengine1_beta",
       "make_target": "appengine1_beta",
       "rest_url": "https://appengine.googleapis.com/$discovery/rest?version=v1beta"
@@ -199,6 +227,7 @@
     {
       "name": "appengine",
       "gen_dir": "appengine/v1",
+      "spec_file": "appengine/v1/spec.json",
       "crate_name": "google-appengine1",
       "make_target": "appengine1",
       "rest_url": "https://appengine.googleapis.com/$discovery/rest?version=v1"
@@ -206,6 +235,7 @@
     {
       "name": "appengine",
       "gen_dir": "appengine/v1beta4",
+      "spec_file": "appengine/v1beta4/spec.json",
       "crate_name": "google-appengine1_beta4",
       "make_target": "appengine1_beta4",
       "rest_url": "https://appengine.googleapis.com/$discovery/rest?version=v1beta4"
@@ -213,6 +243,7 @@
     {
       "name": "appengine",
       "gen_dir": "appengine/v1beta5",
+      "spec_file": "appengine/v1beta5/spec.json",
       "crate_name": "google-appengine1_beta5",
       "make_target": "appengine1_beta5",
       "rest_url": "https://appengine.googleapis.com/$discovery/rest?version=v1beta5"
@@ -220,6 +251,7 @@
     {
       "name": "appsactivity",
       "gen_dir": "appsactivity/v1",
+      "spec_file": "appsactivity/v1/spec.json",
       "crate_name": "google-appsactivity1",
       "make_target": "appsactivity1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/appsactivity/v1/rest"
@@ -227,6 +259,7 @@
     {
       "name": "appstate",
       "gen_dir": "appstate/v1",
+      "spec_file": "appstate/v1/spec.json",
       "crate_name": "google-appstate1",
       "make_target": "appstate1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/appstate/v1/rest"
@@ -234,6 +267,7 @@
     {
       "name": "bigquery",
       "gen_dir": "bigquery/v2",
+      "spec_file": "bigquery/v2/spec.json",
       "crate_name": "google-bigquery2",
       "make_target": "bigquery2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/bigquery/v2/rest"
@@ -241,6 +275,7 @@
     {
       "name": "bigquerydatatransfer",
       "gen_dir": "bigquerydatatransfer/v1",
+      "spec_file": "bigquerydatatransfer/v1/spec.json",
       "crate_name": "google-bigquerydatatransfer1",
       "make_target": "bigquerydatatransfer1",
       "rest_url": "https://bigquerydatatransfer.googleapis.com/$discovery/rest?version=v1"
@@ -248,6 +283,7 @@
     {
       "name": "bigtableadmin",
       "gen_dir": "bigtableadmin/v1",
+      "spec_file": "bigtableadmin/v1/spec.json",
       "crate_name": "google-bigtableadmin1",
       "make_target": "bigtableadmin1",
       "rest_url": "https://bigtableadmin.googleapis.com/$discovery/rest?version=v1"
@@ -255,6 +291,7 @@
     {
       "name": "bigtableadmin",
       "gen_dir": "bigtableadmin/v2",
+      "spec_file": "bigtableadmin/v2/spec.json",
       "crate_name": "google-bigtableadmin2",
       "make_target": "bigtableadmin2",
       "rest_url": "https://bigtableadmin.googleapis.com/$discovery/rest?version=v2"
@@ -262,6 +299,7 @@
     {
       "name": "binaryauthorization",
       "gen_dir": "binaryauthorization/v1beta1",
+      "spec_file": "binaryauthorization/v1beta1/spec.json",
       "crate_name": "google-binaryauthorization1_beta1",
       "make_target": "binaryauthorization1_beta1",
       "rest_url": "https://binaryauthorization.googleapis.com/$discovery/rest?version=v1beta1"
@@ -269,6 +307,7 @@
     {
       "name": "blogger",
       "gen_dir": "blogger/v2",
+      "spec_file": "blogger/v2/spec.json",
       "crate_name": "google-blogger2",
       "make_target": "blogger2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/blogger/v2/rest"
@@ -276,6 +315,7 @@
     {
       "name": "blogger",
       "gen_dir": "blogger/v3",
+      "spec_file": "blogger/v3/spec.json",
       "crate_name": "google-blogger3",
       "make_target": "blogger3",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/blogger/v3/rest"
@@ -283,6 +323,7 @@
     {
       "name": "books",
       "gen_dir": "books/v1",
+      "spec_file": "books/v1/spec.json",
       "crate_name": "google-books1",
       "make_target": "books1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/books/v1/rest"
@@ -290,6 +331,7 @@
     {
       "name": "calendar",
       "gen_dir": "calendar/v3",
+      "spec_file": "calendar/v3/spec.json",
       "crate_name": "google-calendar3",
       "make_target": "calendar3",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"
@@ -297,6 +339,7 @@
     {
       "name": "chat",
       "gen_dir": "chat/v1",
+      "spec_file": "chat/v1/spec.json",
       "crate_name": "google-chat1",
       "make_target": "chat1",
       "rest_url": "https://chat.googleapis.com/$discovery/rest?version=v1"
@@ -304,6 +347,7 @@
     {
       "name": "civicinfo",
       "gen_dir": "civicinfo/v2",
+      "spec_file": "civicinfo/v2/spec.json",
       "crate_name": "google-civicinfo2",
       "make_target": "civicinfo2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/civicinfo/v2/rest"
@@ -311,6 +355,7 @@
     {
       "name": "classroom",
       "gen_dir": "classroom/v1",
+      "spec_file": "classroom/v1/spec.json",
       "crate_name": "google-classroom1",
       "make_target": "classroom1",
       "rest_url": "https://classroom.googleapis.com/$discovery/rest?version=v1"
@@ -318,6 +363,7 @@
     {
       "name": "cloudasset",
       "gen_dir": "cloudasset/v1",
+      "spec_file": "cloudasset/v1/spec.json",
       "crate_name": "google-cloudasset1",
       "make_target": "cloudasset1",
       "rest_url": "https://cloudasset.googleapis.com/$discovery/rest?version=v1"
@@ -325,6 +371,7 @@
     {
       "name": "cloudasset",
       "gen_dir": "cloudasset/v1beta1",
+      "spec_file": "cloudasset/v1beta1/spec.json",
       "crate_name": "google-cloudasset1_beta1",
       "make_target": "cloudasset1_beta1",
       "rest_url": "https://cloudasset.googleapis.com/$discovery/rest?version=v1beta1"
@@ -332,6 +379,7 @@
     {
       "name": "cloudbilling",
       "gen_dir": "cloudbilling/v1",
+      "spec_file": "cloudbilling/v1/spec.json",
       "crate_name": "google-cloudbilling1",
       "make_target": "cloudbilling1",
       "rest_url": "https://cloudbilling.googleapis.com/$discovery/rest?version=v1"
@@ -339,6 +387,7 @@
     {
       "name": "cloudbuild",
       "gen_dir": "cloudbuild/v1alpha1",
+      "spec_file": "cloudbuild/v1alpha1/spec.json",
       "crate_name": "google-cloudbuild1_alpha1",
       "make_target": "cloudbuild1_alpha1",
       "rest_url": "https://cloudbuild.googleapis.com/$discovery/rest?version=v1alpha1"
@@ -346,6 +395,7 @@
     {
       "name": "cloudbuild",
       "gen_dir": "cloudbuild/v1",
+      "spec_file": "cloudbuild/v1/spec.json",
       "crate_name": "google-cloudbuild1",
       "make_target": "cloudbuild1",
       "rest_url": "https://cloudbuild.googleapis.com/$discovery/rest?version=v1"
@@ -353,6 +403,7 @@
     {
       "name": "clouddebugger",
       "gen_dir": "clouddebugger/v2",
+      "spec_file": "clouddebugger/v2/spec.json",
       "crate_name": "google-clouddebugger2",
       "make_target": "clouddebugger2",
       "rest_url": "https://clouddebugger.googleapis.com/$discovery/rest?version=v2"
@@ -360,6 +411,7 @@
     {
       "name": "clouderrorreporting",
       "gen_dir": "clouderrorreporting/v1beta1",
+      "spec_file": "clouderrorreporting/v1beta1/spec.json",
       "crate_name": "google-clouderrorreporting1_beta1",
       "make_target": "clouderrorreporting1_beta1",
       "rest_url": "https://clouderrorreporting.googleapis.com/$discovery/rest?version=v1beta1"
@@ -367,6 +419,7 @@
     {
       "name": "cloudfunctions",
       "gen_dir": "cloudfunctions/v1",
+      "spec_file": "cloudfunctions/v1/spec.json",
       "crate_name": "google-cloudfunctions1",
       "make_target": "cloudfunctions1",
       "rest_url": "https://cloudfunctions.googleapis.com/$discovery/rest?version=v1"
@@ -374,6 +427,7 @@
     {
       "name": "cloudfunctions",
       "gen_dir": "cloudfunctions/v1beta2",
+      "spec_file": "cloudfunctions/v1beta2/spec.json",
       "crate_name": "google-cloudfunctions1_beta2",
       "make_target": "cloudfunctions1_beta2",
       "rest_url": "https://cloudfunctions.googleapis.com/$discovery/rest?version=v1beta2"
@@ -381,6 +435,7 @@
     {
       "name": "cloudidentity",
       "gen_dir": "cloudidentity/v1",
+      "spec_file": "cloudidentity/v1/spec.json",
       "crate_name": "google-cloudidentity1",
       "make_target": "cloudidentity1",
       "rest_url": "https://cloudidentity.googleapis.com/$discovery/rest?version=v1"
@@ -388,6 +443,7 @@
     {
       "name": "cloudidentity",
       "gen_dir": "cloudidentity/v1beta1",
+      "spec_file": "cloudidentity/v1beta1/spec.json",
       "crate_name": "google-cloudidentity1_beta1",
       "make_target": "cloudidentity1_beta1",
       "rest_url": "https://cloudidentity.googleapis.com/$discovery/rest?version=v1beta1"
@@ -395,6 +451,7 @@
     {
       "name": "cloudiot",
       "gen_dir": "cloudiot/v1alpha1",
+      "spec_file": "cloudiot/v1alpha1/spec.json",
       "crate_name": "google-cloudiot1_alpha1",
       "make_target": "cloudiot1_alpha1",
       "rest_url": "https://cloudiot.googleapis.com/$discovery/rest?version=v1alpha1"
@@ -402,6 +459,7 @@
     {
       "name": "cloudiot",
       "gen_dir": "cloudiot/v1",
+      "spec_file": "cloudiot/v1/spec.json",
       "crate_name": "google-cloudiot1",
       "make_target": "cloudiot1",
       "rest_url": "https://cloudiot.googleapis.com/$discovery/rest?version=v1"
@@ -409,6 +467,7 @@
     {
       "name": "cloudkms",
       "gen_dir": "cloudkms/v1",
+      "spec_file": "cloudkms/v1/spec.json",
       "crate_name": "google-cloudkms1",
       "make_target": "cloudkms1",
       "rest_url": "https://cloudkms.googleapis.com/$discovery/rest?version=v1"
@@ -416,6 +475,7 @@
     {
       "name": "cloudprivatecatalog",
       "gen_dir": "cloudprivatecatalog/v1beta1",
+      "spec_file": "cloudprivatecatalog/v1beta1/spec.json",
       "crate_name": "google-cloudprivatecatalog1_beta1",
       "make_target": "cloudprivatecatalog1_beta1",
       "rest_url": "https://cloudprivatecatalog.googleapis.com/$discovery/rest?version=v1beta1"
@@ -423,6 +483,7 @@
     {
       "name": "cloudprivatecatalogproducer",
       "gen_dir": "cloudprivatecatalogproducer/v1beta1",
+      "spec_file": "cloudprivatecatalogproducer/v1beta1/spec.json",
       "crate_name": "google-cloudprivatecatalogproducer1_beta1",
       "make_target": "cloudprivatecatalogproducer1_beta1",
       "rest_url": "https://cloudprivatecatalogproducer.googleapis.com/$discovery/rest?version=v1beta1"
@@ -430,6 +491,7 @@
     {
       "name": "cloudprofiler",
       "gen_dir": "cloudprofiler/v2",
+      "spec_file": "cloudprofiler/v2/spec.json",
       "crate_name": "google-cloudprofiler2",
       "make_target": "cloudprofiler2",
       "rest_url": "https://cloudprofiler.googleapis.com/$discovery/rest?version=v2"
@@ -437,6 +499,7 @@
     {
       "name": "cloudresourcemanager",
       "gen_dir": "cloudresourcemanager/v1",
+      "spec_file": "cloudresourcemanager/v1/spec.json",
       "crate_name": "google-cloudresourcemanager1",
       "make_target": "cloudresourcemanager1",
       "rest_url": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v1"
@@ -444,6 +507,7 @@
     {
       "name": "cloudresourcemanager",
       "gen_dir": "cloudresourcemanager/v1beta1",
+      "spec_file": "cloudresourcemanager/v1beta1/spec.json",
       "crate_name": "google-cloudresourcemanager1_beta1",
       "make_target": "cloudresourcemanager1_beta1",
       "rest_url": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v1beta1"
@@ -451,6 +515,7 @@
     {
       "name": "cloudresourcemanager",
       "gen_dir": "cloudresourcemanager/v2",
+      "spec_file": "cloudresourcemanager/v2/spec.json",
       "crate_name": "google-cloudresourcemanager2",
       "make_target": "cloudresourcemanager2",
       "rest_url": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v2"
@@ -458,6 +523,7 @@
     {
       "name": "cloudresourcemanager",
       "gen_dir": "cloudresourcemanager/v2beta1",
+      "spec_file": "cloudresourcemanager/v2beta1/spec.json",
       "crate_name": "google-cloudresourcemanager2_beta1",
       "make_target": "cloudresourcemanager2_beta1",
       "rest_url": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v2beta1"
@@ -465,6 +531,7 @@
     {
       "name": "cloudscheduler",
       "gen_dir": "cloudscheduler/v1",
+      "spec_file": "cloudscheduler/v1/spec.json",
       "crate_name": "google-cloudscheduler1",
       "make_target": "cloudscheduler1",
       "rest_url": "https://cloudscheduler.googleapis.com/$discovery/rest?version=v1"
@@ -472,6 +539,7 @@
     {
       "name": "cloudscheduler",
       "gen_dir": "cloudscheduler/v1beta1",
+      "spec_file": "cloudscheduler/v1beta1/spec.json",
       "crate_name": "google-cloudscheduler1_beta1",
       "make_target": "cloudscheduler1_beta1",
       "rest_url": "https://cloudscheduler.googleapis.com/$discovery/rest?version=v1beta1"
@@ -479,6 +547,7 @@
     {
       "name": "cloudsearch",
       "gen_dir": "cloudsearch/v1",
+      "spec_file": "cloudsearch/v1/spec.json",
       "crate_name": "google-cloudsearch1",
       "make_target": "cloudsearch1",
       "rest_url": "https://cloudsearch.googleapis.com/$discovery/rest?version=v1"
@@ -486,6 +555,7 @@
     {
       "name": "cloudshell",
       "gen_dir": "cloudshell/v1alpha1",
+      "spec_file": "cloudshell/v1alpha1/spec.json",
       "crate_name": "google-cloudshell1_alpha1",
       "make_target": "cloudshell1_alpha1",
       "rest_url": "https://cloudshell.googleapis.com/$discovery/rest?version=v1alpha1"
@@ -493,6 +563,7 @@
     {
       "name": "cloudshell",
       "gen_dir": "cloudshell/v1",
+      "spec_file": "cloudshell/v1/spec.json",
       "crate_name": "google-cloudshell1",
       "make_target": "cloudshell1",
       "rest_url": "https://cloudshell.googleapis.com/$discovery/rest?version=v1"
@@ -500,6 +571,7 @@
     {
       "name": "cloudtasks",
       "gen_dir": "cloudtasks/v2",
+      "spec_file": "cloudtasks/v2/spec.json",
       "crate_name": "google-cloudtasks2",
       "make_target": "cloudtasks2",
       "rest_url": "https://cloudtasks.googleapis.com/$discovery/rest?version=v2"
@@ -507,6 +579,7 @@
     {
       "name": "cloudtasks",
       "gen_dir": "cloudtasks/v2beta2",
+      "spec_file": "cloudtasks/v2beta2/spec.json",
       "crate_name": "google-cloudtasks2_beta2",
       "make_target": "cloudtasks2_beta2",
       "rest_url": "https://cloudtasks.googleapis.com/$discovery/rest?version=v2beta2"
@@ -514,6 +587,7 @@
     {
       "name": "cloudtasks",
       "gen_dir": "cloudtasks/v2beta3",
+      "spec_file": "cloudtasks/v2beta3/spec.json",
       "crate_name": "google-cloudtasks2_beta3",
       "make_target": "cloudtasks2_beta3",
       "rest_url": "https://cloudtasks.googleapis.com/$discovery/rest?version=v2beta3"
@@ -521,6 +595,7 @@
     {
       "name": "cloudtrace",
       "gen_dir": "cloudtrace/v2alpha1",
+      "spec_file": "cloudtrace/v2alpha1/spec.json",
       "crate_name": "google-cloudtrace2_alpha1",
       "make_target": "cloudtrace2_alpha1",
       "rest_url": "https://cloudtrace.googleapis.com/$discovery/rest?version=v2alpha1"
@@ -528,6 +603,7 @@
     {
       "name": "cloudtrace",
       "gen_dir": "cloudtrace/v1",
+      "spec_file": "cloudtrace/v1/spec.json",
       "crate_name": "google-cloudtrace1",
       "make_target": "cloudtrace1",
       "rest_url": "https://cloudtrace.googleapis.com/$discovery/rest?version=v1"
@@ -535,6 +611,7 @@
     {
       "name": "cloudtrace",
       "gen_dir": "cloudtrace/v2",
+      "spec_file": "cloudtrace/v2/spec.json",
       "crate_name": "google-cloudtrace2",
       "make_target": "cloudtrace2",
       "rest_url": "https://cloudtrace.googleapis.com/$discovery/rest?version=v2"
@@ -542,6 +619,7 @@
     {
       "name": "commentanalyzer",
       "gen_dir": "commentanalyzer/v1alpha1",
+      "spec_file": "commentanalyzer/v1alpha1/spec.json",
       "crate_name": "google-commentanalyzer1_alpha1",
       "make_target": "commentanalyzer1_alpha1",
       "rest_url": "https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1"
@@ -549,6 +627,7 @@
     {
       "name": "composer",
       "gen_dir": "composer/v1",
+      "spec_file": "composer/v1/spec.json",
       "crate_name": "google-composer1",
       "make_target": "composer1",
       "rest_url": "https://composer.googleapis.com/$discovery/rest?version=v1"
@@ -556,6 +635,7 @@
     {
       "name": "composer",
       "gen_dir": "composer/v1beta1",
+      "spec_file": "composer/v1beta1/spec.json",
       "crate_name": "google-composer1_beta1",
       "make_target": "composer1_beta1",
       "rest_url": "https://composer.googleapis.com/$discovery/rest?version=v1beta1"
@@ -563,6 +643,7 @@
     {
       "name": "compute",
       "gen_dir": "compute/alpha",
+      "spec_file": "compute/alpha/spec.json",
       "crate_name": "google-computealpha",
       "make_target": "computealpha",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/compute/alpha/rest"
@@ -570,6 +651,7 @@
     {
       "name": "compute",
       "gen_dir": "compute/beta",
+      "spec_file": "compute/beta/spec.json",
       "crate_name": "google-computebeta",
       "make_target": "computebeta",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/compute/beta/rest"
@@ -577,6 +659,7 @@
     {
       "name": "compute",
       "gen_dir": "compute/v1",
+      "spec_file": "compute/v1/spec.json",
       "crate_name": "google-compute1",
       "make_target": "compute1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/compute/v1/rest"
@@ -584,6 +667,7 @@
     {
       "name": "container",
       "gen_dir": "container/v1",
+      "spec_file": "container/v1/spec.json",
       "crate_name": "google-container1",
       "make_target": "container1",
       "rest_url": "https://container.googleapis.com/$discovery/rest?version=v1"
@@ -591,6 +675,7 @@
     {
       "name": "container",
       "gen_dir": "container/v1beta1",
+      "spec_file": "container/v1beta1/spec.json",
       "crate_name": "google-container1_beta1",
       "make_target": "container1_beta1",
       "rest_url": "https://container.googleapis.com/$discovery/rest?version=v1beta1"
@@ -598,6 +683,7 @@
     {
       "name": "containeranalysis",
       "gen_dir": "containeranalysis/v1alpha1",
+      "spec_file": "containeranalysis/v1alpha1/spec.json",
       "crate_name": "google-containeranalysis1_alpha1",
       "make_target": "containeranalysis1_alpha1",
       "rest_url": "https://containeranalysis.googleapis.com/$discovery/rest?version=v1alpha1"
@@ -605,6 +691,7 @@
     {
       "name": "containeranalysis",
       "gen_dir": "containeranalysis/v1beta1",
+      "spec_file": "containeranalysis/v1beta1/spec.json",
       "crate_name": "google-containeranalysis1_beta1",
       "make_target": "containeranalysis1_beta1",
       "rest_url": "https://containeranalysis.googleapis.com/$discovery/rest?version=v1beta1"
@@ -612,6 +699,7 @@
     {
       "name": "content",
       "gen_dir": "content/v2",
+      "spec_file": "content/v2/spec.json",
       "crate_name": "google-content2",
       "make_target": "content2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/content/v2/rest"
@@ -619,6 +707,7 @@
     {
       "name": "content",
       "gen_dir": "content/v2.1",
+      "spec_file": "content/v2.1/spec.json",
       "crate_name": "google-content2d1",
       "make_target": "content2d1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/content/v2.1/rest"
@@ -626,6 +715,7 @@
     {
       "name": "customsearch",
       "gen_dir": "customsearch/v1",
+      "spec_file": "customsearch/v1/spec.json",
       "crate_name": "google-customsearch1",
       "make_target": "customsearch1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/customsearch/v1/rest"
@@ -633,6 +723,7 @@
     {
       "name": "dataflow",
       "gen_dir": "dataflow/v1b3",
+      "spec_file": "dataflow/v1b3/spec.json",
       "crate_name": "google-dataflow1_b3",
       "make_target": "dataflow1_b3",
       "rest_url": "https://dataflow.googleapis.com/$discovery/rest?version=v1b3"
@@ -640,6 +731,7 @@
     {
       "name": "datafusion",
       "gen_dir": "datafusion/v1beta1",
+      "spec_file": "datafusion/v1beta1/spec.json",
       "crate_name": "google-datafusion1_beta1",
       "make_target": "datafusion1_beta1",
       "rest_url": "https://datafusion.googleapis.com/$discovery/rest?version=v1beta1"
@@ -647,6 +739,7 @@
     {
       "name": "dataproc",
       "gen_dir": "dataproc/v1",
+      "spec_file": "dataproc/v1/spec.json",
       "crate_name": "google-dataproc1",
       "make_target": "dataproc1",
       "rest_url": "https://dataproc.googleapis.com/$discovery/rest?version=v1"
@@ -654,6 +747,7 @@
     {
       "name": "dataproc",
       "gen_dir": "dataproc/v1beta2",
+      "spec_file": "dataproc/v1beta2/spec.json",
       "crate_name": "google-dataproc1_beta2",
       "make_target": "dataproc1_beta2",
       "rest_url": "https://dataproc.googleapis.com/$discovery/rest?version=v1beta2"
@@ -661,6 +755,7 @@
     {
       "name": "datastore",
       "gen_dir": "datastore/v1",
+      "spec_file": "datastore/v1/spec.json",
       "crate_name": "google-datastore1",
       "make_target": "datastore1",
       "rest_url": "https://datastore.googleapis.com/$discovery/rest?version=v1"
@@ -668,6 +763,7 @@
     {
       "name": "datastore",
       "gen_dir": "datastore/v1beta1",
+      "spec_file": "datastore/v1beta1/spec.json",
       "crate_name": "google-datastore1_beta1",
       "make_target": "datastore1_beta1",
       "rest_url": "https://datastore.googleapis.com/$discovery/rest?version=v1beta1"
@@ -675,6 +771,7 @@
     {
       "name": "datastore",
       "gen_dir": "datastore/v1beta3",
+      "spec_file": "datastore/v1beta3/spec.json",
       "crate_name": "google-datastore1_beta3",
       "make_target": "datastore1_beta3",
       "rest_url": "https://datastore.googleapis.com/$discovery/rest?version=v1beta3"
@@ -682,6 +779,7 @@
     {
       "name": "deploymentmanager",
       "gen_dir": "deploymentmanager/alpha",
+      "spec_file": "deploymentmanager/alpha/spec.json",
       "crate_name": "google-deploymentmanageralpha",
       "make_target": "deploymentmanageralpha",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/deploymentmanager/alpha/rest"
@@ -689,6 +787,7 @@
     {
       "name": "deploymentmanager",
       "gen_dir": "deploymentmanager/v2beta",
+      "spec_file": "deploymentmanager/v2beta/spec.json",
       "crate_name": "google-deploymentmanager2_beta",
       "make_target": "deploymentmanager2_beta",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/deploymentmanager/v2beta/rest"
@@ -696,6 +795,7 @@
     {
       "name": "deploymentmanager",
       "gen_dir": "deploymentmanager/v2",
+      "spec_file": "deploymentmanager/v2/spec.json",
       "crate_name": "google-deploymentmanager2",
       "make_target": "deploymentmanager2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/deploymentmanager/v2/rest"
@@ -703,6 +803,7 @@
     {
       "name": "dfareporting",
       "gen_dir": "dfareporting/v3.1",
+      "spec_file": "dfareporting/v3.1/spec.json",
       "crate_name": "google-dfareporting3d1",
       "make_target": "dfareporting3d1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/dfareporting/v3.1/rest"
@@ -710,6 +811,7 @@
     {
       "name": "dfareporting",
       "gen_dir": "dfareporting/v3.2",
+      "spec_file": "dfareporting/v3.2/spec.json",
       "crate_name": "google-dfareporting3d2",
       "make_target": "dfareporting3d2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/dfareporting/v3.2/rest"
@@ -717,6 +819,7 @@
     {
       "name": "dfareporting",
       "gen_dir": "dfareporting/v3.3",
+      "spec_file": "dfareporting/v3.3/spec.json",
       "crate_name": "google-dfareporting3d3",
       "make_target": "dfareporting3d3",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/dfareporting/v3.3/rest"
@@ -724,6 +827,7 @@
     {
       "name": "dialogflow",
       "gen_dir": "dialogflow/v2",
+      "spec_file": "dialogflow/v2/spec.json",
       "crate_name": "google-dialogflow2",
       "make_target": "dialogflow2",
       "rest_url": "https://dialogflow.googleapis.com/$discovery/rest?version=v2"
@@ -731,6 +835,7 @@
     {
       "name": "dialogflow",
       "gen_dir": "dialogflow/v2beta1",
+      "spec_file": "dialogflow/v2beta1/spec.json",
       "crate_name": "google-dialogflow2_beta1",
       "make_target": "dialogflow2_beta1",
       "rest_url": "https://dialogflow.googleapis.com/$discovery/rest?version=v2beta1"
@@ -738,6 +843,7 @@
     {
       "name": "digitalassetlinks",
       "gen_dir": "digitalassetlinks/v1",
+      "spec_file": "digitalassetlinks/v1/spec.json",
       "crate_name": "google-digitalassetlinks1",
       "make_target": "digitalassetlinks1",
       "rest_url": "https://digitalassetlinks.googleapis.com/$discovery/rest?version=v1"
@@ -745,6 +851,7 @@
     {
       "name": "discovery",
       "gen_dir": "discovery/v1",
+      "spec_file": "discovery/v1/spec.json",
       "crate_name": "google-discovery1",
       "make_target": "discovery1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/discovery/v1/rest"
@@ -752,6 +859,7 @@
     {
       "name": "dlp",
       "gen_dir": "dlp/v2",
+      "spec_file": "dlp/v2/spec.json",
       "crate_name": "google-dlp2",
       "make_target": "dlp2",
       "rest_url": "https://dlp.googleapis.com/$discovery/rest?version=v2"
@@ -759,6 +867,7 @@
     {
       "name": "dns",
       "gen_dir": "dns/v1",
+      "spec_file": "dns/v1/spec.json",
       "crate_name": "google-dns1",
       "make_target": "dns1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/dns/v1/rest"
@@ -766,6 +875,7 @@
     {
       "name": "dns",
       "gen_dir": "dns/v1beta2",
+      "spec_file": "dns/v1beta2/spec.json",
       "crate_name": "google-dns1_beta2",
       "make_target": "dns1_beta2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/dns/v1beta2/rest"
@@ -773,6 +883,7 @@
     {
       "name": "dns",
       "gen_dir": "dns/v2beta1",
+      "spec_file": "dns/v2beta1/spec.json",
       "crate_name": "google-dns2_beta1",
       "make_target": "dns2_beta1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/dns/v2beta1/rest"
@@ -780,6 +891,7 @@
     {
       "name": "docs",
       "gen_dir": "docs/v1",
+      "spec_file": "docs/v1/spec.json",
       "crate_name": "google-docs1",
       "make_target": "docs1",
       "rest_url": "https://docs.googleapis.com/$discovery/rest?version=v1"
@@ -787,6 +899,7 @@
     {
       "name": "doubleclickbidmanager",
       "gen_dir": "doubleclickbidmanager/v1",
+      "spec_file": "doubleclickbidmanager/v1/spec.json",
       "crate_name": "google-doubleclickbidmanager1",
       "make_target": "doubleclickbidmanager1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/doubleclickbidmanager/v1/rest"
@@ -794,6 +907,7 @@
     {
       "name": "doubleclicksearch",
       "gen_dir": "doubleclicksearch/v2",
+      "spec_file": "doubleclicksearch/v2/spec.json",
       "crate_name": "google-doubleclicksearch2",
       "make_target": "doubleclicksearch2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/doubleclicksearch/v2/rest"
@@ -801,6 +915,7 @@
     {
       "name": "drive",
       "gen_dir": "drive/v2",
+      "spec_file": "drive/v2/spec.json",
       "crate_name": "google-drive2",
       "make_target": "drive2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/drive/v2/rest"
@@ -808,6 +923,7 @@
     {
       "name": "drive",
       "gen_dir": "drive/v3",
+      "spec_file": "drive/v3/spec.json",
       "crate_name": "google-drive3",
       "make_target": "drive3",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
@@ -815,6 +931,7 @@
     {
       "name": "driveactivity",
       "gen_dir": "driveactivity/v2",
+      "spec_file": "driveactivity/v2/spec.json",
       "crate_name": "google-driveactivity2",
       "make_target": "driveactivity2",
       "rest_url": "https://driveactivity.googleapis.com/$discovery/rest?version=v2"
@@ -822,6 +939,7 @@
     {
       "name": "factchecktools",
       "gen_dir": "factchecktools/v1alpha1",
+      "spec_file": "factchecktools/v1alpha1/spec.json",
       "crate_name": "google-factchecktools1_alpha1",
       "make_target": "factchecktools1_alpha1",
       "rest_url": "https://factchecktools.googleapis.com/$discovery/rest?version=v1alpha1"
@@ -829,6 +947,7 @@
     {
       "name": "fcm",
       "gen_dir": "fcm/v1",
+      "spec_file": "fcm/v1/spec.json",
       "crate_name": "google-fcm1",
       "make_target": "fcm1",
       "rest_url": "https://fcm.googleapis.com/$discovery/rest?version=v1"
@@ -836,6 +955,7 @@
     {
       "name": "file",
       "gen_dir": "file/v1",
+      "spec_file": "file/v1/spec.json",
       "crate_name": "google-file1",
       "make_target": "file1",
       "rest_url": "https://file.googleapis.com/$discovery/rest?version=v1"
@@ -843,6 +963,7 @@
     {
       "name": "file",
       "gen_dir": "file/v1beta1",
+      "spec_file": "file/v1beta1/spec.json",
       "crate_name": "google-file1_beta1",
       "make_target": "file1_beta1",
       "rest_url": "https://file.googleapis.com/$discovery/rest?version=v1beta1"
@@ -850,6 +971,7 @@
     {
       "name": "firebase",
       "gen_dir": "firebase/v1beta1",
+      "spec_file": "firebase/v1beta1/spec.json",
       "crate_name": "google-firebase1_beta1",
       "make_target": "firebase1_beta1",
       "rest_url": "https://firebase.googleapis.com/$discovery/rest?version=v1beta1"
@@ -857,6 +979,7 @@
     {
       "name": "firebasedynamiclinks",
       "gen_dir": "firebasedynamiclinks/v1",
+      "spec_file": "firebasedynamiclinks/v1/spec.json",
       "crate_name": "google-firebasedynamiclinks1",
       "make_target": "firebasedynamiclinks1",
       "rest_url": "https://firebasedynamiclinks.googleapis.com/$discovery/rest?version=v1"
@@ -864,6 +987,7 @@
     {
       "name": "firebasehosting",
       "gen_dir": "firebasehosting/v1beta1",
+      "spec_file": "firebasehosting/v1beta1/spec.json",
       "crate_name": "google-firebasehosting1_beta1",
       "make_target": "firebasehosting1_beta1",
       "rest_url": "https://firebasehosting.googleapis.com/$discovery/rest?version=v1beta1"
@@ -871,6 +995,7 @@
     {
       "name": "firebaserules",
       "gen_dir": "firebaserules/v1",
+      "spec_file": "firebaserules/v1/spec.json",
       "crate_name": "google-firebaserules1",
       "make_target": "firebaserules1",
       "rest_url": "https://firebaserules.googleapis.com/$discovery/rest?version=v1"
@@ -878,6 +1003,7 @@
     {
       "name": "firestore",
       "gen_dir": "firestore/v1",
+      "spec_file": "firestore/v1/spec.json",
       "crate_name": "google-firestore1",
       "make_target": "firestore1",
       "rest_url": "https://firestore.googleapis.com/$discovery/rest?version=v1"
@@ -885,6 +1011,7 @@
     {
       "name": "firestore",
       "gen_dir": "firestore/v1beta1",
+      "spec_file": "firestore/v1beta1/spec.json",
       "crate_name": "google-firestore1_beta1",
       "make_target": "firestore1_beta1",
       "rest_url": "https://firestore.googleapis.com/$discovery/rest?version=v1beta1"
@@ -892,6 +1019,7 @@
     {
       "name": "firestore",
       "gen_dir": "firestore/v1beta2",
+      "spec_file": "firestore/v1beta2/spec.json",
       "crate_name": "google-firestore1_beta2",
       "make_target": "firestore1_beta2",
       "rest_url": "https://firestore.googleapis.com/$discovery/rest?version=v1beta2"
@@ -899,6 +1027,7 @@
     {
       "name": "fitness",
       "gen_dir": "fitness/v1",
+      "spec_file": "fitness/v1/spec.json",
       "crate_name": "google-fitness1",
       "make_target": "fitness1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/fitness/v1/rest"
@@ -906,6 +1035,7 @@
     {
       "name": "fusiontables",
       "gen_dir": "fusiontables/v1",
+      "spec_file": "fusiontables/v1/spec.json",
       "crate_name": "google-fusiontables1",
       "make_target": "fusiontables1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/fusiontables/v1/rest"
@@ -913,6 +1043,7 @@
     {
       "name": "fusiontables",
       "gen_dir": "fusiontables/v2",
+      "spec_file": "fusiontables/v2/spec.json",
       "crate_name": "google-fusiontables2",
       "make_target": "fusiontables2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/fusiontables/v2/rest"
@@ -920,6 +1051,7 @@
     {
       "name": "games",
       "gen_dir": "games/v1",
+      "spec_file": "games/v1/spec.json",
       "crate_name": "google-games1",
       "make_target": "games1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/games/v1/rest"
@@ -927,6 +1059,7 @@
     {
       "name": "gamesConfiguration",
       "gen_dir": "gamesConfiguration/v1configuration",
+      "spec_file": "gamesConfiguration/v1configuration/spec.json",
       "crate_name": "google-gamesConfiguration1_configuration",
       "make_target": "gamesConfiguration1_configuration",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/gamesConfiguration/v1configuration/rest"
@@ -934,6 +1067,7 @@
     {
       "name": "gamesManagement",
       "gen_dir": "gamesManagement/v1management",
+      "spec_file": "gamesManagement/v1management/spec.json",
       "crate_name": "google-gamesManagement1_management",
       "make_target": "gamesManagement1_management",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/gamesManagement/v1management/rest"
@@ -941,6 +1075,7 @@
     {
       "name": "genomics",
       "gen_dir": "genomics/v1alpha2",
+      "spec_file": "genomics/v1alpha2/spec.json",
       "crate_name": "google-genomics1_alpha2",
       "make_target": "genomics1_alpha2",
       "rest_url": "https://genomics.googleapis.com/$discovery/rest?version=v1alpha2"
@@ -948,6 +1083,7 @@
     {
       "name": "genomics",
       "gen_dir": "genomics/v2alpha1",
+      "spec_file": "genomics/v2alpha1/spec.json",
       "crate_name": "google-genomics2_alpha1",
       "make_target": "genomics2_alpha1",
       "rest_url": "https://genomics.googleapis.com/$discovery/rest?version=v2alpha1"
@@ -955,6 +1091,7 @@
     {
       "name": "genomics",
       "gen_dir": "genomics/v1",
+      "spec_file": "genomics/v1/spec.json",
       "crate_name": "google-genomics1",
       "make_target": "genomics1",
       "rest_url": "https://genomics.googleapis.com/$discovery/rest?version=v1"
@@ -962,6 +1099,7 @@
     {
       "name": "gmail",
       "gen_dir": "gmail/v1",
+      "spec_file": "gmail/v1/spec.json",
       "crate_name": "google-gmail1",
       "make_target": "gmail1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
@@ -969,6 +1107,7 @@
     {
       "name": "groupsmigration",
       "gen_dir": "groupsmigration/v1",
+      "spec_file": "groupsmigration/v1/spec.json",
       "crate_name": "google-groupsmigration1",
       "make_target": "groupsmigration1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/groupsmigration/v1/rest"
@@ -976,6 +1115,7 @@
     {
       "name": "groupssettings",
       "gen_dir": "groupssettings/v1",
+      "spec_file": "groupssettings/v1/spec.json",
       "crate_name": "google-groupssettings1",
       "make_target": "groupssettings1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/groupssettings/v1/rest"
@@ -983,6 +1123,7 @@
     {
       "name": "healthcare",
       "gen_dir": "healthcare/v1alpha2",
+      "spec_file": "healthcare/v1alpha2/spec.json",
       "crate_name": "google-healthcare1_alpha2",
       "make_target": "healthcare1_alpha2",
       "rest_url": "https://healthcare.googleapis.com/$discovery/rest?version=v1alpha2"
@@ -990,6 +1131,7 @@
     {
       "name": "healthcare",
       "gen_dir": "healthcare/v1beta1",
+      "spec_file": "healthcare/v1beta1/spec.json",
       "crate_name": "google-healthcare1_beta1",
       "make_target": "healthcare1_beta1",
       "rest_url": "https://healthcare.googleapis.com/$discovery/rest?version=v1beta1"
@@ -997,6 +1139,7 @@
     {
       "name": "iam",
       "gen_dir": "iam/v1",
+      "spec_file": "iam/v1/spec.json",
       "crate_name": "google-iam1",
       "make_target": "iam1",
       "rest_url": "https://iam.googleapis.com/$discovery/rest?version=v1"
@@ -1004,6 +1147,7 @@
     {
       "name": "iamcredentials",
       "gen_dir": "iamcredentials/v1",
+      "spec_file": "iamcredentials/v1/spec.json",
       "crate_name": "google-iamcredentials1",
       "make_target": "iamcredentials1",
       "rest_url": "https://iamcredentials.googleapis.com/$discovery/rest?version=v1"
@@ -1011,6 +1155,7 @@
     {
       "name": "iap",
       "gen_dir": "iap/v1",
+      "spec_file": "iap/v1/spec.json",
       "crate_name": "google-iap1",
       "make_target": "iap1",
       "rest_url": "https://iap.googleapis.com/$discovery/rest?version=v1"
@@ -1018,6 +1163,7 @@
     {
       "name": "iap",
       "gen_dir": "iap/v1beta1",
+      "spec_file": "iap/v1beta1/spec.json",
       "crate_name": "google-iap1_beta1",
       "make_target": "iap1_beta1",
       "rest_url": "https://iap.googleapis.com/$discovery/rest?version=v1beta1"
@@ -1025,6 +1171,7 @@
     {
       "name": "identitytoolkit",
       "gen_dir": "identitytoolkit/v3",
+      "spec_file": "identitytoolkit/v3/spec.json",
       "crate_name": "google-identitytoolkit3",
       "make_target": "identitytoolkit3",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/identitytoolkit/v3/rest"
@@ -1032,6 +1179,7 @@
     {
       "name": "indexing",
       "gen_dir": "indexing/v3",
+      "spec_file": "indexing/v3/spec.json",
       "crate_name": "google-indexing3",
       "make_target": "indexing3",
       "rest_url": "https://indexing.googleapis.com/$discovery/rest?version=v3"
@@ -1039,6 +1187,7 @@
     {
       "name": "jobs",
       "gen_dir": "jobs/v3p1beta1",
+      "spec_file": "jobs/v3p1beta1/spec.json",
       "crate_name": "google-jobs3_p1beta1",
       "make_target": "jobs3_p1beta1",
       "rest_url": "https://jobs.googleapis.com/$discovery/rest?version=v3p1beta1"
@@ -1046,6 +1195,7 @@
     {
       "name": "jobs",
       "gen_dir": "jobs/v2",
+      "spec_file": "jobs/v2/spec.json",
       "crate_name": "google-jobs2",
       "make_target": "jobs2",
       "rest_url": "https://jobs.googleapis.com/$discovery/rest?version=v2"
@@ -1053,6 +1203,7 @@
     {
       "name": "jobs",
       "gen_dir": "jobs/v3",
+      "spec_file": "jobs/v3/spec.json",
       "crate_name": "google-jobs3",
       "make_target": "jobs3",
       "rest_url": "https://jobs.googleapis.com/$discovery/rest?version=v3"
@@ -1060,6 +1211,7 @@
     {
       "name": "kgsearch",
       "gen_dir": "kgsearch/v1",
+      "spec_file": "kgsearch/v1/spec.json",
       "crate_name": "google-kgsearch1",
       "make_target": "kgsearch1",
       "rest_url": "https://kgsearch.googleapis.com/$discovery/rest?version=v1"
@@ -1067,6 +1219,7 @@
     {
       "name": "language",
       "gen_dir": "language/v1",
+      "spec_file": "language/v1/spec.json",
       "crate_name": "google-language1",
       "make_target": "language1",
       "rest_url": "https://language.googleapis.com/$discovery/rest?version=v1"
@@ -1074,6 +1227,7 @@
     {
       "name": "language",
       "gen_dir": "language/v1beta1",
+      "spec_file": "language/v1beta1/spec.json",
       "crate_name": "google-language1_beta1",
       "make_target": "language1_beta1",
       "rest_url": "https://language.googleapis.com/$discovery/rest?version=v1beta1"
@@ -1081,6 +1235,7 @@
     {
       "name": "language",
       "gen_dir": "language/v1beta2",
+      "spec_file": "language/v1beta2/spec.json",
       "crate_name": "google-language1_beta2",
       "make_target": "language1_beta2",
       "rest_url": "https://language.googleapis.com/$discovery/rest?version=v1beta2"
@@ -1088,6 +1243,7 @@
     {
       "name": "libraryagent",
       "gen_dir": "libraryagent/v1",
+      "spec_file": "libraryagent/v1/spec.json",
       "crate_name": "google-libraryagent1",
       "make_target": "libraryagent1",
       "rest_url": "https://libraryagent.googleapis.com/$discovery/rest?version=v1"
@@ -1095,6 +1251,7 @@
     {
       "name": "licensing",
       "gen_dir": "licensing/v1",
+      "spec_file": "licensing/v1/spec.json",
       "crate_name": "google-licensing1",
       "make_target": "licensing1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/licensing/v1/rest"
@@ -1102,6 +1259,7 @@
     {
       "name": "logging",
       "gen_dir": "logging/v2",
+      "spec_file": "logging/v2/spec.json",
       "crate_name": "google-logging2",
       "make_target": "logging2",
       "rest_url": "https://logging.googleapis.com/$discovery/rest?version=v2"
@@ -1109,6 +1267,7 @@
     {
       "name": "manufacturers",
       "gen_dir": "manufacturers/v1",
+      "spec_file": "manufacturers/v1/spec.json",
       "crate_name": "google-manufacturers1",
       "make_target": "manufacturers1",
       "rest_url": "https://manufacturers.googleapis.com/$discovery/rest?version=v1"
@@ -1116,6 +1275,7 @@
     {
       "name": "mirror",
       "gen_dir": "mirror/v1",
+      "spec_file": "mirror/v1/spec.json",
       "crate_name": "google-mirror1",
       "make_target": "mirror1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/mirror/v1/rest"
@@ -1123,6 +1283,7 @@
     {
       "name": "ml",
       "gen_dir": "ml/v1",
+      "spec_file": "ml/v1/spec.json",
       "crate_name": "google-ml1",
       "make_target": "ml1",
       "rest_url": "https://ml.googleapis.com/$discovery/rest?version=v1"
@@ -1130,6 +1291,7 @@
     {
       "name": "monitoring",
       "gen_dir": "monitoring/v3p1alpha1",
+      "spec_file": "monitoring/v3p1alpha1/spec.json",
       "crate_name": "google-monitoring3_p1alpha1",
       "make_target": "monitoring3_p1alpha1",
       "rest_url": "https://monitoring.googleapis.com/$discovery/rest?version=v3p1alpha1"
@@ -1137,6 +1299,7 @@
     {
       "name": "monitoring",
       "gen_dir": "monitoring/v3",
+      "spec_file": "monitoring/v3/spec.json",
       "crate_name": "google-monitoring3",
       "make_target": "monitoring3",
       "rest_url": "https://monitoring.googleapis.com/$discovery/rest?version=v3"
@@ -1144,6 +1307,7 @@
     {
       "name": "oauth",
       "gen_dir": "oauth/v1",
+      "spec_file": "oauth/v1/spec.json",
       "crate_name": "google-oauth1",
       "make_target": "oauth1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/oauth2/v1/rest"
@@ -1151,6 +1315,7 @@
     {
       "name": "oauth",
       "gen_dir": "oauth/v2",
+      "spec_file": "oauth/v2/spec.json",
       "crate_name": "google-oauth2",
       "make_target": "oauth2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/oauth2/v2/rest"
@@ -1158,6 +1323,7 @@
     {
       "name": "osconfig",
       "gen_dir": "osconfig/v1alpha1",
+      "spec_file": "osconfig/v1alpha1/spec.json",
       "crate_name": "google-osconfig1_alpha1",
       "make_target": "osconfig1_alpha1",
       "rest_url": "https://osconfig.googleapis.com/$discovery/rest?version=v1alpha1"
@@ -1165,6 +1331,7 @@
     {
       "name": "osconfig",
       "gen_dir": "osconfig/v1alpha2",
+      "spec_file": "osconfig/v1alpha2/spec.json",
       "crate_name": "google-osconfig1_alpha2",
       "make_target": "osconfig1_alpha2",
       "rest_url": "https://osconfig.googleapis.com/$discovery/rest?version=v1alpha2"
@@ -1172,6 +1339,7 @@
     {
       "name": "oslogin",
       "gen_dir": "oslogin/v1alpha",
+      "spec_file": "oslogin/v1alpha/spec.json",
       "crate_name": "google-oslogin1_alpha",
       "make_target": "oslogin1_alpha",
       "rest_url": "https://oslogin.googleapis.com/$discovery/rest?version=v1alpha"
@@ -1179,6 +1347,7 @@
     {
       "name": "oslogin",
       "gen_dir": "oslogin/v1beta",
+      "spec_file": "oslogin/v1beta/spec.json",
       "crate_name": "google-oslogin1_beta",
       "make_target": "oslogin1_beta",
       "rest_url": "https://oslogin.googleapis.com/$discovery/rest?version=v1beta"
@@ -1186,6 +1355,7 @@
     {
       "name": "oslogin",
       "gen_dir": "oslogin/v1",
+      "spec_file": "oslogin/v1/spec.json",
       "crate_name": "google-oslogin1",
       "make_target": "oslogin1",
       "rest_url": "https://oslogin.googleapis.com/$discovery/rest?version=v1"
@@ -1193,6 +1363,7 @@
     {
       "name": "pagespeedonline",
       "gen_dir": "pagespeedonline/v1",
+      "spec_file": "pagespeedonline/v1/spec.json",
       "crate_name": "google-pagespeedonline1",
       "make_target": "pagespeedonline1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/pagespeedonline/v1/rest"
@@ -1200,6 +1371,7 @@
     {
       "name": "pagespeedonline",
       "gen_dir": "pagespeedonline/v2",
+      "spec_file": "pagespeedonline/v2/spec.json",
       "crate_name": "google-pagespeedonline2",
       "make_target": "pagespeedonline2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/pagespeedonline/v2/rest"
@@ -1207,6 +1379,7 @@
     {
       "name": "pagespeedonline",
       "gen_dir": "pagespeedonline/v4",
+      "spec_file": "pagespeedonline/v4/spec.json",
       "crate_name": "google-pagespeedonline4",
       "make_target": "pagespeedonline4",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/pagespeedonline/v4/rest"
@@ -1214,6 +1387,7 @@
     {
       "name": "pagespeedonline",
       "gen_dir": "pagespeedonline/v5",
+      "spec_file": "pagespeedonline/v5/spec.json",
       "crate_name": "google-pagespeedonline5",
       "make_target": "pagespeedonline5",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/pagespeedonline/v5/rest"
@@ -1221,6 +1395,7 @@
     {
       "name": "people",
       "gen_dir": "people/v1",
+      "spec_file": "people/v1/spec.json",
       "crate_name": "google-people1",
       "make_target": "people1",
       "rest_url": "https://people.googleapis.com/$discovery/rest?version=v1"
@@ -1228,6 +1403,7 @@
     {
       "name": "playcustomapp",
       "gen_dir": "playcustomapp/v1",
+      "spec_file": "playcustomapp/v1/spec.json",
       "crate_name": "google-playcustomapp1",
       "make_target": "playcustomapp1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/playcustomapp/v1/rest"
@@ -1235,6 +1411,7 @@
     {
       "name": "plus",
       "gen_dir": "plus/v1",
+      "spec_file": "plus/v1/spec.json",
       "crate_name": "google-plus1",
       "make_target": "plus1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/plus/v1/rest"
@@ -1242,6 +1419,7 @@
     {
       "name": "plusDomains",
       "gen_dir": "plusDomains/v1",
+      "spec_file": "plusDomains/v1/spec.json",
       "crate_name": "google-plusDomains1",
       "make_target": "plusDomains1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/plusDomains/v1/rest"
@@ -1249,6 +1427,7 @@
     {
       "name": "poly",
       "gen_dir": "poly/v1",
+      "spec_file": "poly/v1/spec.json",
       "crate_name": "google-poly1",
       "make_target": "poly1",
       "rest_url": "https://poly.googleapis.com/$discovery/rest?version=v1"
@@ -1256,6 +1435,7 @@
     {
       "name": "proximitybeacon",
       "gen_dir": "proximitybeacon/v1beta1",
+      "spec_file": "proximitybeacon/v1beta1/spec.json",
       "crate_name": "google-proximitybeacon1_beta1",
       "make_target": "proximitybeacon1_beta1",
       "rest_url": "https://proximitybeacon.googleapis.com/$discovery/rest?version=v1beta1"
@@ -1263,6 +1443,7 @@
     {
       "name": "pubsub",
       "gen_dir": "pubsub/v1beta1a",
+      "spec_file": "pubsub/v1beta1a/spec.json",
       "crate_name": "google-pubsub1_beta1a",
       "make_target": "pubsub1_beta1a",
       "rest_url": "https://pubsub.googleapis.com/$discovery/rest?version=v1beta1a"
@@ -1270,6 +1451,7 @@
     {
       "name": "pubsub",
       "gen_dir": "pubsub/v1",
+      "spec_file": "pubsub/v1/spec.json",
       "crate_name": "google-pubsub1",
       "make_target": "pubsub1",
       "rest_url": "https://pubsub.googleapis.com/$discovery/rest?version=v1"
@@ -1277,6 +1459,7 @@
     {
       "name": "pubsub",
       "gen_dir": "pubsub/v1beta2",
+      "spec_file": "pubsub/v1beta2/spec.json",
       "crate_name": "google-pubsub1_beta2",
       "make_target": "pubsub1_beta2",
       "rest_url": "https://pubsub.googleapis.com/$discovery/rest?version=v1beta2"
@@ -1284,6 +1467,7 @@
     {
       "name": "redis",
       "gen_dir": "redis/v1",
+      "spec_file": "redis/v1/spec.json",
       "crate_name": "google-redis1",
       "make_target": "redis1",
       "rest_url": "https://redis.googleapis.com/$discovery/rest?version=v1"
@@ -1291,6 +1475,7 @@
     {
       "name": "redis",
       "gen_dir": "redis/v1beta1",
+      "spec_file": "redis/v1beta1/spec.json",
       "crate_name": "google-redis1_beta1",
       "make_target": "redis1_beta1",
       "rest_url": "https://redis.googleapis.com/$discovery/rest?version=v1beta1"
@@ -1298,6 +1483,7 @@
     {
       "name": "remotebuildexecution",
       "gen_dir": "remotebuildexecution/v1alpha",
+      "spec_file": "remotebuildexecution/v1alpha/spec.json",
       "crate_name": "google-remotebuildexecution1_alpha",
       "make_target": "remotebuildexecution1_alpha",
       "rest_url": "https://remotebuildexecution.googleapis.com/$discovery/rest?version=v1alpha"
@@ -1305,6 +1491,7 @@
     {
       "name": "remotebuildexecution",
       "gen_dir": "remotebuildexecution/v1",
+      "spec_file": "remotebuildexecution/v1/spec.json",
       "crate_name": "google-remotebuildexecution1",
       "make_target": "remotebuildexecution1",
       "rest_url": "https://remotebuildexecution.googleapis.com/$discovery/rest?version=v1"
@@ -1312,6 +1499,7 @@
     {
       "name": "remotebuildexecution",
       "gen_dir": "remotebuildexecution/v2",
+      "spec_file": "remotebuildexecution/v2/spec.json",
       "crate_name": "google-remotebuildexecution2",
       "make_target": "remotebuildexecution2",
       "rest_url": "https://remotebuildexecution.googleapis.com/$discovery/rest?version=v2"
@@ -1319,6 +1507,7 @@
     {
       "name": "replicapool",
       "gen_dir": "replicapool/v1beta1",
+      "spec_file": "replicapool/v1beta1/spec.json",
       "crate_name": "google-replicapool1_beta1",
       "make_target": "replicapool1_beta1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/replicapool/v1beta1/rest"
@@ -1326,6 +1515,7 @@
     {
       "name": "reseller",
       "gen_dir": "reseller/v1",
+      "spec_file": "reseller/v1/spec.json",
       "crate_name": "google-reseller1",
       "make_target": "reseller1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/reseller/v1/rest"
@@ -1333,6 +1523,7 @@
     {
       "name": "run",
       "gen_dir": "run/v1alpha1",
+      "spec_file": "run/v1alpha1/spec.json",
       "crate_name": "google-run1_alpha1",
       "make_target": "run1_alpha1",
       "rest_url": "https://run.googleapis.com/$discovery/rest?version=v1alpha1"
@@ -1340,6 +1531,7 @@
     {
       "name": "run",
       "gen_dir": "run/v1",
+      "spec_file": "run/v1/spec.json",
       "crate_name": "google-run1",
       "make_target": "run1",
       "rest_url": "https://run.googleapis.com/$discovery/rest?version=v1"
@@ -1347,6 +1539,7 @@
     {
       "name": "runtimeconfig",
       "gen_dir": "runtimeconfig/v1",
+      "spec_file": "runtimeconfig/v1/spec.json",
       "crate_name": "google-runtimeconfig1",
       "make_target": "runtimeconfig1",
       "rest_url": "https://runtimeconfig.googleapis.com/$discovery/rest?version=v1"
@@ -1354,6 +1547,7 @@
     {
       "name": "runtimeconfig",
       "gen_dir": "runtimeconfig/v1beta1",
+      "spec_file": "runtimeconfig/v1beta1/spec.json",
       "crate_name": "google-runtimeconfig1_beta1",
       "make_target": "runtimeconfig1_beta1",
       "rest_url": "https://runtimeconfig.googleapis.com/$discovery/rest?version=v1beta1"
@@ -1361,6 +1555,7 @@
     {
       "name": "safebrowsing",
       "gen_dir": "safebrowsing/v4",
+      "spec_file": "safebrowsing/v4/spec.json",
       "crate_name": "google-safebrowsing4",
       "make_target": "safebrowsing4",
       "rest_url": "https://safebrowsing.googleapis.com/$discovery/rest?version=v4"
@@ -1368,6 +1563,7 @@
     {
       "name": "script",
       "gen_dir": "script/v1",
+      "spec_file": "script/v1/spec.json",
       "crate_name": "google-script1",
       "make_target": "script1",
       "rest_url": "https://script.googleapis.com/$discovery/rest?version=v1"
@@ -1375,6 +1571,7 @@
     {
       "name": "searchconsole",
       "gen_dir": "searchconsole/v1",
+      "spec_file": "searchconsole/v1/spec.json",
       "crate_name": "google-searchconsole1",
       "make_target": "searchconsole1",
       "rest_url": "https://searchconsole.googleapis.com/$discovery/rest?version=v1"
@@ -1382,6 +1579,7 @@
     {
       "name": "securitycenter",
       "gen_dir": "securitycenter/v1p1alpha1",
+      "spec_file": "securitycenter/v1p1alpha1/spec.json",
       "crate_name": "google-securitycenter1_p1alpha1",
       "make_target": "securitycenter1_p1alpha1",
       "rest_url": "https://securitycenter.googleapis.com/$discovery/rest?version=v1p1alpha1"
@@ -1389,6 +1587,7 @@
     {
       "name": "securitycenter",
       "gen_dir": "securitycenter/v1",
+      "spec_file": "securitycenter/v1/spec.json",
       "crate_name": "google-securitycenter1",
       "make_target": "securitycenter1",
       "rest_url": "https://securitycenter.googleapis.com/$discovery/rest?version=v1"
@@ -1396,6 +1595,7 @@
     {
       "name": "securitycenter",
       "gen_dir": "securitycenter/v1beta1",
+      "spec_file": "securitycenter/v1beta1/spec.json",
       "crate_name": "google-securitycenter1_beta1",
       "make_target": "securitycenter1_beta1",
       "rest_url": "https://securitycenter.googleapis.com/$discovery/rest?version=v1beta1"
@@ -1403,6 +1603,7 @@
     {
       "name": "servicebroker",
       "gen_dir": "servicebroker/v1alpha1",
+      "spec_file": "servicebroker/v1alpha1/spec.json",
       "crate_name": "google-servicebroker1_alpha1",
       "make_target": "servicebroker1_alpha1",
       "rest_url": "https://servicebroker.googleapis.com/$discovery/rest?version=v1alpha1"
@@ -1410,6 +1611,7 @@
     {
       "name": "servicebroker",
       "gen_dir": "servicebroker/v1",
+      "spec_file": "servicebroker/v1/spec.json",
       "crate_name": "google-servicebroker1",
       "make_target": "servicebroker1",
       "rest_url": "https://servicebroker.googleapis.com/$discovery/rest?version=v1"
@@ -1417,6 +1619,7 @@
     {
       "name": "servicebroker",
       "gen_dir": "servicebroker/v1beta1",
+      "spec_file": "servicebroker/v1beta1/spec.json",
       "crate_name": "google-servicebroker1_beta1",
       "make_target": "servicebroker1_beta1",
       "rest_url": "https://servicebroker.googleapis.com/$discovery/rest?version=v1beta1"
@@ -1424,6 +1627,7 @@
     {
       "name": "serviceconsumermanagement",
       "gen_dir": "serviceconsumermanagement/v1",
+      "spec_file": "serviceconsumermanagement/v1/spec.json",
       "crate_name": "google-serviceconsumermanagement1",
       "make_target": "serviceconsumermanagement1",
       "rest_url": "https://serviceconsumermanagement.googleapis.com/$discovery/rest?version=v1"
@@ -1431,6 +1635,7 @@
     {
       "name": "servicecontrol",
       "gen_dir": "servicecontrol/v1",
+      "spec_file": "servicecontrol/v1/spec.json",
       "crate_name": "google-servicecontrol1",
       "make_target": "servicecontrol1",
       "rest_url": "https://servicecontrol.googleapis.com/$discovery/rest?version=v1"
@@ -1438,6 +1643,7 @@
     {
       "name": "servicemanagement",
       "gen_dir": "servicemanagement/v1",
+      "spec_file": "servicemanagement/v1/spec.json",
       "crate_name": "google-servicemanagement1",
       "make_target": "servicemanagement1",
       "rest_url": "https://servicemanagement.googleapis.com/$discovery/rest?version=v1"
@@ -1445,6 +1651,7 @@
     {
       "name": "servicenetworking",
       "gen_dir": "servicenetworking/v1beta",
+      "spec_file": "servicenetworking/v1beta/spec.json",
       "crate_name": "google-servicenetworking1_beta",
       "make_target": "servicenetworking1_beta",
       "rest_url": "https://servicenetworking.googleapis.com/$discovery/rest?version=v1beta"
@@ -1452,6 +1659,7 @@
     {
       "name": "servicenetworking",
       "gen_dir": "servicenetworking/v1",
+      "spec_file": "servicenetworking/v1/spec.json",
       "crate_name": "google-servicenetworking1",
       "make_target": "servicenetworking1",
       "rest_url": "https://servicenetworking.googleapis.com/$discovery/rest?version=v1"
@@ -1459,6 +1667,7 @@
     {
       "name": "serviceusage",
       "gen_dir": "serviceusage/v1",
+      "spec_file": "serviceusage/v1/spec.json",
       "crate_name": "google-serviceusage1",
       "make_target": "serviceusage1",
       "rest_url": "https://serviceusage.googleapis.com/$discovery/rest?version=v1"
@@ -1466,6 +1675,7 @@
     {
       "name": "serviceusage",
       "gen_dir": "serviceusage/v1beta1",
+      "spec_file": "serviceusage/v1beta1/spec.json",
       "crate_name": "google-serviceusage1_beta1",
       "make_target": "serviceusage1_beta1",
       "rest_url": "https://serviceusage.googleapis.com/$discovery/rest?version=v1beta1"
@@ -1473,6 +1683,7 @@
     {
       "name": "sheets",
       "gen_dir": "sheets/v4",
+      "spec_file": "sheets/v4/spec.json",
       "crate_name": "google-sheets4",
       "make_target": "sheets4",
       "rest_url": "https://sheets.googleapis.com/$discovery/rest?version=v4"
@@ -1480,6 +1691,7 @@
     {
       "name": "siteVerification",
       "gen_dir": "siteVerification/v1",
+      "spec_file": "siteVerification/v1/spec.json",
       "crate_name": "google-siteVerification1",
       "make_target": "siteVerification1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/siteVerification/v1/rest"
@@ -1487,6 +1699,7 @@
     {
       "name": "slides",
       "gen_dir": "slides/v1",
+      "spec_file": "slides/v1/spec.json",
       "crate_name": "google-slides1",
       "make_target": "slides1",
       "rest_url": "https://slides.googleapis.com/$discovery/rest?version=v1"
@@ -1494,6 +1707,7 @@
     {
       "name": "sourcerepo",
       "gen_dir": "sourcerepo/v1",
+      "spec_file": "sourcerepo/v1/spec.json",
       "crate_name": "google-sourcerepo1",
       "make_target": "sourcerepo1",
       "rest_url": "https://sourcerepo.googleapis.com/$discovery/rest?version=v1"
@@ -1501,6 +1715,7 @@
     {
       "name": "spanner",
       "gen_dir": "spanner/v1",
+      "spec_file": "spanner/v1/spec.json",
       "crate_name": "google-spanner1",
       "make_target": "spanner1",
       "rest_url": "https://spanner.googleapis.com/$discovery/rest?version=v1"
@@ -1508,6 +1723,7 @@
     {
       "name": "speech",
       "gen_dir": "speech/v1p1beta1",
+      "spec_file": "speech/v1p1beta1/spec.json",
       "crate_name": "google-speech1_p1beta1",
       "make_target": "speech1_p1beta1",
       "rest_url": "https://speech.googleapis.com/$discovery/rest?version=v1p1beta1"
@@ -1515,6 +1731,7 @@
     {
       "name": "speech",
       "gen_dir": "speech/v1",
+      "spec_file": "speech/v1/spec.json",
       "crate_name": "google-speech1",
       "make_target": "speech1",
       "rest_url": "https://speech.googleapis.com/$discovery/rest?version=v1"
@@ -1522,6 +1739,7 @@
     {
       "name": "sqladmin",
       "gen_dir": "sqladmin/v1beta4",
+      "spec_file": "sqladmin/v1beta4/spec.json",
       "crate_name": "google-sqladmin1_beta4",
       "make_target": "sqladmin1_beta4",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/sqladmin/v1beta4/rest"
@@ -1529,6 +1747,7 @@
     {
       "name": "storage",
       "gen_dir": "storage/v1",
+      "spec_file": "storage/v1/spec.json",
       "crate_name": "google-storage1",
       "make_target": "storage1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/storage/v1/rest"
@@ -1536,6 +1755,7 @@
     {
       "name": "storage",
       "gen_dir": "storage/v1beta1",
+      "spec_file": "storage/v1beta1/spec.json",
       "crate_name": "google-storage1_beta1",
       "make_target": "storage1_beta1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/storage/v1beta1/rest"
@@ -1543,6 +1763,7 @@
     {
       "name": "storage",
       "gen_dir": "storage/v1beta2",
+      "spec_file": "storage/v1beta2/spec.json",
       "crate_name": "google-storage1_beta2",
       "make_target": "storage1_beta2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/storage/v1beta2/rest"
@@ -1550,6 +1771,7 @@
     {
       "name": "storagetransfer",
       "gen_dir": "storagetransfer/v1",
+      "spec_file": "storagetransfer/v1/spec.json",
       "crate_name": "google-storagetransfer1",
       "make_target": "storagetransfer1",
       "rest_url": "https://storagetransfer.googleapis.com/$discovery/rest?version=v1"
@@ -1557,6 +1779,7 @@
     {
       "name": "streetviewpublish",
       "gen_dir": "streetviewpublish/v1",
+      "spec_file": "streetviewpublish/v1/spec.json",
       "crate_name": "google-streetviewpublish1",
       "make_target": "streetviewpublish1",
       "rest_url": "https://streetviewpublish.googleapis.com/$discovery/rest?version=v1"
@@ -1564,6 +1787,7 @@
     {
       "name": "surveys",
       "gen_dir": "surveys/v2",
+      "spec_file": "surveys/v2/spec.json",
       "crate_name": "google-surveys2",
       "make_target": "surveys2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/surveys/v2/rest"
@@ -1571,6 +1795,7 @@
     {
       "name": "tagmanager",
       "gen_dir": "tagmanager/v1",
+      "spec_file": "tagmanager/v1/spec.json",
       "crate_name": "google-tagmanager1",
       "make_target": "tagmanager1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/tagmanager/v1/rest"
@@ -1578,6 +1803,7 @@
     {
       "name": "tagmanager",
       "gen_dir": "tagmanager/v2",
+      "spec_file": "tagmanager/v2/spec.json",
       "crate_name": "google-tagmanager2",
       "make_target": "tagmanager2",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/tagmanager/v2/rest"
@@ -1585,6 +1811,7 @@
     {
       "name": "tasks",
       "gen_dir": "tasks/v1",
+      "spec_file": "tasks/v1/spec.json",
       "crate_name": "google-tasks1",
       "make_target": "tasks1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest"
@@ -1592,6 +1819,7 @@
     {
       "name": "testing",
       "gen_dir": "testing/v1",
+      "spec_file": "testing/v1/spec.json",
       "crate_name": "google-testing1",
       "make_target": "testing1",
       "rest_url": "https://testing.googleapis.com/$discovery/rest?version=v1"
@@ -1599,6 +1827,7 @@
     {
       "name": "texttospeech",
       "gen_dir": "texttospeech/v1",
+      "spec_file": "texttospeech/v1/spec.json",
       "crate_name": "google-texttospeech1",
       "make_target": "texttospeech1",
       "rest_url": "https://texttospeech.googleapis.com/$discovery/rest?version=v1"
@@ -1606,6 +1835,7 @@
     {
       "name": "texttospeech",
       "gen_dir": "texttospeech/v1beta1",
+      "spec_file": "texttospeech/v1beta1/spec.json",
       "crate_name": "google-texttospeech1_beta1",
       "make_target": "texttospeech1_beta1",
       "rest_url": "https://texttospeech.googleapis.com/$discovery/rest?version=v1beta1"
@@ -1613,6 +1843,7 @@
     {
       "name": "toolresults",
       "gen_dir": "toolresults/v1beta3",
+      "spec_file": "toolresults/v1beta3/spec.json",
       "crate_name": "google-toolresults1_beta3",
       "make_target": "toolresults1_beta3",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/toolresults/v1beta3/rest"
@@ -1620,6 +1851,7 @@
     {
       "name": "tpu",
       "gen_dir": "tpu/v1alpha1",
+      "spec_file": "tpu/v1alpha1/spec.json",
       "crate_name": "google-tpu1_alpha1",
       "make_target": "tpu1_alpha1",
       "rest_url": "https://tpu.googleapis.com/$discovery/rest?version=v1alpha1"
@@ -1627,6 +1859,7 @@
     {
       "name": "tpu",
       "gen_dir": "tpu/v1",
+      "spec_file": "tpu/v1/spec.json",
       "crate_name": "google-tpu1",
       "make_target": "tpu1",
       "rest_url": "https://tpu.googleapis.com/$discovery/rest?version=v1"
@@ -1634,6 +1867,7 @@
     {
       "name": "translate",
       "gen_dir": "translate/v2",
+      "spec_file": "translate/v2/spec.json",
       "crate_name": "google-translate2",
       "make_target": "translate2",
       "rest_url": "https://translation.googleapis.com/$discovery/rest?version=v2"
@@ -1641,6 +1875,7 @@
     {
       "name": "translate",
       "gen_dir": "translate/v3beta1",
+      "spec_file": "translate/v3beta1/spec.json",
       "crate_name": "google-translate3_beta1",
       "make_target": "translate3_beta1",
       "rest_url": "https://translation.googleapis.com/$discovery/rest?version=v3beta1"
@@ -1648,6 +1883,7 @@
     {
       "name": "urlshortener",
       "gen_dir": "urlshortener/v1",
+      "spec_file": "urlshortener/v1/spec.json",
       "crate_name": "google-urlshortener1",
       "make_target": "urlshortener1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/urlshortener/v1/rest"
@@ -1655,6 +1891,7 @@
     {
       "name": "vault",
       "gen_dir": "vault/v1",
+      "spec_file": "vault/v1/spec.json",
       "crate_name": "google-vault1",
       "make_target": "vault1",
       "rest_url": "https://vault.googleapis.com/$discovery/rest?version=v1"
@@ -1662,6 +1899,7 @@
     {
       "name": "videointelligence",
       "gen_dir": "videointelligence/v1p1beta1",
+      "spec_file": "videointelligence/v1p1beta1/spec.json",
       "crate_name": "google-videointelligence1_p1beta1",
       "make_target": "videointelligence1_p1beta1",
       "rest_url": "https://videointelligence.googleapis.com/$discovery/rest?version=v1p1beta1"
@@ -1669,6 +1907,7 @@
     {
       "name": "videointelligence",
       "gen_dir": "videointelligence/v1p2beta1",
+      "spec_file": "videointelligence/v1p2beta1/spec.json",
       "crate_name": "google-videointelligence1_p2beta1",
       "make_target": "videointelligence1_p2beta1",
       "rest_url": "https://videointelligence.googleapis.com/$discovery/rest?version=v1p2beta1"
@@ -1676,6 +1915,7 @@
     {
       "name": "videointelligence",
       "gen_dir": "videointelligence/v1p3beta1",
+      "spec_file": "videointelligence/v1p3beta1/spec.json",
       "crate_name": "google-videointelligence1_p3beta1",
       "make_target": "videointelligence1_p3beta1",
       "rest_url": "https://videointelligence.googleapis.com/$discovery/rest?version=v1p3beta1"
@@ -1683,6 +1923,7 @@
     {
       "name": "videointelligence",
       "gen_dir": "videointelligence/v1",
+      "spec_file": "videointelligence/v1/spec.json",
       "crate_name": "google-videointelligence1",
       "make_target": "videointelligence1",
       "rest_url": "https://videointelligence.googleapis.com/$discovery/rest?version=v1"
@@ -1690,6 +1931,7 @@
     {
       "name": "videointelligence",
       "gen_dir": "videointelligence/v1beta2",
+      "spec_file": "videointelligence/v1beta2/spec.json",
       "crate_name": "google-videointelligence1_beta2",
       "make_target": "videointelligence1_beta2",
       "rest_url": "https://videointelligence.googleapis.com/$discovery/rest?version=v1beta2"
@@ -1697,6 +1939,7 @@
     {
       "name": "vision",
       "gen_dir": "vision/v1p1beta1",
+      "spec_file": "vision/v1p1beta1/spec.json",
       "crate_name": "google-vision1_p1beta1",
       "make_target": "vision1_p1beta1",
       "rest_url": "https://vision.googleapis.com/$discovery/rest?version=v1p1beta1"
@@ -1704,6 +1947,7 @@
     {
       "name": "vision",
       "gen_dir": "vision/v1p2beta1",
+      "spec_file": "vision/v1p2beta1/spec.json",
       "crate_name": "google-vision1_p2beta1",
       "make_target": "vision1_p2beta1",
       "rest_url": "https://vision.googleapis.com/$discovery/rest?version=v1p2beta1"
@@ -1711,6 +1955,7 @@
     {
       "name": "vision",
       "gen_dir": "vision/v1",
+      "spec_file": "vision/v1/spec.json",
       "crate_name": "google-vision1",
       "make_target": "vision1",
       "rest_url": "https://vision.googleapis.com/$discovery/rest?version=v1"
@@ -1718,6 +1963,7 @@
     {
       "name": "webfonts",
       "gen_dir": "webfonts/v1",
+      "spec_file": "webfonts/v1/spec.json",
       "crate_name": "google-webfonts1",
       "make_target": "webfonts1",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/webfonts/v1/rest"
@@ -1725,6 +1971,7 @@
     {
       "name": "webmasters",
       "gen_dir": "webmasters/v3",
+      "spec_file": "webmasters/v3/spec.json",
       "crate_name": "google-webmasters3",
       "make_target": "webmasters3",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/webmasters/v3/rest"
@@ -1732,6 +1979,7 @@
     {
       "name": "websecurityscanner",
       "gen_dir": "websecurityscanner/v1alpha",
+      "spec_file": "websecurityscanner/v1alpha/spec.json",
       "crate_name": "google-websecurityscanner1_alpha",
       "make_target": "websecurityscanner1_alpha",
       "rest_url": "https://websecurityscanner.googleapis.com/$discovery/rest?version=v1alpha"
@@ -1739,6 +1987,7 @@
     {
       "name": "websecurityscanner",
       "gen_dir": "websecurityscanner/v1beta",
+      "spec_file": "websecurityscanner/v1beta/spec.json",
       "crate_name": "google-websecurityscanner1_beta",
       "make_target": "websecurityscanner1_beta",
       "rest_url": "https://websecurityscanner.googleapis.com/$discovery/rest?version=v1beta"
@@ -1746,6 +1995,7 @@
     {
       "name": "websecurityscanner",
       "gen_dir": "websecurityscanner/v1",
+      "spec_file": "websecurityscanner/v1/spec.json",
       "crate_name": "google-websecurityscanner1",
       "make_target": "websecurityscanner1",
       "rest_url": "https://websecurityscanner.googleapis.com/$discovery/rest?version=v1"
@@ -1753,6 +2003,7 @@
     {
       "name": "youtube",
       "gen_dir": "youtube/v3",
+      "spec_file": "youtube/v3/spec.json",
       "crate_name": "google-youtube3",
       "make_target": "youtube3",
       "rest_url": "https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest"
@@ -1760,6 +2011,7 @@
     {
       "name": "youtubeAnalytics",
       "gen_dir": "youtubeAnalytics/v1",
+      "spec_file": "youtubeAnalytics/v1/spec.json",
       "crate_name": "google-youtubeAnalytics1",
       "make_target": "youtubeAnalytics1",
       "rest_url": "https://youtubeanalytics.googleapis.com/$discovery/rest?version=v1"
@@ -1767,6 +2019,7 @@
     {
       "name": "youtubeAnalytics",
       "gen_dir": "youtubeAnalytics/v2",
+      "spec_file": "youtubeAnalytics/v2/spec.json",
       "crate_name": "google-youtubeAnalytics2",
       "make_target": "youtubeAnalytics2",
       "rest_url": "https://youtubeanalytics.googleapis.com/$discovery/rest?version=v2"
@@ -1774,6 +2027,7 @@
     {
       "name": "youtubereporting",
       "gen_dir": "youtubereporting/v1",
+      "spec_file": "youtubereporting/v1/spec.json",
       "crate_name": "google-youtubereporting1",
       "make_target": "youtubereporting1",
       "rest_url": "https://youtubereporting.googleapis.com/$discovery/rest?version=v1"

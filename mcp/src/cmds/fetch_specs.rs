@@ -12,15 +12,19 @@ fn write_artifacts(
     spec: DiscoveryRestDesc,
     output_dir: &Path,
 ) -> Result<DiscoveryRestDesc, Error> {
-    let output_dir = output_dir.join(&api.gen_dir);
-    fs::create_dir_all(&output_dir).with_context(|_| {
+    let spec_path = output_dir.join(&api.spec_file);
+    fs::create_dir_all(
+        &spec_path
+            .parent()
+            .ok_or_else(|| format_err!("invalid spec path - needs parent"))?,
+    )
+    .with_context(|_| {
         format_err!(
             "Could not create artifact output directory at '{}'",
             output_dir.display()
         )
     })?;
 
-    let spec_path = output_dir.join("spec.json");
     // TODO: if no additional processing is done on the data, just pass it as String to avoid
     // ser-de. This is not relevant for performance, but can simplify code a bit.
     logged_write(

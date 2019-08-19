@@ -15,6 +15,7 @@ pub struct MappedIndex {
 pub struct Api {
     pub name: String,
     pub gen_dir: PathBuf,
+    pub spec_file: PathBuf,
     pub crate_name: String,
     pub make_target: String,
     pub rest_url: String,
@@ -25,8 +26,10 @@ impl TryFrom<Item> for Api {
 
     fn try_from(value: Item) -> Result<Self, Self::Error> {
         let name = sanitized_name(&value.name).into();
+        let gen_dir = PathBuf::from(&name).join(&value.version);
         Ok(Api {
-            gen_dir: PathBuf::from(&name).join(&value.version),
+            spec_file: gen_dir.join("spec.json"),
+            gen_dir,
             name,
             rest_url: value.discovery_rest_url,
             crate_name: crate_name(&value.name, &value.version)?,

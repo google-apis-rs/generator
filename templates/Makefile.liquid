@@ -1,3 +1,12 @@
-{% for item in api -%}
-{{item.make_target}}: hello world
+MCP = ../target/release/mcp
+
+help:
+	$(info -- Target ----------------------------------------------------------------------------)
+	$(info gen-all             | generate all libraries and CLIs)
+	$(info --------------------------------------------------------------------------------------)
+
+gen-all: {%- for item in api -%}{{item.make_target}} {% endfor %}
+{% for item in api %}
+{{item.make_target}}: {{item.spec_file}}
+	$(MCP) generate $< {{item.gen_dir}}
 {% endfor %}
