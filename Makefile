@@ -2,6 +2,7 @@ MCPD = target/debug/mcp
 MCP = target/release/mcp
 .PHONY = always # TODO: one day we should be precise, and provide actual dependencies so 'make' can be smart
 API_INDEX_JSON = etc/api-index.v1.json
+API_INDEX_MAPPED_JSON = etc/api-index-mapped.v1.json
 GEN_DIR = gen
 MAKEFILE_TPL = templates/Makefile.liquid
 GEN_MAKEFILE = $(GEN_DIR)/Makefile
@@ -30,6 +31,9 @@ $(MCP): always
 
 $(API_INDEX_JSON):
 	curl -S https://www.googleapis.com/discovery/v1/apis > $@
+
+$(API_INDEX_MAPPED_JSON): $(API_INDEX_JSON) $(MCPD) 
+	$(MCPD) map-api-index $< $@
 
 $(GEN_DIR):
 	git clone --depth=1 https://github.com/google-apis-rs/generated $@
@@ -64,7 +68,7 @@ cargo-tests:
 
 tests: mcp-tests cargo-tests
 
-$(GEN_MAKEFILE): $(API_INDEX_JSON) $(MCPD) $(GEN_DIR) $(MAKEFILE_TPL) 
-	$(MCPD) substitute $(MAKEFILE_TPL):$@ < $(API_INDEX_JSON)
+$(GEN_MAKEFILE): $(API_INDEX_MAPPED_JSON) $(MCPD) $(GEN_DIR) $(MAKEFILE_TPL) 
+	$(MCPD) substitute $(MAKEFILE_TPL):$@ < $< 
 	
 generate-gen-makefile: $(GEN_MAKEFILE)

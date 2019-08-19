@@ -3,7 +3,7 @@ use clap::{App, Shell};
 use failure::{err_msg, format_err, Error, ResultExt};
 use std::{io::stdout, path::Path, str::FromStr};
 
-pub fn generate(mut app: App, Args { shell }: Args) -> Result<(), Error> {
+pub fn execute(mut app: App, Args { shell }: Args) -> Result<(), Error> {
     let shell = Path::new(&shell)
         .file_name()
         .and_then(|f| f.to_str())

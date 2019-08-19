@@ -28,6 +28,9 @@ pub enum SubCommand {
     #[structopt(name = "generate")]
     /// generate APIs and CLIs for a Google API specification
     Generate(generate::Args),
+    #[structopt(name = "map-api-index")]
+    /// Transform the API index into data we can use during substitution
+    MapApiIndex(map_index::Args),
     #[structopt(name = "substitute")]
     #[structopt(raw(alias = "\"sub\""))]
     /// Substitutes templates using structured data.
@@ -37,4 +40,5 @@ pub enum SubCommand {
 pub mod completions;
 pub mod fetch_specs;
 pub mod generate;
+pub mod map_index;
 pub mod substitute;

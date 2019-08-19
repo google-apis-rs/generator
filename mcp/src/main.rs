@@ -14,7 +14,8 @@ use options::SubCommand::*;
 fn main(args: Args) {
     simple_logger::init_with_level(args.log_level).ok();
     let res = match args.cmd {
-        Completions(args) => cmds::completions::generate(Args::clap(), args),
+        MapApiIndex(args) => cmds::map_index::execute(args),
+        Completions(args) => cmds::completions::execute(Args::clap(), args),
         FetchApiSpecs(args) => cmds::fetch_specs::execute(args),
         Generate(args) => cmds::generate::execute(args),
         Substitute(args) => cmds::substitute::execute(args),
