@@ -6,6 +6,8 @@ name = "CRATE NAME GOES HERE"
 version = "VERSION GOES HERE"
 authors = ["Glenn Griffin <ggriffiniii@gmail.com"]
 edition = "2018"
+# for now, let's not even accidentally publish these
+publish = false
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
