@@ -104,6 +104,24 @@ fn write_artifacts<'a>(
     Ok(api)
 }
 
+fn fetch_spec(api: Api) -> Result<(Api, DiscoveryRestDesc), Error> {
+    reqwest::get(&api.url)
+        .with_context(|_| format_err!("Could not fetch spec from '{}'", api.url))
+        .map_err(Error::from)
+        .and_then(|mut r: reqwest::Response| {
+            let res: RestDescOrErr = r
+                .json()
+                .with_context(|_| format_err!("Could not deserialize spec at '{}'", api.url))?;
+            match res {
+                RestDescOrErr::RestDesc(v) => Ok(v),
+                RestDescOrErr::Err(err) => Err(format_err!("{:?}", err.error)),
+            }
+        })
+        .with_context(|_| format_err!("Error fetching spec from '{}'", api.url))
+        .map(|spec: DiscoveryRestDesc| (api, spec))
+        .map_err(Into::into)
+}
+
 pub fn execute(
     Args {
         discovery_json_path,
@@ -123,22 +141,7 @@ pub fn execute(
         .par_iter()
         .map(Api::try_from)
         .filter_map(log_error_and_continue)
-        .map(|api| {
-            reqwest::get(&api.url)
-                .with_context(|_| format_err!("Could not fetch spec from '{}'", api.url))
-                .and_then(|mut r: reqwest::Response| {
-                    let res: RestDescOrErr = r.json().with_context(|_| {
-                        format_err!("Could not deserialize spec at '{}'", api.url)
-                    })?;
-                    match res {
-                        RestDescOrErr::RestDesc(v) => Ok(v),
-                        RestDescOrErr::Err(err) => Err(format_err!("{:?}", err.error))
-                            .with_context(|_| format_err!("Server responded with an error")),
-                    }
-                })
-                .with_context(|_| format_err!("Error fetching spec from '{}'", api.url))
-                .map(|spec: DiscoveryRestDesc| (api, spec))
-        })
+        .map(fetch_spec)
         .filter_map(log_error_and_continue)
         .map(|v| write_artifacts(v, &output_directory))
         .filter_map(log_error_and_continue)
