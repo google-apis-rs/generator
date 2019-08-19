@@ -16,6 +16,8 @@ field_selector = { git = "https://github.com/ggriffiniii/google-apis" }
 mime = "0.3"
 textnonce = "0.6"
 yup-oauth2 = "2"
+
+[workspace]
 "#;
 
 pub(crate) fn cargo_toml(crate_name: impl Into<String>) -> Document {
