@@ -2,7 +2,6 @@ MCPD = target/debug/mcp
 MCP = target/release/mcp
 .PHONY = always # TODO: one day we should be precise, and provide actual dependencies so 'make' can be smart
 API_INDEX_JSON = etc/api-index.v1.json
-API_DIR = etc/api
 GEN_DIR = gen
 
 help:
@@ -12,7 +11,7 @@ help:
 	$(info cargo-tests                | run all tests driven by cargo)
 	$(info -- Targets for files we depend on ----------------------------------------------------)
 	$(info update-all-metadata        | invalidate all specifications from google and fetch the latest versions
-	$(info fetch-api-specs            | fetch all apis our local discovery document knows, and store them in $(API_DIR))
+	$(info fetch-api-specs            | fetch all apis our local discovery document knows, and store them in $(GEN_DIR))
 	$(info -- Everything Else -------------------------------------------------------------------)
 	$(info pull-generated             | be sure the generated repository is latest)
 	$(info --------------------------------------------------------------------------------------)
@@ -44,8 +43,8 @@ discovery_parser/src/discovery.rs: $(API_INDEX_JSON)
 
 api-index: $(API_INDEX_JSON)
 
-fetch-api-specs: $(API_INDEX_JSON) $(MCP)
-	$(MCP) fetch-api-specs $(API_INDEX_JSON) $(API_DIR)
+fetch-api-specs: $(API_INDEX_JSON) $(MCP) $(GEN_DIR)
+	$(MCP) fetch-api-specs $(API_INDEX_JSON) $(GEN_DIR)
 
 mcp-tests: $(MCPD)
 	tests/mcp/journey-tests.sh $<
