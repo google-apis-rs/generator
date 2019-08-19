@@ -3,6 +3,7 @@ MCP = target/release/mcp
 .PHONY = always # TODO: one day we should be precise, and provide actual dependencies so 'make' can be smart
 API_INDEX_JSON = etc/api-index.v1.json
 API_DIR = etc/api
+GEN_DIR = gen
 
 help:
 	$(info -- Targets for development -----------------------------------------------------------)
@@ -12,6 +13,8 @@ help:
 	$(info -- Targets for files we depend on ----------------------------------------------------)
 	$(info update-all-metadata        | invalidate all specifications from google and fetch the latest versions
 	$(info fetch-api-specs            | fetch all apis our local discovery document knows, and store them in $(API_DIR))
+	$(info -- Everything Else -------------------------------------------------------------------)
+	$(info pull-generated             | be sure the generated repository is latest)
 	$(info --------------------------------------------------------------------------------------)
 
 always:
@@ -24,6 +27,12 @@ $(MCP): always
 
 $(API_INDEX_JSON):
 	curl -S https://www.googleapis.com/discovery/v1/apis > $@
+
+$(GEN_DIR):
+	git clone --depth=1 https://github.com/google-apis-rs/generated $@
+
+pull-generated: $(GEN_DIR)
+	cd $(GEN_DIR) && git pull --ff-only
 
 update-all-metadata:
 	rm $(API_INDEX_JSON)

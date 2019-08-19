@@ -16,3 +16,5 @@ Cargo.lock
 
 # End of https://www.gitignore.io/api/rust
 
+# The folder containing all generated output
+/gen/
