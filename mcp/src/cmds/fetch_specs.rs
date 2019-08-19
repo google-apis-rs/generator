@@ -5,6 +5,7 @@ use discovery_parser::{
 };
 use failure::{bail, format_err, Error, ResultExt};
 use log::{error, info};
+use rayon::prelude::*;
 use std::{convert::TryFrom, convert::TryInto, fmt, fs, path::Path, time::Instant};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -87,9 +88,8 @@ pub fn execute(
         })?)?;
 
     let time = Instant::now();
-    for api in apis
-        .items
-        .iter()
+    apis.items
+        .par_iter()
         .map(Api::try_from)
         .filter_map(log_error_and_continue)
         .map(|api| {
@@ -100,9 +100,7 @@ pub fn execute(
         .filter_map(log_error_and_continue)
         .map(|v| write_artifacts(v, &output_directory))
         .filter_map(log_error_and_continue)
-    {
-        info!("Successfully processed ${:?}", api)
-    }
+        .for_each(|api| info!("Successfully processed ${:?}", api));
     info!(
         "Processed {} specs in {}s",
         apis.items.len(),
