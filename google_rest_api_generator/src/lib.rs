@@ -13,6 +13,7 @@ mod markdown;
 mod method_actions;
 mod method_builder;
 mod path_templates;
+mod resource_actions;
 mod resource_builder;
 mod rustfmt;
 
@@ -86,7 +87,11 @@ impl APIDesc {
             .resources
             .iter()
             .map(|(resource_id, resource_desc)| {
-                Resource::from_disco_resource(resource_id, &parse_quote! {crate}, resource_desc)
+                Resource::from_disco_resource(
+                    resource_id,
+                    &parse_quote! {crate::resources},
+                    resource_desc,
+                )
             })
             .collect();
         debug!("collecting methods");
@@ -145,23 +150,10 @@ impl APIDesc {
             )
         });
         info!("creating resource actions");
-        let resource_actions = self.resources.iter().map(|resource| {
-            let resource_ident = &resource.ident;
-            let action_ident = resource.action_type_name();
-            let description = format!(
-                "Actions that can be performed on the {} resource",
-                &resource.ident
-            );
-            quote! {
-                #[doc= #description]
-                pub fn #resource_ident(&self) -> crate::#resource_ident::#action_ident<A> {
-                    crate::#resource_ident::#action_ident{
-                        reqwest: &self.reqwest,
-                        auth: &self.auth
-                    }
-                }
-            }
-        });
+        let resource_actions = self
+            .resources
+            .iter()
+            .map(|resource| resource_actions::generate(resource));
 
         let method_builders = self.methods.iter().map(|method| {
             method_builder::generate(
@@ -199,8 +191,10 @@ impl APIDesc {
                 #(#resource_actions)*
                 #(#method_actions)*
             }
-            #(#resource_modules)*
-            #(#method_builders)*
+            mod resources {
+                #(#resource_modules)*
+                #(#method_builders)*
+            }
         }
     }
 }
@@ -264,7 +258,7 @@ impl Resource {
             .map(|(method_id, method_desc)| {
                 Method::from_disco_method(
                     method_id,
-                    &parse_quote! {crate::#resource_ident},
+                    &parse_quote! {#parent_path::#resource_ident},
                     method_desc,
                 )
             })
@@ -275,7 +269,7 @@ impl Resource {
             .map(|(nested_id, resource_desc)| {
                 Resource::from_disco_resource(
                     nested_id,
-                    &parse_quote! {parent_path::#resource_ident},
+                    &parse_quote! {#parent_path::#resource_ident},
                     resource_desc,
                 )
             })

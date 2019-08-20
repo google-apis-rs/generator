@@ -29,20 +29,10 @@ pub(crate) fn generate(
         .methods
         .iter()
         .map(|method| method_actions::generate(method, global_params));
-    let sub_resource_actions = resource.resources.iter().map(|sub_resource| {
-        let sub_resource_ident = &sub_resource.ident;
-        let sub_action_ident = sub_resource.action_type_name();
-        let description = format!(
-            "Actions that can be performed on the {} resource",
-            sub_resource_ident
-        );
-        quote! {
-            #[doc = #description]
-            pub fn #sub_resource_ident(&self) -> #sub_resource_ident::#sub_action_ident<A> {
-                #sub_resource_ident::#sub_action_ident
-            }
-        }
-    });
+    let nested_resource_actions = resource
+        .resources
+        .iter()
+        .map(|sub_resource| crate::resource_actions::generate(sub_resource));
     let action_ident = resource.action_type_name();
     quote! {
         pub mod #ident {
@@ -56,7 +46,7 @@ pub(crate) fn generate(
             }
             impl<'a, A: yup_oauth2::GetToken> #action_ident<'a, A> {
                 #(#method_actions)*
-                #(#sub_resource_actions)*
+                #(#nested_resource_actions)*
             }
 
             #(#method_builders)*
