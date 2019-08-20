@@ -10,10 +10,15 @@ use log::error;
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, path::Path, path::PathBuf};
 
+/// A bunch of constants which must be the single source for constants
+/// that are not API specific.
 #[derive(Serialize, Deserialize)]
 pub struct Standard {
+    /// A cargo project relative path to the manifest file
     pub cargo_toml_path: String,
+    /// A project relative path to the Rust library implementation
     pub lib_path: String,
+    /// The name of the folder into which we want to generate the library projects
     pub lib_dir: String,
 }
 
@@ -35,13 +40,21 @@ pub struct MappedIndex {
 
 #[derive(Serialize, Deserialize)]
 pub struct Api {
+    /// The sanitized API name. See `sanitized_name(...)` for more information
     pub name: String,
+    /// A 'gen' directory relative path to the project manifest
     pub lib_cargo_file: PathBuf,
+    /// A 'gen' directory relative path to the file containing any kind of generation or build error
     pub error_file: PathBuf,
+    /// A 'gen' directory relative path into which all files pertaining the API must be placed
     pub gen_dir: PathBuf,
+    /// A 'gen' directory relative path to the google discovery specification file
     pub spec_file: PathBuf,
+    /// A suitable name for the crate
     pub crate_name: String,
+    /// A suitable name for being a target in 'make'
     pub make_target: String,
+    /// The URL to the google discovery specification
     pub rest_url: String,
 }
 
@@ -51,9 +64,10 @@ impl TryFrom<Item> for Api {
     fn try_from(value: Item) -> Result<Self, Self::Error> {
         let name = sanitized_name(&value.name).into();
         let gen_dir = PathBuf::from(&name).join(&value.version);
+        let standard = Standard::default();
         Ok(Api {
             spec_file: gen_dir.join("spec.json"),
-            lib_cargo_file: gen_dir.join("lib").join("Cargo.toml"),
+            lib_cargo_file: gen_dir.join(standard.lib_dir).join(standard.cargo_toml_path),
             error_file: gen_dir.join("generator-errors.log"),
             gen_dir,
             name,
@@ -126,6 +140,8 @@ pub fn crate_name(name: &str, version: &str) -> Result<String, Error> {
     make_target(name, version).map(|n| format!("google-{}", n))
 }
 
+/// Currently does the following
+/// * strip off all numbers from the tail, until the first non-digit is found
 pub fn sanitized_name(name: &str) -> &str {
     if let Some(pos) = name.rfind(|c| !char::is_digit(c, 10)) {
         &name[..=pos]
@@ -142,6 +158,9 @@ pub fn make_target(name: &str, version: &str) -> Result<String, Error> {
     ))
 }
 
+/// Normalize the version string to adhere to a standard format.
+/// The latter could certainly be expressed here at some point, right
+/// now it's implied by the tests.
 pub fn parse_version(version: &str) -> Result<String, Error> {
     let inner = |version: &str| {
         if version.len() < 2 {
