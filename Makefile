@@ -33,6 +33,6 @@ mcp-tests: $(MCPD)
 	tests/mcp/journey-tests.sh $<
 
 cargo-tests:
-	cargo test --lib --bin mcp --all --examples
+	cargo test --tests --examples
 
 tests: mcp-tests cargo-tests
