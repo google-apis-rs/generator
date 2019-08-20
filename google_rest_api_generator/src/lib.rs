@@ -535,9 +535,17 @@ fn to_rust_varstr(s: &str) -> String {
 
 fn fixup(s: String) -> String {
     // TODO: add all keywords
-    if ["type", "match", "use"].contains(&s.as_str()) {
+    if [
+        "as", "break", "const", "continue", "crate", "dyn", "else", "enum", "extern", "false",
+        "fn", "for", "if", "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub",
+        "ref", "return", "Self", "self", "static", "struct", "super", "trait", "true", "type",
+        "unsafe", "use", "where", "while",
+    ]
+    .contains(&s.as_str())
+    {
         return format!("r#{}", s);
     }
+
     let s: String = s
         .chars()
         .map(|c| if !c.is_ascii_alphanumeric() { '_' } else { c })
