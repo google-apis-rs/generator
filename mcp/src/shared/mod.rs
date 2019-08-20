@@ -14,6 +14,7 @@ pub struct MappedIndex {
 #[derive(Serialize, Deserialize)]
 pub struct Api {
     pub name: String,
+    pub lib_cargo_file: PathBuf,
     pub gen_dir: PathBuf,
     pub spec_file: PathBuf,
     pub crate_name: String,
@@ -29,6 +30,7 @@ impl TryFrom<Item> for Api {
         let gen_dir = PathBuf::from(&name).join(&value.version);
         Ok(Api {
             spec_file: gen_dir.join("spec.json"),
+            lib_cargo_file: gen_dir.join("lib").join("Cargo.toml"),
             gen_dir,
             name,
             rest_url: value.discovery_rest_url,
