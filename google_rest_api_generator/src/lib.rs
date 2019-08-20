@@ -697,7 +697,7 @@ impl Type {
                 type_desc,
             },
             TypeDesc::Date => Type {
-                id: parse_quote! {Date<chrono::offset::Utc>},
+                id: parse_quote! {NaiveDate},
                 parent_path: parse_quote! {::chrono},
                 type_desc,
             },
