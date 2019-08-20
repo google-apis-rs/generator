@@ -9,8 +9,8 @@ mod options;
 use options::Args;
 use options::SubCommand::*;
 
-#[paw::main]
-fn main(args: Args) {
+fn main() {
+    let args = Args::from_args();
     simple_logger::init_with_level(args.log_level).ok();
     let res = match args.cmd {
         MapApiIndex(args) => cmds::map_index::execute(args),
