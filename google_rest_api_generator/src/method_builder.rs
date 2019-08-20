@@ -234,16 +234,23 @@ fn path_method(
     params: &[Param],
 ) -> TokenStream {
     use crate::path_templates::{PathAstNode, PathTemplate};
+    use std::borrow::Cow;
     let template_ast = PathTemplate::new(path_template)
         .expect(&format!("invalid path template: {}", path_template));
-    let tokens: Vec<TokenStream> = template_ast
+    let tokens = template_ast
         .nodes()
         .map(|node| match node {
-            PathAstNode::Lit(lit) => quote! {output.push_str(#lit);},
+            PathAstNode::Lit(lit) => {
+                use ::percent_encoding::{CONTROLS, AsciiSet, utf8_percent_encode};
+                const LITERALS: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'\'').add(b'<').add(b'>').add(b'\\').add(b'^').add(b'`').add(b'{').add(b'|').add(b'}');
+                let escaped_lit = utf8_percent_encode(lit, LITERALS).to_string();
+                quote! {output.push_str(#escaped_lit);}
+            },
             PathAstNode::Var {
                 var_name,
-                expansion_style: _,
+                expansion_style: expansion,
             } => {
+                use crate::path_templates::ExpansionStyle;
                 let param = params
                     .iter()
                     .find(|p| &p.id == var_name)
@@ -254,32 +261,93 @@ fn path_method(
                         path_template, &param.id
                     );
                 }
-                match &param.typ.type_desc {
-                    TypeDesc::String => {
-                        let ident = &param.ident;
-                        quote! { output.push_str(&self.#ident); }
+                let ident = &param.ident;
+
+                let is_array_of_strings = |type_desc: &TypeDesc| {
+                    if let TypeDesc::Array{items} = type_desc {
+                        if let RefOrType::Type(Cow::Owned(Type{type_desc: TypeDesc::String, ..})) = **items {
+                            return true;
+                        }
                     }
-                    TypeDesc::Int32
-                    | TypeDesc::Int64
-                    | TypeDesc::Uint32
-                    | TypeDesc::Uint64
-                    | TypeDesc::Enum { .. } => {
-                        let ident = &param.ident;
+                    false
+                };
+
+                let var_as_str = match expansion {
+                    ExpansionStyle::Simple{..} | ExpansionStyle::Reserved{..} => {
+                        match &param.typ.type_desc {
+                            TypeDesc::String => {
+                                quote!{let var_as_str = &self.#ident;}
+                            },
+                            TypeDesc::Int32
+                            | TypeDesc::Int64
+                            | TypeDesc::Uint32
+                            | TypeDesc::Uint64
+                            | TypeDesc::Enum { .. } => {
+                                quote!{
+                                    let var_as_string = self.#ident.to_string();
+                                    let var_as_str = &var_as_string;
+                                }
+                            }
+                            t => panic!(
+                                "Unsupported parameter type in path: variable: {}, type: {:?}",
+                                var_name, t
+                            ),
+                        }
+                    },
+                    ExpansionStyle::PathSegment => {
+                        if is_array_of_strings(&param.typ.type_desc) {
+                            quote!{
+                                let path_iter = self.#ident.iter().map(|path_segment| {
+                                    ::percent_encoding::utf8_percent_encode(path_segment, crate::SIMPLE)
+                                });
+                            }
+                        } else {
+                            panic!("PathSegment variable expansion can only be invoked on arrays of strings: {:?}", param.typ.type_desc);
+                        }
+                    }
+                };
+
+                let prefix_limit = match expansion {
+                    ExpansionStyle::Simple{prefix: Some(prefix)} | ExpansionStyle::Reserved{prefix: Some(prefix)} => {
+                        quote!{let var_as_str = &var_as_str[..#prefix as usize];}
+                    },
+                    ExpansionStyle::Simple{prefix: None} | ExpansionStyle::Reserved{prefix: None} => {
+                        quote!{}
+                    }
+                    ExpansionStyle::PathSegment => {
+                        quote!{}
+                    }
+                };
+
+                let append_to_output = match expansion {
+                    ExpansionStyle::Simple{..} => {
                         quote! {
-                            {
-                                let str_value = self.#ident.to_string();
-                                output.push_str(&str_value);
+                            output.extend(::percent_encoding::utf8_percent_encode(&var_as_str, crate::SIMPLE));
+                        }
+                    },
+                    ExpansionStyle::Reserved{..} => {
+                        quote! {
+                            output.extend(::percent_encoding::utf8_percent_encode(&var_as_str, crate::RESERVED));
+                        }
+                    }
+                    ExpansionStyle::PathSegment => {
+                        quote!{
+                            for segment in path_iter {
+                                output.push_str("/");
+                                output.extend(segment);
                             }
                         }
                     }
-                    t => panic!(
-                        "Unsupported parameter type in path: variable: {}, type: {:?}",
-                        var_name, t
-                    ),
+                };
+                quote!{
+                    {
+                        #var_as_str
+                        #prefix_limit
+                        #append_to_output
+                    }
                 }
             }
-        })
-        .collect();
+        });
     quote! {
         fn #method_name(&self) -> String {
             let mut output = #base_url.to_owned();

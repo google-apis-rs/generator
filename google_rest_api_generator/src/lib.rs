@@ -43,6 +43,7 @@ where
     let output_file = std::fs::File::create(&lib_path)?;
     let mut rustfmt_writer = crate::rustfmt::RustFmtWriter::new(output_file)?;
     rustfmt_writer.write_all(api_desc.generate().to_string().as_bytes())?;
+    rustfmt_writer.write_all(include_bytes!("../gen_include/percent_encode_consts.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/resumable_upload.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/parsed_string.rs"))?;
@@ -489,7 +490,7 @@ impl Param {
     }
 
     fn init_method(&self) -> ParamInitMethod {
-        match self.typ.type_desc {
+        match &self.typ.type_desc {
             TypeDesc::String => ParamInitMethod::IntoImpl(parse_quote! {String}),
             TypeDesc::Bool => ParamInitMethod::ByValue,
             TypeDesc::Int32 => ParamInitMethod::ByValue,
@@ -502,7 +503,11 @@ impl Param {
             TypeDesc::Date => ParamInitMethod::IntoImpl(parse_quote! {String}),
             TypeDesc::DateTime => ParamInitMethod::IntoImpl(parse_quote! {String}),
             TypeDesc::Enum(_) => ParamInitMethod::ByValue,
-            TypeDesc::Any | TypeDesc::Array { .. } | TypeDesc::Object { .. } => panic!(
+            TypeDesc::Array { items } => {
+                let items_type_path = items.type_path();
+                ParamInitMethod::IntoImpl(parse_quote! { Vec<#items_type_path> })
+            }
+            TypeDesc::Any | TypeDesc::Object { .. } => panic!(
                 "param {} is not an expected type: {:?}",
                 &self.ident, &self.typ.type_desc
             ),

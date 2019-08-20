@@ -19,6 +19,7 @@ mime = "0.3"
 textnonce = "0.6"
 yup-oauth2 = "3"
 tokio = "0.1"
+percent-encoding = "2"
 
 [workspace]
 "#;

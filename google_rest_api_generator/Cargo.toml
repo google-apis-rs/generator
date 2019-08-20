@@ -21,6 +21,7 @@ toml_edit = "0.1.5"
 toolchain_find = "0.1.4"
 pulldown-cmark-to-cmark = "1.2.2"
 pulldown-cmark = "0.5.3"
+percent-encoding = "2.1.0"
 
 [dev-dependencies]
 env_logger = "0.6.2"

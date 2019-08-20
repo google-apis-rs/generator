@@ -25,8 +25,9 @@ pub(crate) enum PathAstNode<'a> {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub(crate) enum ExpansionStyle {
-    Simple,
-    Reserved,
+    Simple { prefix: Option<u16> },
+    Reserved { prefix: Option<u16> },
+    PathSegment, // implies explode (atleast for now).
 }
 
 impl<'a> PathAstNode<'a> {
@@ -34,23 +35,42 @@ impl<'a> PathAstNode<'a> {
         Ok(match n {
             parser::AstNode::Lit(lit) => PathAstNode::Lit(lit),
             parser::AstNode::Expr(expr) => {
-                let expansion_style = match expr.operator {
-                    parser::Operator::Simple => ExpansionStyle::Simple,
-                    parser::Operator::Reserved => ExpansionStyle::Reserved,
-                    x => {
-                        eprintln!("unsupported uri template operator: {:?}", x);
-                        ExpansionStyle::Simple
-                    } //x => return Err(format!("Unsupported uri template operator: {:?}", x)),
-                };
                 if expr.var_spec_list.len() != 1 {
                     return Err(format!(
                         "Unsupported number of variables in uri template varspec: {}",
                         expr.var_spec_list.len()
                     ));
                 }
-                let var_name = &expr.var_spec_list[0].var_name;
+                let var_spec = &expr.var_spec_list[0];
+                let expansion_style = match (expr.operator, var_spec.modifier) {
+                    (parser::Operator::Simple, parser::Modifier::NoModifier) => {
+                        ExpansionStyle::Simple { prefix: None }
+                    }
+                    (parser::Operator::Simple, parser::Modifier::Prefix(prefix)) => {
+                        ExpansionStyle::Simple {
+                            prefix: Some(prefix),
+                        }
+                    }
+                    (parser::Operator::Reserved, parser::Modifier::NoModifier) => {
+                        ExpansionStyle::Reserved { prefix: None }
+                    }
+                    (parser::Operator::Reserved, parser::Modifier::Prefix(prefix)) => {
+                        ExpansionStyle::Reserved {
+                            prefix: Some(prefix),
+                        }
+                    }
+                    (parser::Operator::PathSegment, parser::Modifier::Explode) => {
+                        ExpansionStyle::PathSegment
+                    }
+                    (operator, modifier) => {
+                        return Err(format!(
+                            "Unsupported uri template: op: {:?} mod: {:?}",
+                            operator, modifier
+                        ))
+                    }
+                };
                 PathAstNode::Var {
-                    var_name,
+                    var_name: var_spec.var_name,
                     expansion_style,
                 }
             }

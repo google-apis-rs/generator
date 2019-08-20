@@ -190,14 +190,23 @@ pub struct TypeDesc {
 
 impl TypeDesc {
     pub fn from_param(param: ParamDesc) -> TypeDesc {
+        let (typ, items) = if param.repeated {
+            // Repeated params should be represented as arrays of this type.
+
+            let mut items_param = param.clone();
+            items_param.repeated = false;
+            ("array".to_owned(), Some(Box::new(RefOrType::Type(TypeDesc::from_param(items_param)))))
+        } else {
+            (param.typ, None)
+        };
         TypeDesc {
-            typ: param.typ,
+            typ,
             format: param.format,
             enumeration: param.enumeration,
             enum_descriptions: param.enum_descriptions,
             properties: BTreeMap::new(),
             additional_properties: None,
-            items: None,
+            items,
         }
     }
 }
