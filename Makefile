@@ -15,7 +15,10 @@ always:
 $(MCPD): always
 	cargo build
 
-update-generated-fixtures: shared/tests/fixtures/known-versions discovery_parser/src/discovery.rs
+update-generated-fixtures: discovery_parser/tests/spec.json shared/tests/fixtures/known-versions discovery_parser/src/discovery.rs
+
+discovery_parser/tests/spec.json:
+	curl https://www.googleapis.com/discovery/v1/apis/admin/directory_v1/rest -o $@
 
 shared/tests/fixtures/known-versions: $(API_INDEX_JSON)
 	# version 1.6 known to be working
