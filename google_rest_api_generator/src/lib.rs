@@ -4,9 +4,8 @@ use discovery_parser::{DiscoveryRestDesc, RefOrType as DiscoRefOrType};
 use log::{debug, info};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use std::borrow::Cow;
-use std::collections::BTreeMap;
-use std::error::Error;
+use shared;
+use std::{borrow::Cow, collections::BTreeMap, error::Error};
 use syn::parse_quote;
 
 mod cargo;
@@ -25,17 +24,21 @@ where
     P: AsRef<std::path::Path>,
 {
     use std::io::Write;
+    let constants = shared::Standard::default();
+    let lib_path = base_dir.as_ref().join(constants.lib_path);
+    let cargo_toml_path = base_dir.as_ref().join(constants.cargo_toml_path);
+
     info!("building api desc");
     let api_desc = APIDesc::from_discovery(discovery_desc);
+
     info!("creating directory and Cargo.toml");
-    let project_path = base_dir.as_ref();
-    let src_path = project_path.join("src");
-    std::fs::create_dir_all(&src_path)?;
-    let cargo_path = project_path.join("Cargo.toml");
+    std::fs::create_dir_all(&lib_path.parent().expect("file in directory"))?;
+
     let cargo_contents = cargo::cargo_toml(api_name).to_string();
-    std::fs::write(&cargo_path, &cargo_contents)?;
-    info!("writing lib");
-    let output_file = std::fs::File::create(&src_path.join("lib.rs"))?;
+    std::fs::write(&cargo_toml_path, &cargo_contents)?;
+
+    info!("writing lib '{}'", lib_path.display());
+    let output_file = std::fs::File::create(&lib_path)?;
     let mut rustfmt_writer = crate::rustfmt::RustFmtWriter::new(output_file)?;
     rustfmt_writer.write_all(api_desc.generate().to_string().as_bytes())?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;
@@ -43,7 +46,7 @@ where
     rustfmt_writer.write_all(include_bytes!("../gen_include/parsed_string.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/iter.rs"))?;
     rustfmt_writer.close()?;
-    info!("returning");
+    info!("done");
     Ok(())
 }
 

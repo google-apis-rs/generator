@@ -15,6 +15,7 @@ syn = { version = "0.15.40", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 uri_template_parser = { path = "../uri_template_parser" }
+shared = { path = "../shared" }
 log = "0.4.8"
 toml_edit = "0.1.5"
 toolchain_find = "0.1.4"

@@ -1,10 +1,25 @@
 //! This module, in some way or form, should contain all logic used to generate names.
 //! These must be reused throughout the library.
-use discovery_parser::generated::{ApiIndexV1, Item};
+//! You will find all/most of the constants here.
+use discovery_parser::generated::{ApiIndexV1, Icons, Item, Kind};
+use discovery_parser::DiscoveryRestDesc;
 use failure::{bail, format_err, Error};
 use serde::{Deserialize, Serialize};
-use std::convert::TryFrom;
-use std::path::PathBuf;
+use std::{convert::TryFrom, path::PathBuf};
+
+pub struct Standard {
+    pub cargo_toml_path: &'static str,
+    pub lib_path: &'static str,
+}
+
+impl Default for Standard {
+    fn default() -> Self {
+        Standard {
+            cargo_toml_path: "Cargo.toml",
+            lib_path: "src/lib.rs",
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct MappedIndex {
@@ -37,6 +52,31 @@ impl TryFrom<Item> for Api {
             crate_name: crate_name(&value.name, &value.version)?,
             make_target: make_target(&value.name, &value.version)?,
         })
+    }
+}
+
+impl TryFrom<&DiscoveryRestDesc> for Api {
+    type Error = Error;
+
+    fn try_from(value: &DiscoveryRestDesc) -> Result<Self, Self::Error> {
+        let item = Item {
+            kind: Kind::DiscoveryDirectoryItem,
+            id: value.id.to_owned(),
+            name: value.name.to_owned(),
+            version: value.version.to_owned(),
+            title: value.title.to_owned(),
+            description: value.description.to_owned(),
+            discovery_rest_url: "<unset>".into(),
+            icons: Icons {
+                x16: "".to_string(),
+                x32: "".to_string(),
+            },
+            documentation_link: None,
+            preferred: false,
+            discovery_link: None,
+            labels: None,
+        };
+        Api::try_from(item)
     }
 }
 
