@@ -1,11 +1,14 @@
 //! This module, in some way or form, should contain all logic used to generate names.
 //! These must be reused throughout the library.
 //! You will find all/most of the constants here.
-use discovery_parser::generated::{ApiIndexV1, Icons, Item, Kind};
-use discovery_parser::DiscoveryRestDesc;
+use discovery_parser::{
+    generated::{ApiIndexV1, Icons, Item, Kind},
+    DiscoveryRestDesc,
+};
 use failure::{bail, format_err, Error};
+use log::error;
 use serde::{Deserialize, Serialize};
-use std::{convert::TryFrom, path::PathBuf};
+use std::{convert::TryFrom, path::Path, path::PathBuf};
 
 pub struct Standard {
     pub cargo_toml_path: &'static str,
@@ -81,6 +84,22 @@ impl TryFrom<&DiscoveryRestDesc> for Api {
 }
 
 impl MappedIndex {
+    pub fn validated(mut self, output_directory: &Path) -> Self {
+        self.api.retain(|api| {
+            let spec_path = output_directory.join(&api.spec_file);
+            if !spec_path.is_file() {
+                error!(
+                    "Dropping API '{}' as its spec file at '{}' does not exist",
+                    api.crate_name,
+                    spec_path.display(),
+                );
+                false
+            } else {
+                true
+            }
+        });
+        self
+    }
     pub fn from_index(index: ApiIndexV1) -> Result<Self, Error> {
         Ok(MappedIndex {
             api: index

@@ -9,6 +9,7 @@ publish = false
 serde = { version = "1", features = ["derive"] }
 discovery_parser = { path = "../discovery_parser" }
 failure = "0.1.5"
+log = "0.4.8"
 
 [dev-dependencies]
 itertools = "0.8.0"

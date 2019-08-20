@@ -9,6 +9,7 @@ pub fn execute(
     Args {
         discovery_json_path,
         output_file,
+        output_directory,
     }: Args,
 ) -> Result<(), Error> {
     let index: ApiIndexV1 = { serde_json::from_slice(&fs::read(&discovery_json_path)?) }
@@ -19,7 +20,7 @@ pub fn execute(
             )
         })?;
 
-    let index = MappedIndex::from_index(index)?;
+    let index = MappedIndex::from_index(index)?.validated(&output_directory);
     logged_write(
         output_file,
         serde_json::to_string_pretty(&index)?.as_bytes(),

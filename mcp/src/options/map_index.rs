@@ -12,4 +12,8 @@ pub struct Args {
     /// The path to which to write the digest
     #[structopt(parse(from_os_str))]
     pub output_file: PathBuf,
+
+    /// The path into which the `fetch-specs` subcommand writes its files
+    #[structopt(parse(from_os_str))]
+    pub output_directory: PathBuf,
 }
