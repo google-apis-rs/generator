@@ -6,7 +6,7 @@ use discovery_parser::{
     DiscoveryRestDesc,
 };
 use failure::{bail, format_err, Error};
-use log::error;
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, path::Path, path::PathBuf};
 
@@ -42,6 +42,8 @@ pub struct MappedIndex {
 pub struct Api {
     /// The sanitized API name. See `sanitized_name(...)` for more information
     pub name: String,
+    /// The official API id, good for identification
+    pub id: String,
     /// A 'gen' directory relative path to the project manifest
     pub lib_cargo_file: PathBuf,
     /// A 'gen' directory relative path to the file containing any kind of generation or build error
@@ -67,7 +69,10 @@ impl TryFrom<Item> for Api {
         let standard = Standard::default();
         Ok(Api {
             spec_file: gen_dir.join("spec.json"),
-            lib_cargo_file: gen_dir.join(standard.lib_dir).join(standard.cargo_toml_path),
+            id: value.id,
+            lib_cargo_file: gen_dir
+                .join(standard.lib_dir)
+                .join(standard.cargo_toml_path),
             error_file: gen_dir.join("generator-errors.log"),
             gen_dir,
             name,
@@ -105,8 +110,25 @@ impl TryFrom<&DiscoveryRestDesc> for Api {
 
 impl MappedIndex {
     pub fn validated(mut self, output_directory: &Path) -> Self {
+        let ci_whitelist = ["admin:directory_v1", "compute:v1", "drive:v3", "oauth2:v2"];
+        let info = ci_info::get();
+        if info.ci {
+            info!(
+                "Running on CI '{:?}' - limiting APIs to {whitelist:?}",
+                info.vendor,
+                whitelist = ci_whitelist
+            );
+        }
         self.api.retain(|api| {
             let spec_path = output_directory.join(&api.spec_file);
+            let is_allowed = if info.ci {
+                ci_whitelist.contains(&api.id.as_str())
+            } else {
+                true
+            };
+            if !is_allowed {
+                return false;
+            }
             if !spec_path.is_file() {
                 error!(
                     "Dropping API '{}' as its spec file at '{}' does not exist",
