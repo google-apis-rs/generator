@@ -449,13 +449,16 @@ fn is_iter_method(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> Page
 }
 
 fn iter_types_and_impls<'a>(
-    builder_name: &syn::Ident,
+    method: &Method,
     array_properties: impl Iterator<Item = &'a PropertyDesc>,
     page_token_param: PageTokenParam,
 ) -> TokenStream {
+    let builder_name = method.builder_name();
     let iter_types = array_properties.map(|prop| {
-        let iter_type_ident: syn::Ident =
-            to_ident(&to_rust_typestr(&format!("{}_iter", &prop.ident)));
+        let iter_type_ident: syn::Ident = to_ident(&to_rust_typestr(&format!(
+            "{}_{}_iter",
+            &method.id, &prop.ident
+        )));
         let prop_id = &prop.id;
         let set_page_token = match page_token_param {
             PageTokenParam::None => unreachable!(),
@@ -534,8 +537,6 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
     if page_token_param == PageTokenParam::None {
         return (quote! {}, quote! {});
     }
-    let builder_name = method.builder_name();
-
     let response_type_desc: Option<&TypeDesc> = method
         .response
         .as_ref()
@@ -560,8 +561,10 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
             to_ident(&to_rust_varstr(&format!("{}_standard", &iter_method_ident)));
         let iter_method_ident_debug: syn::Ident =
             to_ident(&to_rust_varstr(&format!("{}_debug", &iter_method_ident)));
-        let iter_type_ident: syn::Ident =
-            to_ident(&to_rust_typestr(&format!("{}_iter", &prop.ident)));
+        let iter_type_ident: syn::Ident = to_ident(&to_rust_typestr(&format!(
+            "{}_{}_iter",
+            &method.id, &prop.ident
+        )));
         quote! {
             /// Return an iterator that iterates over all `#prop_ident`. The
             /// items yielded by the iterator are chosen by the caller of this
@@ -611,7 +614,7 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
     };
 
     let iter_types_and_impls = iter_types_and_impls(
-        &builder_name,
+        method,
         array_props.iter().map(|(prop, _)| *prop),
         page_token_param,
     );
