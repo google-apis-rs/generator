@@ -1,6 +1,6 @@
 use crate::{
-    markdown, to_ident, to_rust_typestr, to_rust_varstr, Method, Param, PropertyDesc, RefOrType,
-    Type, TypeDesc, ParamInitMethod,
+    markdown, to_ident, to_rust_typestr, to_rust_varstr, Method, Param, ParamInitMethod,
+    PropertyDesc, RefOrType, Type, TypeDesc,
 };
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -68,7 +68,7 @@ pub(crate) fn generate(
                         self
                     }
                 }
-            },
+            }
         };
         let description = &param
             .description
