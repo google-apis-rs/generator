@@ -1,10 +1,11 @@
 use super::util::{log_error_and_continue, logged_write};
-use crate::shared::Api;
-use crate::{options::fetch_specs::Args, shared::MappedIndex};
+use crate::options::fetch_specs::Args;
 use discovery_parser::{DiscoveryRestDesc, RestDescOrErr};
 use failure::{format_err, Error, ResultExt};
 use log::info;
 use rayon::prelude::*;
+use shared::Api;
+use shared::MappedIndex;
 use std::{fs, path::Path, time::Instant};
 
 fn write_artifacts(

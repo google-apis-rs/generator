@@ -1,0 +1,16 @@
+[package]
+name = "shared"
+version = "0.1.0"
+authors = ["Sebastian Thiel <byronimo@gmail.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+discovery_parser = { path = "../discovery_parser" }
+failure = "0.1.5"
+
+[dev-dependencies]
+itertools = "0.8.0"
+insta = "0.10.1"
+

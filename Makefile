@@ -19,9 +19,9 @@ $(MCPD): always
 $(MCP): always
 	cargo build --release
 
-update-generated-fixtures: tests/mcp/fixtures/shared/known-versions discovery_parser/src/discovery.rs
+update-generated-fixtures: shared/tests/fixtures/known-versions discovery_parser/src/discovery.rs
 
-tests/mcp/fixtures/shared/known-versions: $(API_INDEX_JSON)
+shared/tests/fixtures/known-versions: $(API_INDEX_JSON)
 	# version 1.6 known to be working
 	jq -r '.items[].version' < $(API_INDEX_JSON) | sort | uniq > $@
 

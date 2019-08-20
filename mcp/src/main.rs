@@ -5,7 +5,6 @@ const PROGRAM_NAME: &str = "mcp";
 mod cmds;
 /// taken from share-secrets-safely/tools
 mod options;
-mod shared;
 
 use options::Args;
 use options::SubCommand::*;

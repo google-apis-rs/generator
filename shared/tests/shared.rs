@@ -1,5 +1,5 @@
 mod sanitized_name {
-    use crate::shared::sanitized_name;
+    use shared::sanitized_name;
 
     #[test]
     fn it_does_not_alter_anything_else() {
@@ -16,7 +16,7 @@ mod sanitized_name {
 }
 
 mod crate_name {
-    use crate::shared::crate_name;
+    use shared::crate_name;
 
     #[test]
     fn it_produces_a_valid_crate_name() {
@@ -25,7 +25,7 @@ mod crate_name {
 }
 
 mod make_target {
-    use crate::shared::make_target;
+    use shared::make_target;
 
     #[test]
     fn it_produces_a_valid_make_target() {
@@ -34,12 +34,12 @@ mod make_target {
 }
 
 mod parse_version {
-    use super::super::parse_version;
     use insta::assert_snapshot_matches;
     use itertools::Itertools;
+    use shared::parse_version;
     use std::io::{BufRead, BufReader};
 
-    const KNOWN_VERSIONS: &str = include_str!("../../../tests/mcp/fixtures/shared/known-versions");
+    const KNOWN_VERSIONS: &str = include_str!("./fixtures/known-versions");
 
     #[test]
     fn it_works_for_all_known_inputs() {

@@ -1,8 +1,8 @@
 use super::util::logged_write;
 use crate::options::map_index::Args;
-use crate::shared::MappedIndex;
 use discovery_parser::generated::ApiIndexV1;
 use failure::{format_err, Error, ResultExt};
+use shared::MappedIndex;
 use std::fs;
 
 pub fn execute(

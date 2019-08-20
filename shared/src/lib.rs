@@ -120,6 +120,3 @@ pub fn parse_version(version: &str) -> Result<String, Error> {
     };
     inner(version).map_err(|e| format_err!("invalid version '{}': {}", version, e))
 }
-
-#[cfg(test)]
-mod tests;

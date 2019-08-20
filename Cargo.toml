@@ -6,5 +6,6 @@ members = [
     "google_field_selector_derive",
     "google_rest_api_generator",
     "uri_template_parser",
+    "shared",
     "mcp",
 ]
