@@ -33,6 +33,7 @@ pub struct MappedIndex {
 pub struct Api {
     pub name: String,
     pub lib_cargo_file: PathBuf,
+    pub error_file: PathBuf,
     pub gen_dir: PathBuf,
     pub spec_file: PathBuf,
     pub crate_name: String,
@@ -49,6 +50,7 @@ impl TryFrom<Item> for Api {
         Ok(Api {
             spec_file: gen_dir.join("spec.json"),
             lib_cargo_file: gen_dir.join("lib").join("Cargo.toml"),
+            error_file: gen_dir.join("generator-errors.log"),
             gen_dir,
             name,
             rest_url: value.discovery_rest_url,
@@ -93,10 +95,14 @@ impl MappedIndex {
                     api.crate_name,
                     spec_path.display(),
                 );
-                false
-            } else {
-                true
+                return false
             }
+            let error_log = output_directory.join(&api.error_file);
+            if error_log.is_file() {
+                error!("Dropping API '{}' as it previously failed with generator errors, see '{}' for details.", api.crate_name, error_log.display());
+                return false;
+            }
+            true
         });
         self
     }
