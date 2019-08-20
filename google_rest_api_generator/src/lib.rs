@@ -55,7 +55,7 @@ struct APIDesc {
     version: String,
     root_url: String,
     service_path: String,
-    schemas: BTreeMap<syn::Ident,Type>,
+    schemas: BTreeMap<syn::Ident, Type>,
     params: Vec<Param>,
     resources: Vec<Resource>,
     methods: Vec<Method>,
@@ -214,11 +214,7 @@ fn append_nested_type_defs(
     schemas: &BTreeMap<syn::Ident, Type>,
     out: &mut Vec<TokenStream>,
 ) {
-    fn add_type(
-        typ: &Type,
-        schemas: &BTreeMap<syn::Ident, Type>,
-        out: &mut Vec<TokenStream>,
-    ) {
+    fn add_type(typ: &Type, schemas: &BTreeMap<syn::Ident, Type>, out: &mut Vec<TokenStream>) {
         match &typ.type_desc {
             TypeDesc::Array { items } => {
                 append_nested_type_defs(&items, schemas, out);
@@ -921,7 +917,7 @@ impl Type {
                         pub struct #name;
 
                         impl ::field_selector::FieldSelector for #name {
-                            fn field_selector_with_ident(ident; &str, selector: &mut String) {}
+                            fn field_selector_with_ident(ident: &str, selector: &mut String) {}
                         }
                     })
                 }

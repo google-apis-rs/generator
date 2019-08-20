@@ -1,8 +1,8 @@
 use crate::{to_ident, to_rust_varstr, Method, Param, PropertyDesc, RefOrType, Type, TypeDesc};
 use proc_macro2::TokenStream;
 use quote::quote;
-use std::str::FromStr;
 use std::collections::BTreeMap;
+use std::str::FromStr;
 use syn::parse_quote;
 
 pub(crate) fn generate(

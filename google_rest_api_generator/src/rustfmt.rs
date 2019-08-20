@@ -14,7 +14,7 @@ impl RustFmtWriter {
             Some(path) => RustFmtWriter::Formatted(
                 Command::new(path)
                     .arg("--edition=2018")
-                    .stderr(Stdio::null())
+                    .stderr(Stdio::inherit())
                     .stdout(output_file)
                     .stdin(Stdio::piped())
                     .spawn()?,
