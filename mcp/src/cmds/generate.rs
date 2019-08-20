@@ -2,7 +2,7 @@ use crate::options::generate::Args;
 use discovery_parser::DiscoveryRestDesc;
 use failure::{format_err, Error, ResultExt};
 use google_rest_api_generator::generate as generate_library;
-use shared::Api;
+use shared::{Api, Standard};
 use std::{convert::TryFrom, fs};
 
 pub fn execute(
@@ -15,7 +15,12 @@ pub fn execute(
         .with_context(|_| format_err!("Could read spec file at '{}'", spec_json_path.display()))?;
 
     let api = Api::try_from(&desc)?;
-    generate_library(&api.crate_name, &desc, output_directory.join("lib"))
-        .map_err(|e| format_err!("{}", e.to_string()))?;
+    let standard = Standard::default();
+    generate_library(
+        &api.crate_name,
+        &desc,
+        output_directory.join(standard.lib_dir),
+    )
+    .map_err(|e| format_err!("{}", e.to_string()))?;
     Ok(())
 }

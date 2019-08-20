@@ -10,22 +10,26 @@ use log::error;
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, path::Path, path::PathBuf};
 
+#[derive(Serialize, Deserialize)]
 pub struct Standard {
-    pub cargo_toml_path: &'static str,
-    pub lib_path: &'static str,
+    pub cargo_toml_path: String,
+    pub lib_path: String,
+    pub lib_dir: String,
 }
 
 impl Default for Standard {
     fn default() -> Self {
         Standard {
-            cargo_toml_path: "Cargo.toml",
-            lib_path: "src/lib.rs",
+            cargo_toml_path: "Cargo.toml".into(),
+            lib_path: "src/lib.rs".into(),
+            lib_dir: "lib".into(),
         }
     }
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct MappedIndex {
+    pub standard: Standard,
     pub api: Vec<Api>,
 }
 
@@ -108,6 +112,7 @@ impl MappedIndex {
     }
     pub fn from_index(index: ApiIndexV1) -> Result<Self, Error> {
         Ok(MappedIndex {
+            standard: Standard::default(),
             api: index
                 .items
                 .into_iter()
