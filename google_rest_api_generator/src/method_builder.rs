@@ -1,4 +1,6 @@
-use crate::{to_ident, to_rust_varstr, Method, Param, PropertyDesc, RefOrType, Type, TypeDesc};
+use crate::{
+    markdown, to_ident, to_rust_varstr, Method, Param, PropertyDesc, RefOrType, Type, TypeDesc,
+};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::BTreeMap;
@@ -64,7 +66,11 @@ pub(crate) fn generate(
             }
             _ => param_value_method(&fn_name, &param.ident, param.typ.type_path().into()),
         };
-        let description = &param.description.as_ref().map(|s| s.as_str()).unwrap_or("");
+        let description = &param
+            .description
+            .as_ref()
+            .map(|s| markdown::sanitize(s.as_str()))
+            .unwrap_or_else(String::new);
         quote! {
             #[doc = #description]
             #fn_def

@@ -19,6 +19,8 @@ shared = { path = "../shared" }
 log = "0.4.8"
 toml_edit = "0.1.5"
 toolchain_find = "0.1.4"
+pulldown-cmark-to-cmark = "1.2.2"
+pulldown-cmark = "0.5.3"
 
 [dev-dependencies]
 env_logger = "0.6.2"

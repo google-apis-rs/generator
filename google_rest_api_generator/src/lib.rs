@@ -9,6 +9,7 @@ use std::{borrow::Cow, collections::BTreeMap, error::Error};
 use syn::parse_quote;
 
 mod cargo;
+mod markdown;
 mod method_actions;
 mod method_builder;
 mod path_templates;
@@ -543,7 +544,7 @@ fn to_ident(s: &str) -> syn::Ident {
 fn make_field(doc: &Option<String>, ident: &syn::Ident, ty: syn::Type) -> syn::Field {
     let mut attrs = Vec::new();
     if let Some(doc) = doc {
-        let doc = syn::LitStr::new(doc, Span::call_site());
+        let doc = syn::LitStr::new(&markdown::sanitize(&doc), Span::call_site());
         use syn::parse::Parser;
         attrs = syn::Attribute::parse_outer
             .parse2(quote! {
@@ -766,6 +767,7 @@ impl Type {
                          description, ident, ..
                      }| {
                         let doc: Option<TokenStream> = description.as_ref().map(|description| {
+                            let description = markdown::sanitize(description);
                             quote! {#[doc = #description]}
                         });
                         quote! {
