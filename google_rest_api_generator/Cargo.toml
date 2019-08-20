@@ -24,3 +24,5 @@ pulldown-cmark = "0.5.3"
 
 [dev-dependencies]
 env_logger = "0.6.2"
+structopt = "0.2.18"
+
