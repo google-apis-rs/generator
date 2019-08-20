@@ -500,8 +500,8 @@ impl Param {
             TypeDesc::Uint64 => ParamInitMethod::ByValue,
             TypeDesc::Float64 => ParamInitMethod::ByValue,
             TypeDesc::Bytes => ParamInitMethod::IntoImpl(parse_quote! {Box<[u8]>}),
-            TypeDesc::Date => ParamInitMethod::IntoImpl(parse_quote! {String}),
-            TypeDesc::DateTime => ParamInitMethod::IntoImpl(parse_quote! {String}),
+            TypeDesc::Date => ParamInitMethod::ByValue,
+            TypeDesc::DateTime => ParamInitMethod::ByValue,
             TypeDesc::Enum(_) => ParamInitMethod::ByValue,
             TypeDesc::Array { items } => {
                 let items_type_path = items.type_path();
