@@ -41,8 +41,8 @@ pub(crate) fn generate(
             }
 
             pub struct #action_ident<'a, A> {
-                pub(super) reqwest: &'a reqwest::Client,
-                pub(super) auth: &'a std::sync::Mutex<A>,
+                pub(crate) reqwest: &'a reqwest::Client,
+                pub(crate) auth: &'a std::sync::Mutex<A>,
             }
             impl<'a, A: yup_oauth2::GetToken> #action_ident<'a, A> {
                 #(#method_actions)*
