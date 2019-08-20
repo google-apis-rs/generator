@@ -124,12 +124,24 @@ impl APIDesc {
     fn generate(&self) -> TokenStream {
         info!("getting all types");
         let mut schema_type_defs = Vec::new();
-        for schema in self.schemas.values() {
-            append_nested_type_defs(
-                &RefOrType::Type(Cow::Borrowed(schema)),
-                &self.schemas,
-                &mut schema_type_defs,
-            );
+        for (schema_id, schema) in self.schemas.iter() {
+            if schema.type_def(&self.schemas).is_some() {
+                // The schemas is a composite type (enum or struct) and may
+                // contain other nested composite types. Add all nested type
+                // defs.
+                append_nested_type_defs(
+                    &RefOrType::Type(Cow::Borrowed(schema)),
+                    &self.schemas,
+                    &mut schema_type_defs,
+                );
+            } else {
+                // The schema is a simple type that doesn't require creating a
+                // new composite type, but we still create a type alias for it
+                // so that creating a path from a Ref will point to a valid
+                // type.
+                let type_path = schema.type_path();
+                schema_type_defs.push(quote! {type #schema_id = #type_path;});
+            }
         }
         let mut param_type_defs = Vec::new();
         for param in &self.params {
