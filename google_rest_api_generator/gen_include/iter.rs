@@ -6,6 +6,7 @@ trait IterableMethod {
         T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector;
 }
 
+#[allow(dead_code)]
 struct PageIter<M, T>{
     method: M,
     finished: bool,
