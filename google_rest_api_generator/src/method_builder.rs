@@ -1,5 +1,6 @@
 use crate::{
-    markdown, to_ident, to_rust_varstr, Method, Param, PropertyDesc, RefOrType, Type, TypeDesc,
+    markdown, to_ident, to_rust_typestr, to_rust_varstr, Method, Param, PropertyDesc, RefOrType,
+    Type, TypeDesc,
 };
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -86,8 +87,7 @@ pub(crate) fn generate(
     );
     let request_method = request_method(&method.http_method, &method.scopes, all_params);
     let exec_method = exec_method(method.request.as_ref(), method.response.as_ref());
-    let iterable_method_impl = iterable_method_impl(method, schemas);
-    let iter_methods = iter_methods(method, schemas);
+    let (iter_methods, iter_types_and_impls) = iter_defs(method, schemas);
     let download_method = download_method(&base_url, method);
     let upload_methods = upload_methods(root_url, method);
 
@@ -111,7 +111,7 @@ pub(crate) fn generate(
             #request_method
         }
 
-        #iterable_method_impl
+        #iter_types_and_impls
     }
 }
 
@@ -128,31 +128,60 @@ fn exec_method(
         Some(typ) => {
             let resp_type_path = typ.type_path();
             quote! {
-                pub fn execute<T>(mut self) -> Result<T, Box<dyn ::std::error::Error>>
+                /// Execute the given operation. The fields requested are
+                /// determined by the FieldSelector attribute of the return type.
+                /// This allows for flexible and ergonomic partial responses. See
+                /// `execute_standard` and `execute_debug` for interfaces that
+                /// are not generic over the return type and deserialize the
+                /// response into an auto-generated struct will all possible
+                /// fields.
+                pub fn execute<T>(self) -> Result<T, Box<dyn ::std::error::Error>>
                 where
                     T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
                 {
-                    self._execute()
+                    let fields = T::field_selector();
+                    let fields: Option<String> = if fields.is_empty() {
+                        None
+                    } else {
+                        Some(fields)
+                    };
+                    self.execute_fields(fields)
                 }
 
-                /// TODO: Remove once development debugging is no longer a priority.
-                pub fn execute_text(self) -> Result<String, Box<dyn ::std::error::Error>> {
-                    let req = self._request(&self._path());
-                    #set_body
-                    Ok(req.send()?.error_for_status()?.text()?)
+                // TODO: come up with a better name for this.
+                /// Execute the given operation. This will not provide any
+                /// `fields` selector indicating that the server will determine
+                /// the fields returned. This typically includes the most common
+                /// fields, but it will not include every possible attribute of
+                /// the response resource.
+                pub fn execute_standard(self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
+                    self.execute_fields::<_, &str>(None)
                 }
 
+                /// Execute the given operation. This will provide a `fields`
+                /// selector of `*`. This will include every attribute of the
+                /// response resource and should be limited to use during
+                /// development or debugging.
                 pub fn execute_debug(self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
-                    self.execute()
+                    self.execute_fields(Some("*"))
+                }
+
+                /// Execute the given operation. This will use the `fields`
+                /// selector provided and will deserialize the response into
+                /// whatever return value is provided.
+                pub fn execute_fields<T, F>(mut self, fields: Option<F>) -> Result<T, Box<dyn ::std::error::Error>>
+                where
+                    T: ::serde::de::DeserializeOwned,
+                    F: Into<String>,
+                {
+                    self.fields = fields.map(Into::into);
+                    self._execute()
                 }
 
                 fn _execute<T>(&mut self) -> Result<T, Box<dyn ::std::error::Error>>
                 where
-                    T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
+                    T: ::serde::de::DeserializeOwned,
                 {
-                    if self.fields.is_none() {
-                        self.fields = Some(T::field_selector());
-                    }
                     let req = self._request(&self._path());
                     #set_body
                     Ok(req.send()?.error_for_status()?.json()?)
@@ -178,7 +207,7 @@ fn param_into_method(
     param_type: syn::Type,
 ) -> TokenStream {
     quote! {
-        pub fn #fn_name(&mut self, value: #param_type) -> &mut Self {
+        pub fn #fn_name(mut self, value: #param_type) -> Self {
             self.#param_ident = Some(value.into());
             self
         }
@@ -191,7 +220,7 @@ fn param_value_method(
     param_type: syn::Type,
 ) -> TokenStream {
     quote! {
-        pub fn #fn_name(&mut self, value: #param_type) -> &mut Self {
+        pub fn #fn_name(mut self, value: #param_type) -> Self {
             self.#param_ident = Some(value);
             self
         }
@@ -322,7 +351,14 @@ fn request_method<'a>(
     }
 }
 
-fn is_iter_method(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> bool {
+#[derive(Copy, Clone, PartialEq, Eq)]
+enum PageTokenParam {
+    None,
+    Optional,
+    Required,
+}
+
+fn is_iter_method(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> PageTokenParam {
     // The requirements to qualify as an iterator are
     // The method needs to define a response object.
     // The response object needs to have a nextPageToken.
@@ -348,27 +384,91 @@ fn is_iter_method(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> bool
             }
         })
         .unwrap_or(false);
-    let params_contains_page_token = method
-        .params
-        .iter()
-        .find(|param| {
-            if let TypeDesc::String = param.typ.type_desc {
-                if param.id == "pageToken" {
-                    return true;
-                }
+    if !response_contains_next_page_token {
+        return PageTokenParam::None;
+    }
+
+    let page_token_param = method.params.iter().find(|param| {
+        if let TypeDesc::String = param.typ.type_desc {
+            if param.id == "pageToken" {
+                return true;
             }
-            false
-        })
-        .is_some();
-    response_contains_next_page_token && params_contains_page_token
+        }
+        false
+    });
+    match page_token_param {
+        Some(param) if param.required => PageTokenParam::Required,
+        Some(_) => PageTokenParam::Optional,
+        None => PageTokenParam::None,
+    }
 }
 
-fn iterable_method_impl(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> TokenStream {
-    if !is_iter_method(method, schemas) {
-        return quote! {};
-    }
-    let builder_name = method.builder_name();
+fn iter_types_and_impls<'a>(
+    builder_name: &syn::Ident,
+    array_properties: impl Iterator<Item = &'a PropertyDesc>,
+    page_token_param: PageTokenParam,
+) -> TokenStream {
+    let iter_types = array_properties.map(|prop| {
+        let iter_type_ident: syn::Ident =
+            to_ident(&to_rust_typestr(&format!("{}_iter", &prop.ident)));
+        let prop_id = &prop.id;
+        let set_page_token = match page_token_param {
+            PageTokenParam::None => unreachable!(),
+            PageTokenParam::Optional => quote! {self.method.page_token = resp.next_page_token;},
+            PageTokenParam::Required => quote! {
+                if let Some(token) = resp.next_page_token {
+                    self.method.page_token = token;
+                }
+            },
+        };
+        quote! {
+            pub struct #iter_type_ident<'a, A, T> {
+                method: #builder_name<'a, A>,
+                last_page_reached: bool,
+                items_iter: Option<::std::vec::IntoIter<T>>,
+            }
+            impl<'a, A, T> Iterator for #iter_type_ident<'a, A, T>
+            where
+                A: ::yup_oauth2::GetToken,
+                T: ::serde::de::DeserializeOwned,
+            {
+                type Item = Result<T, Box<dyn ::std::error::Error>>;
+
+                fn next(&mut self) -> Option<Result<T, Box<dyn ::std::error::Error>>> {
+                    #[derive(::serde::Deserialize)]
+                    struct Resp<T> {
+                        #[serde(rename=#prop_id)]
+                        items: Option<Vec<T>>,
+
+                        #[serde(rename="nextPageToken")]
+                        next_page_token: Option<String>,
+                    }
+                    loop {
+                        if let Some(iter) = self.items_iter.as_mut() {
+                            match iter.next() {
+                                Some(v) => return Some(Ok(v)),
+                                None => {},
+                            }
+                        }
+
+                        if self.last_page_reached {
+                            return None;
+                        }
+
+                        let resp: Resp<T> = match self.method._execute() {
+                            Ok(r) => r,
+                            Err(err) => return Some(Err(err)),
+                        };
+                        self.last_page_reached = resp.next_page_token.as_ref().is_none();
+                        #set_page_token
+                        self.items_iter = resp.items.map(|i| i.into_iter());
+                    }
+                }
+            }
+        }
+    });
     quote! {
+        #(#iter_types)*
         impl<'a, A: yup_oauth2::GetToken> crate::IterableMethod for #builder_name<'a, A> {
             fn set_page_token(&mut self, value: String) {
                 self.page_token = value.into();
@@ -384,104 +484,93 @@ fn iterable_method_impl(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -
     }
 }
 
-fn iter_methods(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> TokenStream {
-    if !is_iter_method(method, schemas) {
-        return quote! {};
+fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStream, TokenStream) {
+    let page_token_param = is_iter_method(method, schemas);
+    if page_token_param == PageTokenParam::None {
+        return (quote! {}, quote! {});
     }
+    let builder_name = method.builder_name();
 
     let response_type_desc: Option<&TypeDesc> = method
         .response
         .as_ref()
         .map(|ref_or_type| &ref_or_type.get_type(schemas).type_desc);
-    let array_props: Vec<&PropertyDesc> =
+    let array_props: Vec<(&PropertyDesc, syn::TypePath)> =
         if let Some(TypeDesc::Object { props, .. }) = response_type_desc {
             props
                 .values()
-                .filter(|prop| match prop.typ.get_type(schemas).type_desc {
-                    TypeDesc::Array { .. } => true,
-                    _ => false,
+                .filter_map(|prop| match prop.typ.get_type(schemas).type_desc {
+                    TypeDesc::Array { ref items } => Some((prop, items.type_path())),
+                    _ => None,
                 })
                 .collect()
         } else {
             Vec::new()
         };
-    let array_iter_methods = array_props.iter().map(|prop| {
-        let iter_method_ident: syn::Ident = syn::parse_str(&format!("iter_{}", &prop.ident)).unwrap();
+    let array_iter_methods = array_props.iter().map(|(prop, items_type)| {
         let prop_id = &prop.id;
-        quote!{
-            pub fn #iter_method_ident<T>(&'a mut self) -> impl Iterator<Item=Result<T, Box<dyn ::std::error::Error>>> + 'a
+        let iter_method_ident: syn::Ident =
+            to_ident(&to_rust_varstr(&format!("iter_{}", &prop.ident)));
+        let iter_method_ident_std: syn::Ident =
+            to_ident(&to_rust_varstr(&format!("{}_standard", &iter_method_ident)));
+        let iter_method_ident_debug: syn::Ident =
+            to_ident(&to_rust_varstr(&format!("{}_debug", &iter_method_ident)));
+        let iter_type_ident: syn::Ident =
+            to_ident(&to_rust_typestr(&format!("{}_iter", &prop.ident)));
+        quote! {
+            /// Return an iterator that iterates over all `#prop_ident`. The
+            /// items yielded by the iterator are chosen by the caller of this
+            /// method and must implement `Deserialize` and `FieldSelector`. The
+            /// populated fields in the yielded items will be determined by the
+            /// `FieldSelector` implementation.
+            pub fn #iter_method_ident<T>(self) -> #iter_type_ident<'a, A, T>
             where
-                T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector + 'a,
+                T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
             {
+                #iter_type_ident{method: self, last_page_reached: false, items_iter: None}
+            }
 
-                struct ItemIter<'a, M, T>{
-                    method: &'a mut M,
-                    finished: bool,
-                    items_iter: Option<::std::vec::IntoIter<T>>,
-                }
+            /// Return an iterator that iterates over all `#prop_ident`. The
+            /// items yielded by the iterator are `#items_type`. The populated
+            /// fields in `#items_type` will be the default fields populated by
+            /// the server.
+            pub fn #iter_method_ident_std(mut self) -> #iter_type_ident<'a, A, #items_type>
+            {
+                self.fields = Some(concat!("nextPageToken,", #prop_id).to_owned());
+                #iter_type_ident{method: self, last_page_reached: false, items_iter: None}
+            }
 
-                impl<'a, M, T> Iterator for ItemIter<'a, M, T>
-                where
-                    M: crate::IterableMethod,
-                    T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
-                {
-                    type Item = Result<T, Box<dyn ::std::error::Error>>;
-
-                    fn next(&mut self) -> Option<Result<T, Box<dyn ::std::error::Error>>> {
-                        use ::field_selector::FieldSelector;
-                        #[derive(::serde::Deserialize,FieldSelector)]
-                        struct Resp<T>
-                        where
-                            T: FieldSelector,
-                        {
-                            #[serde(rename=#prop_id)]
-                            items: Option<Vec<T>>,
-
-                            #[serde(rename="nextPageToken")]
-                            next_page_token: Option<String>,
-                        }
-                        loop {
-                            if let Some(iter) = self.items_iter.as_mut() {
-                                match iter.next() {
-                                    Some(v) => return Some(Ok(v)),
-                                    None => {},
-                                }
-                            }
-
-                            if self.finished {
-                                return None;
-                            }
-
-                            let resp: Resp<T> = match self.method.execute() {
-                                Ok(r) => r,
-                                Err(err) => return Some(Err(err)),
-                            };
-
-                            if let Some(next_page_token) = resp.next_page_token {
-                                self.method.set_page_token(next_page_token);
-                            } else {
-                                self.finished = true;
-                            }
-
-                            self.items_iter = resp.items.map(|i| i.into_iter());
-                        }
-                    }
-                }
-
-                ItemIter{method: self, finished: false, items_iter: None}
+            /// Return an iterator that iterates over all `#prop_ident`. The
+            /// items yielded by the iterator are `#items_type`. The populated
+            /// fields in `#items_type` will be all fields available. This should
+            /// primarily be used during developement and debugging as fetching
+            /// all fields can be expensive both in bandwidth and server
+            /// resources.
+            pub fn #iter_method_ident_debug(mut self) -> #iter_type_ident<'a, A, #items_type>
+            {
+                self.fields = Some(concat!("nextPageToken,", #prop_id, "(*)").to_owned());
+                #iter_type_ident{method: self, last_page_reached: false, items_iter: None}
             }
         }
     });
 
-    quote! {
+    let iter_methods = quote! {
         #(#array_iter_methods)*
-        pub fn iter<T>(&'a mut self) -> impl Iterator<Item=Result<T, Box<dyn ::std::error::Error>>> + 'a
+        /// Return an iterator that
+        pub fn iter<T>(self) -> impl Iterator<Item=Result<T, Box<dyn ::std::error::Error + 'static>>> + 'a
         where
             T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector + 'a,
         {
             crate::PageIter{method: self, finished: false, _phantom: ::std::default::Default::default()}
         }
-    }
+    };
+
+    let iter_types_and_impls = iter_types_and_impls(
+        &builder_name,
+        array_props.iter().map(|(prop, _)| *prop),
+        page_token_param,
+    );
+    (iter_methods, iter_types_and_impls)
 }
 
 fn download_method(base_url: &str, method: &Method) -> TokenStream {
@@ -500,7 +589,7 @@ fn download_method(base_url: &str, method: &Method) -> TokenStream {
         where
             W: ::std::io::Write + ?Sized,
         {
-            self.alt(crate::params::Alt::Media);
+            self = self.alt(crate::params::Alt::Media);
             Ok(self._request(&self._path()).send()?.error_for_status()?.copy_to(output)?)
         }
     }
