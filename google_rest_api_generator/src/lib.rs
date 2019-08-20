@@ -1061,14 +1061,21 @@ impl TypeDesc {
                         disco_type
                             .enumeration
                             .iter()
-                            .zip(disco_type.enum_descriptions.iter())
+                            .zip(
+                                disco_type
+                                    .enum_descriptions
+                                    .iter()
+                                    .map(|desc| {
+                                        if desc.is_empty() {
+                                            None
+                                        } else {
+                                            Some(desc.clone())
+                                        }
+                                    })
+                                    .chain(std::iter::repeat(None)),
+                            )
                             .map(|(value, description)| {
                                 let ident = to_ident(&to_rust_typestr(&value));
-                                let description = if description.is_empty() {
-                                    None
-                                } else {
-                                    Some(description.clone())
-                                };
                                 EnumDesc {
                                     ident,
                                     description,
