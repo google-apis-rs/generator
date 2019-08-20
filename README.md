@@ -53,6 +53,15 @@ This project is the successor of [Google-APIS-rs](https://github.com/byron/oogle
    * See which tasks you can perform using make
 
 
+# Shortcomings
+
+Note here everything you consider a limitation. It's something to possibly go back to once
+all high-priority items were resolved.
+
+* **CI of generated code repository is not triggered if the this one changes**
+   * The 'generated' code repository depends on the code here, but if we change it, the
+     generated code repository will not be rebuild.
+
 # 🛸Project Goals🛸
 
 These are snatched from the original project (_OP_), with some adjustments and amendments.
