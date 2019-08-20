@@ -1,5 +1,4 @@
 MCPD = target/debug/mcp
-MCP = target/release/mcp
 .PHONY = always # TODO: one day we should be precise, and provide actual dependencies so 'make' can be smart
 
 help:
@@ -15,9 +14,6 @@ always:
 
 $(MCPD): always
 	cargo build
-
-$(MCP): always
-	cargo build --release
 
 update-generated-fixtures: shared/tests/fixtures/known-versions discovery_parser/src/discovery.rs
 
