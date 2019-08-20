@@ -1,52 +1,5 @@
-use discovery_parser::{DiscoveryRestDesc, RestDescOrErr};
-use serde::Deserialize;
+use discovery_parser::DiscoveryRestDesc;
 use std::error::Error;
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ApiList {
-    items: Vec<ApiSpec>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ApiSpec {
-    name: String,
-    discovery_rest_url: String,
-}
-
-// This test takes too long to run to have it enabled by default. Uncomment it
-// when you want to sanity check logic against all apis.
-//#[test]
-#[allow(dead_code)]
-fn successfully_parse_all_apis() -> Result<(), Box<dyn Error>> {
-    let mut errors = 0;
-    let mut successes = 0;
-    let all_apis: ApiList = reqwest::get("https://www.googleapis.com/discovery/v1/apis")?.json()?;
-    for api in &all_apis.items {
-        println!("Fetching {}", api.discovery_rest_url);
-
-        let res: Result<RestDescOrErr, _> = reqwest::get(&api.discovery_rest_url)?.json();
-        match res {
-            Ok(RestDescOrErr::RestDesc(_desc)) => {
-                successes += 1;
-                //println!("{:#?}", desc);
-            }
-            Ok(RestDescOrErr::Err(_err)) => {
-                //eprintln!("{}: {:?}", api.discovery_rest_url, err);
-                errors += 1;
-            }
-            Err(err) => {
-                eprintln!("{}: json error: {:?}", api.discovery_rest_url, err);
-                errors += 1;
-            }
-        }
-
-        //let desc: DiscoveryRestDesc = reqwest::get(&api.discovery_rest_url)?.json()?;
-    }
-    println!("success: {}, errors: {}", successes, errors);
-    Ok(())
-}
 
 #[test]
 fn parse_one_api() -> Result<(), Box<dyn Error>> {
