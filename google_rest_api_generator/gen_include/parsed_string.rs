@@ -2,6 +2,7 @@
 // to deserialize any string to a FromStr type and serialize any
 // Display type to a String. Google API's encode i64, u64 values as
 // strings.
+#[allow(dead_code)]
 mod parsed_string {
     pub fn serialize<T, S>(value: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
     where
