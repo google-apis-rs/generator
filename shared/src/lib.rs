@@ -149,10 +149,14 @@ impl MappedIndex {
         });
         self
     }
-    pub fn from_index(index: ApiIndexV1) -> Result<Self, Error> {
+}
+impl TryFrom<ApiIndexV1> for MappedIndex {
+    type Error = Error;
+
+    fn try_from(value: ApiIndexV1) -> Result<Self, Self::Error> {
         Ok(MappedIndex {
             standard: Standard::default(),
-            api: index
+            api: value
                 .items
                 .into_iter()
                 .map(Api::try_from)

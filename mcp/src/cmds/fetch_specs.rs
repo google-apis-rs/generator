@@ -1,12 +1,11 @@
 use super::util::{log_error_and_continue, logged_write};
 use crate::options::fetch_specs::Args;
-use discovery_parser::{DiscoveryRestDesc, RestDescOrErr};
+use discovery_parser::{generated::ApiIndexV1, DiscoveryRestDesc, RestDescOrErr};
 use failure::{format_err, Error, ResultExt};
 use log::info;
 use rayon::prelude::*;
-use shared::Api;
-use shared::MappedIndex;
-use std::{fs, path::Path, time::Instant};
+use shared::{Api, MappedIndex};
+use std::{convert::TryInto, fs, path::Path, time::Instant};
 
 fn write_artifacts(
     api: &Api,
@@ -55,17 +54,28 @@ fn fetch_spec(api: &Api) -> Result<DiscoveryRestDesc, Error> {
 
 pub fn execute(
     Args {
+        is_original_index,
         mapped_index_path,
         output_directory,
     }: Args,
 ) -> Result<(), Error> {
-    let index: MappedIndex =
+    let index: MappedIndex = if is_original_index {
+        let index: ApiIndexV1 =
+            serde_json::from_str(&fs::read_to_string(&mapped_index_path).with_context(|_| {
+                format_err!(
+                    "Could not read google api index at '{}'",
+                    mapped_index_path.display()
+                )
+            })?)?;
+        index.try_into()?
+    } else {
         serde_json::from_str(&fs::read_to_string(&mapped_index_path).with_context(|_| {
             format_err!(
-                "Could not read api index at '{}'",
+                "Could not read mapped api index at '{}'",
                 mapped_index_path.display()
             )
-        })?)?;
+        })?)?
+    };
 
     let time = Instant::now();
     index

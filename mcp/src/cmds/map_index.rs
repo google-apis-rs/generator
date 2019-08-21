@@ -3,7 +3,7 @@ use crate::options::map_index::Args;
 use discovery_parser::generated::ApiIndexV1;
 use failure::{format_err, Error, ResultExt};
 use shared::MappedIndex;
-use std::fs;
+use std::{convert::TryFrom, fs};
 
 pub fn execute(
     Args {
@@ -20,7 +20,7 @@ pub fn execute(
             )
         })?;
 
-    let index = MappedIndex::from_index(index)?.validated(&output_directory);
+    let index: MappedIndex = MappedIndex::try_from(index)?.validated(&output_directory);
     logged_write(
         output_file,
         serde_json::to_string_pretty(&index)?.as_bytes(),
