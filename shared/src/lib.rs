@@ -116,7 +116,7 @@ impl TryFrom<&DiscoveryRestDesc> for Api {
 
 impl MappedIndex {
     pub fn validated(mut self, spec_directory: &Path, output_directory: &Path) -> Self {
-        let ci_whitelist = ["admin:directory_v1", "compute:v1", "drive:v3", "oauth2:v2"];
+        let ci_whitelist = ["admin:directory_v1", "drive:v3", "oauth2:v2"];
         let info = ci_info::get();
         if info.ci {
             info!(
