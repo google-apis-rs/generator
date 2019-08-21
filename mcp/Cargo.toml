@@ -10,7 +10,7 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sheesy-tools = "4.0.6"
+sheesy-tools = { version = "4.0.6", default-features = false, features = ["substitute"] }
 clap = "2.33.0"
 failure = "0.1.5"
 itertools = "0.8.0"
