@@ -21,7 +21,7 @@ This project is the successor of [Google-APIS-rs](https://github.com/byron/oogle
      input is a discovery document and the output is rust crate at a specified
      directory.
  * **mcp/**
-   * a program with subcommands to do all the work. Calls to it are orchestrated with `make`.
+   * a program with subcommands to do all the work.
  * **tests/**
    * contains all integration and journey tests.
  * **uri_template_parser/**
@@ -49,8 +49,8 @@ This project is the successor of [Google-APIS-rs](https://github.com/byron/oogle
 * `cargo run -- --help`
    * Run the master control program and see what it can do
 
-* `make`
-   * See which tasks you can perform using make
+* `[just][just]`
+   * See which tasks you can perform
 
 
 # Shortcomings
@@ -163,8 +163,10 @@ Here is the anticipated tooling. What follows is the list of tools I would add a
   * get parallelization for free, and make transparent which programs to call and how to get work done.
   * the Makefile serves as hub keeping all commands one would run to interact with the project in any way.
   * It helps to generate crates only when needed, and can help manage publishing of crates while avoiding trying to upload duplicates.
+* **just** - repeats `🌈1` 
+   * For use in whenever we don't benefit from makes ability to _paralellize_ and _avoid work_ .
 * **Cargo/Rust** - fixes `🥵4`, support `🌈1`
-  * All work should be done by a Rust binary, which helps keeping things easy with `make`. Previously, the single, magical binary was `python`, and when adding even a single additional Rust tool, one would pay with some complexity. One Rust binary with multiple sub-command seems reasonable.
+  * All work should be done by a Rust binary, which helps keeping things easy with `make`/`just`. Previously, the single, magical binary was `python`, and when adding even a single additional Rust tool, one would pay with some complexity. One Rust binary with multiple sub-command seems reasonable.
 * **rust-fmt** - helps remedy `🥵8`
   * Definitely needed to get idiomatically looking code.
   * _OP_ didn't have it, it wasn't a real problem, but too much time was spent making things look pretty. With `rust-fmt`, templates can be optimized for maintainability, even if the output doesn't look great initially.
@@ -178,3 +180,4 @@ These should optimize for allowing a pleasant developer experience, at the begin
   * **Byron also thinks that** this is totally doable without breaking into sweat.
 * **Journey Testing**
     
+[just]: https://github.com/casey/just#installation

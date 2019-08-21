@@ -2,7 +2,10 @@
 # This script takes care of testing your crate
 set -eux -o pipefail
 
-make tests
+curl -LSfs https://japaric.github.io/trust/install.sh | \
+  sh -s -- --git casey/just --force
+
+just tests
 
 [ -d generated ] || git clone --depth=1 https://github.com/google-apis-rs/generated
 
