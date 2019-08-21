@@ -20,6 +20,8 @@ pub struct Standard {
     pub lib_path: String,
     /// The name of the folder into which we want to generate the library projects
     pub lib_dir: String,
+    /// The name of the folder containing specification files, as seen from the 'generated' repository
+    pub spec_dir: String,
 }
 
 impl Default for Standard {
@@ -28,6 +30,7 @@ impl Default for Standard {
             cargo_toml_path: "Cargo.toml".into(),
             lib_path: "src/lib.rs".into(),
             lib_dir: "lib".into(),
+            spec_dir: "etc/api".into(),
         }
     }
 }
