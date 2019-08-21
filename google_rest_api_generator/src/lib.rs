@@ -538,7 +538,8 @@ fn fixup(s: String) -> String {
         "as", "break", "const", "continue", "crate", "dyn", "else", "enum", "extern", "false",
         "fn", "for", "if", "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub",
         "ref", "return", "Self", "static", "struct", "super", "trait", "true", "type", "unsafe",
-        "use", "where", "while",
+        "use", "where", "while", "abstract", "become", "box", "do", "final", "macro", "override",
+        "priv", "typeof", "unsized", "virtual", "yield", "async", "await", "try",
     ]
     .contains(&s.as_str())
     {
