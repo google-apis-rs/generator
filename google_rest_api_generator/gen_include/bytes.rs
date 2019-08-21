@@ -21,7 +21,7 @@ mod bytes {
     }
 
     impl ::serde::Serialize for Bytes {
-        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        fn serialize<S>(&self, serializer: S) -> ::std::result::Result<S::Ok, S::Error>
         where
             S: ::serde::Serializer,
         {
@@ -31,7 +31,7 @@ mod bytes {
     }
 
     impl<'de> ::serde::Deserialize<'de> for Bytes {
-        fn deserialize<D>(deserializer: D) -> Result<Bytes, D::Error>
+        fn deserialize<D>(deserializer: D) -> ::std::result::Result<Bytes, D::Error>
         where
             D: ::serde::Deserializer<'de>,
         {

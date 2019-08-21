@@ -583,7 +583,7 @@ fn make_field(doc: &Option<String>, ident: &syn::Ident, ty: syn::Type) -> syn::F
         vis: syn::parse_quote! {pub},
         ident: Some(ident.clone()),
         colon_token: Some(syn::parse_quote! {:}),
-        ty: parse_quote! {Option<#ty>},
+        ty: parse_quote! {::std::option::Option<#ty>},
     }
 }
 
