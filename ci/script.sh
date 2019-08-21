@@ -2,11 +2,11 @@
 # This script takes care of testing your crate
 set -eux -o pipefail
 
-curl -LSfs https://japaric.github.io/trust/install.sh | \
-  sh -s -- --git casey/just --force
 
 # TODO: wait for https://github.com/casey/just/pull/465 and a new release, then use 
-# the following line instead
+# the following lines instead
+# curl -LSfs https://japaric.github.io/trust/install.sh | \
+#   sh -s -- --git casey/just --force
 # just tests
 cargo build
 cargo test --tests --examples
