@@ -1,22 +1,5 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # This script takes care of testing your crate
+set -eux -o pipefail
 
-set -ex
-
-main() {
-    cross build --target "$TARGET"
-
-    if [ ! -z $DISABLE_TESTS ]; then
-        return
-    fi
-
-    cross test --target "$TARGET"
-
-    bin=mcp
-    ./tests/mcp/journey-tests.sh "target/$TARGET/debug/$bin"
-}
-
-# we don't run the "test phase" when doing deploys
-if [ -z $TRAVIS_TAG ]; then
-    main
-fi
+make tests
