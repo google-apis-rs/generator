@@ -712,7 +712,7 @@ impl Type {
             },
             TypeDesc::Bytes => Type {
                 id: parse_quote! {Bytes},
-                parent_path: empty_type_path.clone(),
+                parent_path: parse_quote! {crate::bytes},
                 type_desc,
             },
             TypeDesc::Date => Type {

@@ -265,6 +265,7 @@ fn path_method(
                             | TypeDesc::Int64
                             | TypeDesc::Uint32
                             | TypeDesc::Uint64
+                            | TypeDesc::Bytes
                             | TypeDesc::Enum { .. } => {
                                 quote!{
                                     let var_as_string = self.#ident.to_string();
