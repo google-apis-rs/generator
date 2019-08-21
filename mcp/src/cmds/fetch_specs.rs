@@ -54,27 +54,30 @@ fn fetch_spec(api: &Api) -> Result<DiscoveryRestDesc, Error> {
 
 pub fn execute(
     Args {
-        is_original_index,
+        original_index_path,
         mapped_index_path,
         output_directory,
     }: Args,
 ) -> Result<(), Error> {
-    let index: MappedIndex = if is_original_index {
-        let index: ApiIndexV1 =
+    let index: MappedIndex = match original_index_path {
+        Some(index_path) => {
+            let index: ApiIndexV1 =
+                serde_json::from_str(&fs::read_to_string(&index_path).with_context(|_| {
+                    format_err!(
+                        "Could not read google api index at '{}'",
+                        index_path.display()
+                    )
+                })?)?;
+            index.try_into()?
+        }
+        None => {
             serde_json::from_str(&fs::read_to_string(&mapped_index_path).with_context(|_| {
                 format_err!(
-                    "Could not read google api index at '{}'",
+                    "Could not read mapped api index at '{}'",
                     mapped_index_path.display()
                 )
-            })?)?;
-        index.try_into()?
-    } else {
-        serde_json::from_str(&fs::read_to_string(&mapped_index_path).with_context(|_| {
-            format_err!(
-                "Could not read mapped api index at '{}'",
-                mapped_index_path.display()
-            )
-        })?)?
+            })?)?
+        }
     };
 
     let time = Instant::now();
