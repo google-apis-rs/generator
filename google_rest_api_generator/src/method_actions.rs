@@ -16,6 +16,7 @@ pub(crate) fn generate(method: &Method, global_params: &[Param]) -> TokenStream 
     required_args.extend(method.params.iter().filter(|p| p.required).map(|param| {
         let name = &param.ident;
         let init_method: syn::FnArg = match param.init_method() {
+            ParamInitMethod::BytesInit => parse_quote! {#name: impl Into<Vec<u8>>},
             ParamInitMethod::IntoImpl(into_typ) => parse_quote! {#name: impl Into<#into_typ>},
             ParamInitMethod::ByValue => {
                 let ty = param.typ.type_path();
@@ -29,6 +30,7 @@ pub(crate) fn generate(method: &Method, global_params: &[Param]) -> TokenStream 
         let name = &param.ident;
         let field_pattern: syn::FieldValue = if param.required {
             match param.init_method() {
+                ParamInitMethod::BytesInit => parse_quote! {#name: #name.into().into()},
                 ParamInitMethod::IntoImpl(_) => parse_quote! {#name: #name.into()},
                 ParamInitMethod::ByValue => parse_quote! {#name},
             }

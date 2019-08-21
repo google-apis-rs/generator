@@ -48,6 +48,7 @@ where
     rustfmt_writer.write_all(include_bytes!("../gen_include/resumable_upload.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/parsed_string.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/iter.rs"))?;
+    rustfmt_writer.write_all(include_bytes!("../gen_include/bytes.rs"))?;
     rustfmt_writer.close()?;
     info!("done");
     Ok(())
@@ -499,7 +500,7 @@ impl Param {
             TypeDesc::Int64 => ParamInitMethod::ByValue,
             TypeDesc::Uint64 => ParamInitMethod::ByValue,
             TypeDesc::Float64 => ParamInitMethod::ByValue,
-            TypeDesc::Bytes => ParamInitMethod::IntoImpl(parse_quote! {Box<[u8]>}),
+            TypeDesc::Bytes => ParamInitMethod::BytesInit,
             TypeDesc::Date => ParamInitMethod::ByValue,
             TypeDesc::DateTime => ParamInitMethod::ByValue,
             TypeDesc::Enum(_) => ParamInitMethod::ByValue,
@@ -517,6 +518,7 @@ impl Param {
 
 #[derive(Clone, Debug)]
 enum ParamInitMethod {
+    BytesInit,
     IntoImpl(syn::TypePath),
     ByValue,
 }
@@ -709,7 +711,7 @@ impl Type {
                 type_desc,
             },
             TypeDesc::Bytes => Type {
-                id: parse_quote! {Vec<u8>},
+                id: parse_quote! {Bytes},
                 parent_path: empty_type_path.clone(),
                 type_desc,
             },

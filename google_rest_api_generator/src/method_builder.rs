@@ -54,6 +54,12 @@ pub(crate) fn generate(
     let param_methods = optional_params.iter().map(|param| {
         let name = &param.ident;
         let fn_def = match param.init_method() {
+            ParamInitMethod::BytesInit => quote! {
+                pub fn #name(mut self, value: impl Into<Vec<u8>>) -> Self {
+                    let v: Vec<u8> = value.into();
+                    self.#name = Some(v.into())
+                }
+            },
             ParamInitMethod::IntoImpl(param_type) => quote! {
                 pub fn #name(mut self, value: impl Into<#param_type>) -> Self {
                     self.#name = Some(value.into());
