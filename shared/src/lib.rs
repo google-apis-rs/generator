@@ -49,8 +49,10 @@ pub struct Api {
     pub id: String,
     /// A 'gen' directory relative path to the project manifest
     pub lib_cargo_file: PathBuf,
-    /// A 'gen' directory relative path to the file containing any kind of generation or build error
-    pub error_file: PathBuf,
+    /// A 'gen' directory relative path to the file containing errors happening during code generation
+    pub gen_error_file: PathBuf,
+    /// A 'gen' directory relative path to the file containing errors happening during cargo invocations
+    pub cargo_error_file: PathBuf,
     /// A 'gen' directory relative path into which all files pertaining the API must be placed
     pub gen_dir: PathBuf,
     /// A 'gen' directory relative path to the google discovery specification file
@@ -76,7 +78,8 @@ impl TryFrom<Item> for Api {
             lib_cargo_file: gen_dir
                 .join(standard.lib_dir)
                 .join(standard.cargo_toml_path),
-            error_file: gen_dir.join("generator-errors.log"),
+            gen_error_file: gen_dir.join("generator-errors.log"),
+            cargo_error_file: gen_dir.join("cargo-errors.log"),
             gen_dir,
             name,
             rest_url: value.discovery_rest_url,
@@ -140,7 +143,7 @@ impl MappedIndex {
                 );
                 return false
             }
-            let error_log = output_directory.join(&api.error_file);
+            let error_log = output_directory.join(&api.gen_error_file);
             if error_log.is_file() {
                 error!("Dropping API '{}' as it previously failed with generator errors, see '{}' for details.", api.crate_name, error_log.display());
                 return false;
