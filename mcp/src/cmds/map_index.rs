@@ -9,6 +9,7 @@ pub fn execute(
     Args {
         discovery_json_path,
         output_file,
+        spec_directory,
         output_directory,
     }: Args,
 ) -> Result<(), Error> {
@@ -20,7 +21,8 @@ pub fn execute(
             )
         })?;
 
-    let index: MappedIndex = MappedIndex::try_from(index)?.validated(&output_directory);
+    let index: MappedIndex =
+        MappedIndex::try_from(index)?.validated(&spec_directory, &output_directory);
     logged_write(
         output_file,
         serde_json::to_string_pretty(&index)?.as_bytes(),

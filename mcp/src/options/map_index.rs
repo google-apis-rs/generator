@@ -13,7 +13,11 @@ pub struct Args {
     #[structopt(parse(from_os_str))]
     pub output_file: PathBuf,
 
-    /// The path into which the `fetch-specs` subcommand writes its files
+    /// The directory into which the `fetch-specs` subcommand writes its files, see `Standard::spec_dir`
+    #[structopt(parse(from_os_str))]
+    pub spec_directory: PathBuf,
+
+    /// The directory into which files will be generated into
     #[structopt(parse(from_os_str))]
     pub output_directory: PathBuf,
 }

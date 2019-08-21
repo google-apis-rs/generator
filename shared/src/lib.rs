@@ -115,7 +115,7 @@ impl TryFrom<&DiscoveryRestDesc> for Api {
 }
 
 impl MappedIndex {
-    pub fn validated(mut self, output_directory: &Path) -> Self {
+    pub fn validated(mut self, spec_directory: &Path, output_directory: &Path) -> Self {
         let ci_whitelist = ["admin:directory_v1", "compute:v1", "drive:v3", "oauth2:v2"];
         let info = ci_info::get();
         if info.ci {
@@ -126,7 +126,7 @@ impl MappedIndex {
             );
         }
         self.api.retain(|api| {
-            let spec_path = output_directory.join(&api.spec_file);
+            let spec_path = spec_directory.join(&api.spec_file);
             let is_allowed = if info.ci {
                 ci_whitelist.contains(&api.id.as_str())
             } else {
@@ -143,10 +143,12 @@ impl MappedIndex {
                 );
                 return false
             }
-            let error_log = output_directory.join(&api.gen_error_file);
-            if error_log.is_file() {
-                error!("Dropping API '{}' as it previously failed with generator errors, see '{}' for details.", api.crate_name, error_log.display());
-                return false;
+            for error_log_file in &[&api.gen_error_file, &api.cargo_error_file] {
+                let error_log_file = output_directory.join(error_log_file);
+                if error_log_file.is_file() {
+                    error!("Dropping API '{}' as it previously failed with errors, see '{}' for details.", api.crate_name, error_log_file.display());
+                    return false;
+                }
             }
             true
         });
