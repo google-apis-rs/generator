@@ -57,7 +57,8 @@ pub(crate) fn generate(
             ParamInitMethod::BytesInit => quote! {
                 pub fn #name(mut self, value: impl Into<Vec<u8>>) -> Self {
                     let v: Vec<u8> = value.into();
-                    self.#name = Some(v.into())
+                    self.#name = Some(v.into());
+                    self
                 }
             },
             ParamInitMethod::IntoImpl(param_type) => quote! {

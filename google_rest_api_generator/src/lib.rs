@@ -56,7 +56,7 @@ where
 
 // A structure that represents the desired rust API. Typically built by
 // transforming a discovery_parser::DiscoveryRestDesc.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct APIDesc {
     name: String,
     version: String,
@@ -142,7 +142,7 @@ impl APIDesc {
                 // so that creating a path from a Ref will point to a valid
                 // type.
                 let type_path = schema.type_path();
-                schema_type_defs.push(quote! {type #schema_id = #type_path;});
+                schema_type_defs.push(quote! {pub type #schema_id = #type_path;});
             }
         }
         let mut param_type_defs = Vec::new();
@@ -251,7 +251,7 @@ fn append_nested_type_defs(
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct Resource {
     ident: syn::Ident,
     parent_path: syn::Path,
@@ -303,7 +303,7 @@ impl Resource {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct Method {
     id: String,
     path: String,
@@ -318,7 +318,7 @@ struct Method {
     media_upload: Option<MediaUpload>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct MediaUpload {
     accept: Vec<String>,
     max_size: Option<String>,
@@ -434,7 +434,7 @@ impl Method {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct Param {
     id: String,
     ident: syn::Ident,
@@ -516,7 +516,7 @@ impl Param {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 enum ParamInitMethod {
     BytesInit,
     IntoImpl(syn::TypePath),
@@ -587,7 +587,7 @@ fn make_field(doc: &Option<String>, ident: &syn::Ident, ty: syn::Type) -> syn::F
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 enum RefOrType<'a> {
     Ref(syn::Ident),
     Type(Cow<'a, Type>),
@@ -638,7 +638,7 @@ impl<'a> RefOrType<'a> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct Type {
     id: syn::PathSegment,
     parent_path: syn::Path,
@@ -823,13 +823,13 @@ impl Type {
                     }
 
                     impl ::std::fmt::Display for #name {
-                        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> ::std::fmt::Result {
                             f.write_str(self.as_str())
                         }
                     }
 
                     impl ::serde::Serialize for #name {
-                        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                        fn serialize<S>(&self, serializer: S) -> ::std::result::Result<S::Ok, S::Error>
                             where S: ::serde::ser::Serializer
                         {
                             serializer.serialize_str(self.as_str())
@@ -837,7 +837,7 @@ impl Type {
                     }
 
                     impl<'de> ::serde::Deserialize<'de> for #name {
-                        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+                        fn deserialize<D>(deserializer: D) -> ::std::result::Result<Self, D::Error>
                         where
                             D: ::serde::de::Deserializer<'de>,
                         {
@@ -877,11 +877,16 @@ impl Type {
                             )| {
                                 use syn::parse::Parser;
                                 let typ = ref_or_type.get_type(schemas);
-                                let mut field = make_field(
-                                    &description,
-                                    ident,
-                                    syn::Type::Path(typ.type_path()),
-                                );
+                                let mut type_path = syn::Type::Path(typ.type_path());
+                                // This handles only the most basic form of
+                                // recursive type where a member of a struct points
+                                // back to itself. It's still possible to create
+                                // an infinite sized type using a graph of two
+                                // or more types and that's not handled.
+                                if typ == self {
+                                    type_path = parse_quote! {Box<#type_path>};
+                                }
+                                let mut field = make_field(&description, ident, type_path);
                                 field.attrs.extend(
                                     syn::Attribute::parse_outer
                                         .parse2(quote! {
@@ -1036,7 +1041,7 @@ impl Type {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 enum TypeDesc {
     Any,
     String,
@@ -1258,7 +1263,7 @@ impl TypeDesc {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct PropertyDesc {
     id: String,
     ident: syn::Ident,
@@ -1266,7 +1271,7 @@ struct PropertyDesc {
     typ: RefOrType<'static>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct EnumDesc {
     description: Option<String>,
     ident: syn::Ident,
