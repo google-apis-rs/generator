@@ -5,7 +5,12 @@ set -eux -o pipefail
 curl -LSfs https://japaric.github.io/trust/install.sh | \
   sh -s -- --git casey/just --force
 
-just tests
+# TODO: wait for https://github.com/casey/just/pull/465 and a new release, then use 
+# the following line instead
+# just tests
+cargo build
+cargo test --tests --examples
+tests/mcp/journey-tests.sh target/debug/mcp
 
 [ -d generated ] || git clone --depth=1 https://github.com/google-apis-rs/generated
 
