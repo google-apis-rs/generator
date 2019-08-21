@@ -845,6 +845,16 @@ impl Type {
                             })
                         }
                     }
+
+                    impl ::field_selector::FieldSelector for #name {
+                        fn field_selector_with_ident(ident: &str, selector: &mut String) {
+                            match selector.chars().rev().nth(0) {
+                                Some(',') | None => {},
+                                _ => selector.push_str(","),
+                            }
+                            selector.push_str(ident);
+                        }
+                    }
                 })
             }
             TypeDesc::Object { props, add_props } => match (props.is_empty(), add_props) {
@@ -928,7 +938,6 @@ impl Type {
                                     _ => selector.push_str(","),
                                 }
                                 selector.push_str(ident);
-                                selector.push_str("*");
                             }
                         }
                     })
@@ -944,7 +953,7 @@ impl Type {
                         pub struct #name;
 
                         impl ::field_selector::FieldSelector for #name {
-                            fn field_selector_with_ident(ident: &str, selector: &mut String) {}
+                            fn field_selector_with_ident(_ident: &str, _selector: &mut String) {}
                         }
                     })
                 }
