@@ -654,6 +654,12 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
     if let Some(media_upload) = &method.media_upload {
         let simple_fns = media_upload.simple_path.as_ref().map(|path| {
             let path_fn = path_method(&parse_quote!{_simple_upload_path}, base_url, path, &method.params);
+            let add_request_part = method.request.as_ref().map(|_| {
+                quote!{
+                    let request_json = ::serde_json::to_vec(&self.request)?;
+                    multipart.new_part(Part::new(::mime::APPLICATION_JSON, Box::new(::std::io::Cursor::new(request_json))));
+                }
+            });
             let upload_fn = match &method.response {
                 Some(_response) => {
                     quote!{
@@ -668,10 +674,8 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                             let req = self._request(&self._simple_upload_path());
                             let req = req.query(&[("uploadType", "multipart")]);
                             use crate::multipart::{RelatedMultiPart, Part};
-                            // TODO: Do not read the contents of the file into memory.
                             let mut multipart = RelatedMultiPart::new();
-                            let request_json = ::serde_json::to_vec(&self.request)?;
-                            multipart.new_part(Part::new(::mime::APPLICATION_JSON, Box::new(::std::io::Cursor::new(request_json))));
+                            #add_request_part
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
                             let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
                             let req = req.body(reqwest::Body::new(multipart.into_reader()));
@@ -683,10 +687,16 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                     quote!{
                         pub fn upload<R>(mut self, content: R, mime_type: ::mime::Mime) -> Result<(), Box<dyn ::std::error::Error>>
                         where
-                            R: ::std::io::Read + ::std::io::Seek,
+                            R: ::std::io::Read + ::std::io::Seek + Send + 'static,
                         {
                             let req = self._request(&self._simple_upload_path());
                             let req = req.query(&[("uploadType", "multipart")]);
+                            use crate::multipart::{RelatedMultiPart, Part};
+                            let mut multipart = RelatedMultiPart::new();
+                            #add_request_part
+                            multipart.new_part(Part::new(mime_type, Box::new(content)));
+                            let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
+                            let req = req.body(reqwest::Body::new(multipart.into_reader()));
                             Ok(req.send()?.error_for_status()?)
                         }
                     }
