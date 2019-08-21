@@ -111,12 +111,12 @@ mod tests {
                 nodes: vec![
                     PathAstNode::Var {
                         var_name: "project",
-                        expansion_style: ExpansionStyle::Simple
+                        expansion_style: ExpansionStyle::Simple { prefix: None }
                     },
                     PathAstNode::Lit("/managedZones/"),
                     PathAstNode::Var {
                         var_name: "managedZone",
-                        expansion_style: ExpansionStyle::Reserved
+                        expansion_style: ExpansionStyle::Reserved { prefix: None }
                     },
                     PathAstNode::Lit("/changes"),
                 ],
