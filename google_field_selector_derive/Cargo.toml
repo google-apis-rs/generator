@@ -6,6 +6,7 @@ edition = "2018"
 
 [lib]
 name = "google_field_selector_derive"
+doctest = false
 proc-macro = true
 
 [dependencies]

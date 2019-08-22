@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Glenn Griffin <ggriffiniii@gmail.com>"]
 edition = "2018"
 
+[lib]
+doctest = false
+
 [features]
 # Don't allow unknown fields in serde parsing. Useful in development to ensure
 # no features are being missed accidentally.

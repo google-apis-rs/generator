@@ -5,6 +5,9 @@ authors = ["Sebastian Thiel <byronimo@gmail.com>"]
 edition = "2018"
 publish = false
 
+[lib]
+doctest = false
+
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 discovery_parser = { path = "../discovery_parser" }

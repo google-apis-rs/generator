@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Glenn Griffin <ggriffiniii@gmail.com>"]
 edition = "2018"
 
+[lib]
+doctest = false
+
 [dependencies]
 http = "0.1.17"
 reqwest = "0.9.19"
