@@ -2,7 +2,7 @@ use clap::ArgSettings;
 use failure::{bail, Error};
 use std::ffi::OsString;
 use structopt::StructOpt;
-use templating::substitute::{Engine, Spec, StreamOrPath};
+use templating::substitute::{Spec, StreamOrPath};
 
 #[derive(Debug, StructOpt)]
 #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
@@ -14,17 +14,6 @@ use templating::substitute::{Engine, Spec, StreamOrPath};
 /// Liquid is used as template engine, and it's possible to refer to and inherit from other templates by their file-stem.
 /// Read more on their website at https://shopify.github.io/liquid .
 pub struct Args {
-    #[structopt(raw(set = "ArgSettings::RequireEquals"))]
-    #[structopt(short = "e", long = "engine", name = "name", default_value = "liquid")]
-    #[structopt(raw(possible_values = r#"&["handlebars", "liquid"]"#))]
-    /// The choice of engine used for the substitution.
-    ///
-    /// 'liquid', is coming with batteries included and very good at handling
-    /// one template at a time.
-    /// 'handlebars' supports referencing other templates using partials, which
-    /// is useful for sharing of common functionality.
-    pub engine: Engine,
-
     #[structopt(parse(from_os_str))]
     #[structopt(raw(set = "ArgSettings::RequireEquals"))]
     #[structopt(

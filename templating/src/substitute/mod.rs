@@ -17,13 +17,10 @@ use std::{
 
 pub use self::{
     spec::*,
-    util::Engine,
-    util::{de_json_or_yaml, validate, EngineChoice},
+    util::{de_json_or_yaml, validate},
 };
-use crate::substitute::util::liquid_filters;
 
 pub fn substitute(
-    engine: Engine,
     input_data: &StreamOrPath,
     specs: &[Spec],
     separator: &OsStr,
@@ -62,14 +59,10 @@ pub fn substitute(
 
     validate(input_data, specs)?;
     let dataset = substitute_in_data(dataset, replacements);
-    let engine = match engine {
-        Engine::Liquid => EngineChoice::Liquid(
-            liquid::ParserBuilder::with_liquid()
-                .filter(liquid_filters::Base64)
-                .build()?,
-            into_liquid_object(dataset)?,
-        ),
-    };
+    let (engine, dataset) = (
+        liquid::ParserBuilder::with_liquid().build()?,
+        into_liquid_object(dataset)?,
+    );
 
     let mut seen_file_outputs = BTreeSet::new();
     let mut seen_writes_to_stdout = 0;
@@ -102,26 +95,22 @@ pub fn substitute(
                 &mut ostream
             };
 
-            match engine {
-                EngineChoice::Liquid(ref liquid, ref dataset) => {
-                    ibuf.clear();
-                    istream.read_to_string(&mut ibuf)?;
-                    let tpl = liquid.parse(&ibuf).map_err(|err| {
-                        format_err!("{}", err).context(format!(
-                            "Failed to parse liquid template at '{}'",
-                            spec.src.name()
-                        ))
-                    })?;
+            ibuf.clear();
+            istream.read_to_string(&mut ibuf)?;
+            let tpl = engine.parse(&ibuf).map_err(|err| {
+                format_err!("{}", err).context(format!(
+                    "Failed to parse liquid template at '{}'",
+                    spec.src.name()
+                ))
+            })?;
 
-                    let rendered = tpl.render(dataset).map_err(|err| {
-                        format_err!("{}", err).context(format!(
-                            "Failed to render template from template at '{}'",
-                            spec.src.short_name()
-                        ))
-                    })?;
-                    ostream_for_template.write_all(rendered.as_bytes())?;
-                }
-            }
+            let rendered = tpl.render(&dataset).map_err(|err| {
+                format_err!("{}", err).context(format!(
+                    "Failed to render template from template at '{}'",
+                    spec.src.short_name()
+                ))
+            })?;
+            ostream_for_template.write_all(rendered.as_bytes())?;
         }
 
         if try_deserialize {

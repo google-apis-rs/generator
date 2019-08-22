@@ -227,4 +227,3 @@ there
 
 {% assign my_array = "ants, bugs, bees, bugs, ants" | split: ", " %}
 {{ my_array | uniq | join: ", " }}
-{{ "some text as base64" | base64 }}
