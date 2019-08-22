@@ -51,42 +51,48 @@ pub(crate) fn generate(
             .expect("failed to parse param field")
     }));
 
-    let param_methods = optional_params.iter().map(|param| {
-        let name = &param.ident;
-        let fn_def = match param.init_method() {
-            ParamInitMethod::BytesInit => quote! {
-                pub fn #name(mut self, value: impl Into<Vec<u8>>) -> Self {
-                    let v: Vec<u8> = value.into();
-                    self.#name = Some(v.into());
-                    self
-                }
-            },
-            ParamInitMethod::IntoImpl(param_type) => quote! {
-                pub fn #name(mut self, value: impl Into<#param_type>) -> Self {
-                    self.#name = Some(value.into());
-                    self
-                }
-            },
-            ParamInitMethod::ByValue => {
-                let param_type = param.typ.type_path();
-                quote! {
-                    pub fn #name(mut self, value: #param_type) -> Self {
-                        self.#name = Some(value);
+    let param_methods = optional_params
+        .iter()
+        .filter(|param| {
+            // We have special handling for fields and alt. Don't provide methods to set them.
+            !["alt", "fields"].contains(&param.id.as_str())
+        })
+        .map(|param| {
+            let name = &param.ident;
+            let fn_def = match param.init_method() {
+                ParamInitMethod::BytesInit => quote! {
+                    pub fn #name(mut self, value: impl Into<Vec<u8>>) -> Self {
+                        let v: Vec<u8> = value.into();
+                        self.#name = Some(v.into());
                         self
                     }
+                },
+                ParamInitMethod::IntoImpl(param_type) => quote! {
+                    pub fn #name(mut self, value: impl Into<#param_type>) -> Self {
+                        self.#name = Some(value.into());
+                        self
+                    }
+                },
+                ParamInitMethod::ByValue => {
+                    let param_type = param.typ.type_path();
+                    quote! {
+                        pub fn #name(mut self, value: #param_type) -> Self {
+                            self.#name = Some(value);
+                            self
+                        }
+                    }
                 }
+            };
+            let description = &param
+                .description
+                .as_ref()
+                .map(|s| markdown::sanitize(s.as_str()))
+                .unwrap_or_else(String::new);
+            quote! {
+                #[doc = #description]
+                #fn_def
             }
-        };
-        let description = &param
-            .description
-            .as_ref()
-            .map(|s| markdown::sanitize(s.as_str()))
-            .unwrap_or_else(String::new);
-        quote! {
-            #[doc = #description]
-            #fn_def
-        }
-    });
+        });
 
     let base_url = format!("{}{}", root_url, service_path);
     let default_path_method = path_method(
@@ -645,7 +651,7 @@ fn download_method(base_url: &str, method: &Method) -> TokenStream {
         where
             W: ::std::io::Write + ?Sized,
         {
-            self = self.alt(crate::params::Alt::Media);
+            self.alt = Some(crate::params::Alt::Media);
             Ok(self._request(&self._path()).send()?.error_for_status()?.copy_to(output)?)
         }
     }
