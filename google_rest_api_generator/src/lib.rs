@@ -1316,33 +1316,63 @@ impl TypeDesc {
                 if disco_type.enumeration.is_empty() {
                     TypeDesc::String
                 } else {
-                    TypeDesc::Enum(
-                        disco_type
-                            .enumeration
-                            .iter()
-                            .zip(
-                                disco_type
-                                    .enum_descriptions
-                                    .iter()
-                                    .map(|desc| {
-                                        if desc.is_empty() {
-                                            None
-                                        } else {
-                                            Some(desc.clone())
-                                        }
-                                    })
-                                    .chain(std::iter::repeat(None)),
-                            )
-                            .map(|(value, description)| {
-                                let ident = to_ident(&to_rust_typestr(&value));
-                                EnumDesc {
-                                    ident,
-                                    description,
-                                    value: value.to_owned(),
-                                }
-                            })
-                            .collect(),
-                    )
+                    let enums: Vec<EnumDesc> = disco_type
+                        .enumeration
+                        .iter()
+                        .zip(
+                            disco_type
+                                .enum_descriptions
+                                .iter()
+                                .map(|desc| {
+                                    if desc.is_empty() {
+                                        None
+                                    } else {
+                                        Some(desc.clone())
+                                    }
+                                })
+                                .chain(std::iter::repeat(None)),
+                        )
+                        .map(|(value, description)| {
+                            let ident = to_ident(&to_rust_typestr(&value));
+                            EnumDesc {
+                                ident,
+                                description,
+                                value: value.to_owned(),
+                            }
+                        })
+                        .collect();
+                    // Some apis (google_games_v1) have an enum that contains
+                    // both a snake_case and camelCase version. Since we
+                    // normalize to PascalCase this causes a conflict. In this
+                    // case the duplicate is a mistake and has been marked
+                    // deprecated in the comments. We'll use the strategy of it
+                    // there's a duplicate we'll filter out any enums that claim
+                    // to be deprecated and leave the rest. This is obviously
+                    // not a foolproof solution but good enough for now.
+                    let mut enums_by_value = BTreeMap::new();
+                    for enumdesc in enums {
+                        enums_by_value
+                            .entry(enumdesc.ident.clone())
+                            .or_insert(Vec::new())
+                            .push(enumdesc);
+                    }
+                    let mut enums: Vec<EnumDesc> = Vec::new();
+                    for (_ident, mut enum_descs) in enums_by_value {
+                        if enum_descs.len() == 1 {
+                            enums.push(enum_descs.pop().unwrap());
+                        } else {
+                            enums.extend(enum_descs.into_iter().filter(|enum_desc| {
+                                let lower_description = enum_desc
+                                    .description
+                                    .as_ref()
+                                    .map(|s| s.as_str())
+                                    .unwrap_or("")
+                                    .to_ascii_lowercase();
+                                !lower_description.contains("deprecated")
+                            }));
+                        }
+                    }
+                    TypeDesc::Enum(enums)
                 }
             }
             ("array", None) => {
