@@ -1,6 +1,6 @@
 use crate::{
-    markdown, to_ident, to_rust_typestr, to_rust_varstr, Method, Param, ParamInitMethod,
-    PropertyDesc, RefOrType, Type, TypeDesc,
+    markdown, to_ident, to_rust_varstr, Method, Param, ParamInitMethod, PropertyDesc, RefOrType,
+    Type, TypeDesc,
 };
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -462,83 +462,17 @@ fn is_iter_method(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> Page
     }
 }
 
-fn iter_types_and_impls<'a>(
-    method: &Method,
-    array_properties: impl Iterator<Item = &'a PropertyDesc>,
-    page_token_param: PageTokenParam,
-) -> TokenStream {
+fn iterable_method_impl<'a>(method: &Method) -> TokenStream {
     let builder_name = method.builder_name();
-    let iter_types = array_properties.map(|prop| {
-        let iter_type_ident: syn::Ident = to_ident(&to_rust_typestr(&format!(
-            "{}_{}_iter",
-            &method.id, &prop.ident
-        )));
-        let prop_id = &prop.id;
-        let set_page_token = match page_token_param {
-            PageTokenParam::None => unreachable!(),
-            PageTokenParam::Optional => quote! {self.method.page_token = resp.next_page_token;},
-            PageTokenParam::Required => quote! {
-                if let Some(token) = resp.next_page_token {
-                    self.method.page_token = token;
-                }
-            },
-        };
-        quote! {
-            pub struct #iter_type_ident<'a, A, T> {
-                method: #builder_name<'a, A>,
-                last_page_reached: bool,
-                items_iter: Option<::std::vec::IntoIter<T>>,
-            }
-            impl<'a, A, T> Iterator for #iter_type_ident<'a, A, T>
-            where
-                A: ::yup_oauth2::GetToken,
-                T: ::serde::de::DeserializeOwned,
-            {
-                type Item = Result<T, Box<dyn ::std::error::Error>>;
-
-                fn next(&mut self) -> Option<Result<T, Box<dyn ::std::error::Error>>> {
-                    #[derive(::serde::Deserialize)]
-                    struct Resp<T> {
-                        #[serde(rename=#prop_id)]
-                        items: Option<Vec<T>>,
-
-                        #[serde(rename="nextPageToken")]
-                        next_page_token: Option<String>,
-                    }
-                    loop {
-                        if let Some(iter) = self.items_iter.as_mut() {
-                            match iter.next() {
-                                Some(v) => return Some(Ok(v)),
-                                None => {},
-                            }
-                        }
-
-                        if self.last_page_reached {
-                            return None;
-                        }
-
-                        let resp: Resp<T> = match self.method._execute() {
-                            Ok(r) => r,
-                            Err(err) => return Some(Err(err)),
-                        };
-                        self.last_page_reached = resp.next_page_token.as_ref().is_none();
-                        #set_page_token
-                        self.items_iter = resp.items.map(|i| i.into_iter());
-                    }
-                }
-            }
-        }
-    });
     quote! {
-        #(#iter_types)*
-        impl<'a, A: yup_oauth2::GetToken> crate::IterableMethod for #builder_name<'a, A> {
+        impl<'a, A: yup_oauth2::GetToken> crate::iter::IterableMethod for #builder_name<'a, A> {
             fn set_page_token(&mut self, value: String) {
                 self.page_token = value.into();
             }
 
             fn execute<T>(&mut self) -> Result<T, Box<dyn ::std::error::Error>>
             where
-                T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
+                T: ::serde::de::DeserializeOwned,
             {
                 self._execute()
             }
@@ -551,12 +485,11 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
     if page_token_param == PageTokenParam::None {
         return (quote! {}, quote! {});
     }
-    let response_type_desc: Option<&TypeDesc> = method
-        .response
-        .as_ref()
-        .map(|ref_or_type| &ref_or_type.get_type(schemas).type_desc);
+    let response = method.response.as_ref().unwrap(); // unwrap safe because is_iter_method returned true.
+    let response_type_path = response.type_path();
+    let response_type_desc: &TypeDesc = &response.get_type(schemas).type_desc;
     let array_props: Vec<(&PropertyDesc, syn::TypePath)> =
-        if let Some(TypeDesc::Object { props, .. }) = response_type_desc {
+        if let TypeDesc::Object { props, .. } = response_type_desc {
             props
                 .values()
                 .filter_map(|prop| match prop.typ.get_type(schemas).type_desc {
@@ -565,7 +498,7 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
                 })
                 .collect()
         } else {
-            Vec::new()
+            panic!("is_iter_method that doesn't return an object");
         };
     let array_iter_methods = array_props.iter().map(|(prop, items_type)| {
         let prop_id = &prop.id;
@@ -575,31 +508,34 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
             to_ident(&to_rust_varstr(&format!("{}_standard", &iter_method_ident)));
         let iter_method_ident_debug: syn::Ident =
             to_ident(&to_rust_varstr(&format!("{}_debug", &iter_method_ident)));
-        let iter_type_ident: syn::Ident = to_ident(&to_rust_typestr(&format!(
-            "{}_{}_iter",
-            &method.id, &prop.ident
-        )));
         quote! {
             /// Return an iterator that iterates over all `#prop_ident`. The
             /// items yielded by the iterator are chosen by the caller of this
             /// method and must implement `Deserialize` and `FieldSelector`. The
             /// populated fields in the yielded items will be determined by the
             /// `FieldSelector` implementation.
-            pub fn #iter_method_ident<T>(self) -> #iter_type_ident<'a, A, T>
+            pub fn #iter_method_ident<T>(mut self) -> crate::iter::PageItemIter<Self, T>
             where
                 T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
             {
-                #iter_type_ident{method: self, last_page_reached: false, items_iter: None}
+                let mut fields = concat!("nextPageToken,", #prop_id).to_owned();
+                let items_fields = T::field_selector();
+                if !items_fields.is_empty() {
+                    fields.push_str("(");
+                    fields.push_str(&items_fields);
+                    fields.push_str(")");
+                }
+                self.fields = Some(fields);
+                crate::iter::PageItemIter::new(self, #prop_id)
             }
 
             /// Return an iterator that iterates over all `#prop_ident`. The
             /// items yielded by the iterator are `#items_type`. The populated
             /// fields in `#items_type` will be the default fields populated by
             /// the server.
-            pub fn #iter_method_ident_std(mut self) -> #iter_type_ident<'a, A, #items_type>
-            {
+            pub fn #iter_method_ident_std(mut self) -> crate::iter::PageItemIter<Self, #items_type> {
                 self.fields = Some(concat!("nextPageToken,", #prop_id).to_owned());
-                #iter_type_ident{method: self, last_page_reached: false, items_iter: None}
+                crate::iter::PageItemIter::new(self, #prop_id)
             }
 
             /// Return an iterator that iterates over all `#prop_ident`. The
@@ -608,31 +544,51 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
             /// primarily be used during developement and debugging as fetching
             /// all fields can be expensive both in bandwidth and server
             /// resources.
-            pub fn #iter_method_ident_debug(mut self) -> #iter_type_ident<'a, A, #items_type>
-            {
+            pub fn #iter_method_ident_debug(mut self) -> crate::iter::PageItemIter<Self, #items_type> {
                 self.fields = Some(concat!("nextPageToken,", #prop_id, "(*)").to_owned());
-                #iter_type_ident{method: self, last_page_reached: false, items_iter: None}
+                crate::iter::PageItemIter::new(self, #prop_id)
             }
         }
     });
 
     let iter_methods = quote! {
         #(#array_iter_methods)*
-        /// Return an iterator that
-        pub fn iter<T>(self) -> impl Iterator<Item=Result<T, Box<dyn ::std::error::Error + 'static>>> + 'a
+
+        pub fn iter<T>(mut self) -> crate::iter::PageIter<Self, T>
         where
-            T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector + 'a,
+            T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
         {
-            crate::PageIter{method: self, finished: false, _phantom: ::std::default::Default::default()}
+            let mut fields = T::field_selector();
+            if !fields.is_empty() {
+                // Append nextPageToken to any non-empty field selector.
+                // Requesting the same field twice is not harmful, so this will
+                // work even if the FieldSelector includes it. We do not do this
+                // if fields is empty because an empty field selector is
+                // requesting the default set of fields, and specifying
+                // nextPageToken would only request that one field. The default
+                // set of fields always seems to include nextPageToken anyway.
+                match fields.chars().rev().nth(0) {
+                    Some(',') | None => {},
+                    _ => fields.push_str(","),
+                }
+                fields.push_str("nextPageToken");
+                self.fields = Some(fields);
+            }
+            crate::iter::PageIter::new(self)
+        }
+
+        pub fn iter_standard(self) -> crate::iter::PageIter<Self, #response_type_path> {
+            crate::iter::PageIter::new(self)
+        }
+
+        pub fn iter_debug(mut self) -> crate::iter::PageIter<Self, #response_type_path> {
+            self.fields = Some("*".to_owned());
+            crate::iter::PageIter::new(self)
         }
     };
 
-    let iter_types_and_impls = iter_types_and_impls(
-        method,
-        array_props.iter().map(|(prop, _)| *prop),
-        page_token_param,
-    );
-    (iter_methods, iter_types_and_impls)
+    let iterable_method_impl = iterable_method_impl(method);
+    (iter_methods, iterable_method_impl)
 }
 
 fn download_method(base_url: &str, method: &Method) -> TokenStream {
