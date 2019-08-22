@@ -262,8 +262,29 @@ mod tests {
                 }
             ))
         );
+        assert_eq!(
+            expression("{foo:3,bar:1}"),
+            Ok((
+                "",
+                Expression {
+                    operator: Operator::Simple,
+                    var_spec_list: vec![
+                        VarSpec {
+                            var_name: "foo",
+                            modifier: Modifier::Prefix(3),
+                        },
+                        VarSpec {
+                            var_name: "bar",
+                            modifier: Modifier::Prefix(1)
+                        }
+                    ],
+                }
+            ))
+        );
         assert!(expression("{+foo:3*}").is_err());
         assert!(expression("{+foo%2z:3}").is_err());
+        assert!(expression("{+foo:3,*bar:1}").is_err());
+        assert!(expression("{+foo:3, bar:1}").is_err());
     }
 
     #[test]
@@ -292,6 +313,41 @@ mod tests {
                     }],
                 })
             ))
+        );
+    }
+
+    #[test]
+    fn test_ast_nodes() {
+        use super::{AstNode::*, Modifier::*, Operator::*};
+        assert_eq!(ast_nodes("hello"), Some(vec![Lit("hello")]));
+        assert_eq!(ast_nodes(""), Some(vec![]));
+        assert_eq!(
+            ast_nodes("/{foo}/{bar,baz}/literal"),
+            Some(vec![
+                Lit("/"),
+                Expr(Expression {
+                    operator: Simple,
+                    var_spec_list: vec![VarSpec {
+                        var_name: "foo",
+                        modifier: NoModifier
+                    }]
+                }),
+                Lit("/"),
+                Expr(Expression {
+                    operator: Simple,
+                    var_spec_list: vec![
+                        VarSpec {
+                            var_name: "bar",
+                            modifier: NoModifier
+                        },
+                        VarSpec {
+                            var_name: "baz",
+                            modifier: NoModifier
+                        }
+                    ]
+                }),
+                Lit("/literal")
+            ])
         );
     }
 }
