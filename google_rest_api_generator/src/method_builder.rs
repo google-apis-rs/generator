@@ -686,7 +686,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                 },
                 None => {
                     quote!{
-                        pub fn upload<R>(mut self, content: R, mime_type: ::mime::Mime) -> Result<(), Box<dyn ::std::error::Error>>
+                        pub fn upload<R>(self, content: R, mime_type: ::mime::Mime) -> Result<(), Box<dyn ::std::error::Error>>
                         where
                             R: ::std::io::Read + ::std::io::Seek + Send + 'static,
                         {
