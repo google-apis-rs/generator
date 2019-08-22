@@ -1,6 +1,0 @@
-error: Failed to render template from template at 'the-answer'
-Caused by: 
- 1: liquid: Unknown variable
-  with:
-    requested variable=the-answer
-    available variables=hi

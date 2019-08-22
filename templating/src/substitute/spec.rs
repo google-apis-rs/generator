@@ -1,12 +1,14 @@
 use atty;
-use failure::{Error, ResultExt};
+use failure::{bail, Error, ResultExt};
 
-use std::ffi::OsStr;
-use std::fmt;
-use std::fs::create_dir_all;
-use std::fs::{File, OpenOptions};
-use std::io::{self, stdin, stdout};
-use std::path::PathBuf;
+use std::{
+    ffi::OsStr,
+    fmt,
+    fs::create_dir_all,
+    fs::{File, OpenOptions},
+    io::{self, stdin, stdout},
+    path::PathBuf,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum StreamOrPath {

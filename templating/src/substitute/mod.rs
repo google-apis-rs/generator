@@ -1,25 +1,26 @@
 mod spec;
-
 mod util;
 
 use atty;
-use failure::{err_msg, Error, ResultExt};
-use handlebars::Handlebars;
+use failure::{bail, err_msg, format_err, Error, ResultExt};
 use json;
 use liquid;
 use yaml_rust;
 
-use std::ffi::OsStr;
-use std::fs::File;
-use std::io::{self, stdin};
-use std::os::unix::ffi::OsStrExt;
+use std::{
+    collections::BTreeSet,
+    ffi::OsStr,
+    fs::File,
+    io::{self, stdin},
+    os::unix::ffi::OsStrExt,
+};
 
-pub use self::spec::*;
-pub use self::util::Engine;
-use self::util::{de_json_or_yaml, validate, EngineChoice};
-use handlebars::no_escape;
-use std::collections::BTreeSet;
-use substitute::util::liquid_filters;
+pub use self::{
+    spec::*,
+    util::Engine,
+    util::{de_json_or_yaml, validate, EngineChoice},
+};
+use crate::substitute::util::liquid_filters;
 
 pub fn substitute(
     engine: Engine,
@@ -61,19 +62,13 @@ pub fn substitute(
 
     validate(input_data, specs)?;
     let dataset = substitute_in_data(dataset, replacements);
-    let mut engine = match engine {
+    let engine = match engine {
         Engine::Liquid => EngineChoice::Liquid(
             liquid::ParserBuilder::with_liquid()
                 .filter(liquid_filters::Base64)
                 .build()?,
             into_liquid_object(dataset)?,
         ),
-        Engine::Handlebars => {
-            let mut hbs = Handlebars::new();
-            hbs.set_strict_mode(true);
-            hbs.register_escape_fn(no_escape);
-            EngineChoice::Handlebars(hbs, dataset)
-        }
     };
 
     let mut seen_file_outputs = BTreeSet::new();
@@ -125,23 +120,6 @@ pub fn substitute(
                         ))
                     })?;
                     ostream_for_template.write_all(rendered.as_bytes())?;
-                }
-                EngineChoice::Handlebars(ref mut hbs, ref dataset) => {
-                    hbs.register_template_source(spec.src.short_name(), &mut istream)
-                        .with_context(|_| {
-                            format!(
-                                "Failed to register handlebars template at '{}'",
-                                spec.src.name()
-                            )
-                        })?;
-
-                    hbs.render_to_write(spec.src.short_name(), &dataset, ostream_for_template)
-                        .with_context(|_| {
-                            format!(
-                                "Could instantiate template or writing to '{}' failed",
-                                spec.dst.name()
-                            )
-                        })?;
                 }
             }
         }

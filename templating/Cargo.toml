@@ -2,6 +2,7 @@
 authors = ["Sebastian Thiel <byronimo@gmail.com>"]
 name = "templating"
 version = "1.0.0"
+edition = "2018"
 publish = false
 
 description = "Provide a nice interface to a templating engine"
@@ -17,6 +18,5 @@ serde_json = "1.0.11"
 serde_yaml = "0.8.8"
 yaml-rust = "0.4.0"
 liquid = "0.19"
-handlebars = "2.0"
 base64 = "0.10.0"
 liquid-error = "0.19.0"

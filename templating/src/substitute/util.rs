@@ -1,14 +1,11 @@
-use failure::{Error, Fail, ResultExt};
-use handlebars;
+use failure::{bail, Error, Fail, ResultExt};
 use json;
 use liquid;
 use yaml;
 
-use std::io::Read;
+use std::{io::Cursor, io::Read, str::FromStr};
 
 pub use super::spec::*;
-use std::io::Cursor;
-use std::str::FromStr;
 
 pub mod liquid_filters {
     use liquid::compiler::Filter;
@@ -38,7 +35,6 @@ pub mod liquid_filters {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Engine {
-    Handlebars,
     Liquid,
 }
 
@@ -48,14 +44,12 @@ impl FromStr for Engine {
     fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
         Ok(match s {
             "liquid" => Engine::Liquid,
-            "handlebars" => Engine::Handlebars,
             _ => bail!("Engine named '{}' is unknown", s),
         })
     }
 }
 
 pub enum EngineChoice {
-    Handlebars(handlebars::Handlebars, json::Value),
     Liquid(liquid::Parser, liquid::value::Object),
 }
 
