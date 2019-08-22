@@ -225,7 +225,7 @@ impl APIDesc {
                 #(#method_actions)*
             }
             #(#method_builders)*
-            mod resources {
+            pub mod resources {
                 #(#resource_modules)*
             }
         }
