@@ -1055,12 +1055,7 @@ impl Type {
                                 use syn::parse::Parser;
                                 let typ = ref_or_type.get_type(schemas);
                                 let mut type_path = syn::Type::Path(typ.type_path());
-                                // This handles only the most basic form of
-                                // recursive type where a member of a struct points
-                                // back to itself. It's still possible to create
-                                // an infinite sized type using a graph of two
-                                // or more types and that's not handled.
-                                if typ == self {
+                                if typ.requires_pointer_indirection_when_within(self, schemas) {
                                     type_path = parse_quote! {Box<#type_path>};
                                 }
                                 let mut field = make_field(&description, ident, type_path);
@@ -1145,6 +1140,54 @@ impl Type {
             },
             _ => None,
         }
+    }
+
+    // Determine if the current type requires pointer indirection when it's a
+    // member of the provided type. Pointer indirection is necessary when there
+    // are recursive types. This method traverses the non-pointer members of the
+    // current type and returns true if any of them are the provided type.
+    fn requires_pointer_indirection_when_within(
+        &self,
+        typ: &Type,
+        schemas: &BTreeMap<syn::Ident, Type>,
+    ) -> bool {
+        fn _requires_pointer_indirection_when_within<'a, 'b>(
+            nested_type: &'a Type,
+            typ: &'a Type,
+            schemas: &'a BTreeMap<syn::Ident, Type>,
+            seen: &'b mut Vec<&'a Type>,
+        ) -> bool {
+            if nested_type == typ {
+                return true;
+            }
+            if seen.contains(&nested_type) {
+                // We've entered a type loop, but the loop did not involve self so
+                // we don't need pointer indirection in this location.
+                return false;
+            }
+            seen.push(nested_type);
+            let res = if let TypeDesc::Object { props, .. } = &nested_type.type_desc {
+                props.values().any(|prop_desc| {
+                    _requires_pointer_indirection_when_within(
+                        prop_desc.typ.get_type(schemas),
+                        typ,
+                        schemas,
+                        seen,
+                    )
+                })
+            } else {
+                // The only way to create a loop without pointer indirection is via
+                // Object properties. Anything else is not capable of forming a
+                // loop.
+                // Vec items always have pointer indirection
+                // add_props are put into a BTreeMap which always includes pointer indirection
+                // All other types are simple types, not composed of other types.
+                false
+            };
+            seen.pop();
+            res
+        }
+        _requires_pointer_indirection_when_within(self, typ, schemas, &mut Vec::new())
     }
 
     fn nested_type_desc_fold<F, B>(&self, schemas: &BTreeMap<syn::Ident, Type>, init: B, f: F) -> B
