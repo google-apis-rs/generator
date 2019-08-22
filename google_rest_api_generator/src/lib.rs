@@ -290,8 +290,13 @@ impl Resource {
             .methods
             .iter()
             .map(|(method_id, method_desc)| {
+                let method_id = if disco_resource.resources.contains_key(method_id) {
+                    Cow::Owned(format!("{}_method", method_id))
+                } else {
+                    Cow::Borrowed(method_id)
+                };
                 Method::from_disco_method(
-                    method_id,
+                    &method_id,
                     &parse_quote! {#parent_path::#resource_ident},
                     method_desc,
                     ident_tracker,
