@@ -698,7 +698,8 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
                             let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
                             let req = req.body(reqwest::Body::new(multipart.into_reader()));
-                            Ok(req.send()?.error_for_status()?)
+                            req.send()?.error_for_status()?;
+                            Ok(())
                         }
                     }
                 }

@@ -5,6 +5,7 @@ use log::{debug, info};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use shared;
+use std::collections::HashMap;
 use std::{borrow::Cow, collections::BTreeMap, error::Error};
 use syn::parse_quote;
 
@@ -71,17 +72,34 @@ struct APIDesc {
 impl APIDesc {
     fn from_discovery(discovery_desc: &DiscoveryRestDesc) -> APIDesc {
         debug!("collecting schema_types");
+        let mut ident_tracker = TypeIdentTracker::new();
+        // Reserve the idents for all schemas first so that if there are any
+        // conflicts the top-level schema gets the preferred name. This is
+        // necessary to ensure that references link correctly.
+        for schema_id in discovery_desc.schemas.keys() {
+            ident_tracker.reserve(schema_id, &schema_parent_path());
+        }
         let schemas: BTreeMap<syn::Ident, Type> = discovery_desc
             .schemas
             .iter()
-            .map(|(id, schema)| (schema_id_to_ident(id), Type::from_disco_schema(schema)))
+            .map(|(id, schema)| {
+                (
+                    schema_id_to_ident(id),
+                    Type::from_disco_schema(schema, &mut ident_tracker),
+                )
+            })
             .collect();
         debug!("collecting params");
         let mut params: Vec<Param> = discovery_desc
             .parameters
             .iter()
             .map(|(param_id, param_desc)| {
-                Param::from_disco_param(param_id, &parse_quote! {crate::params}, param_desc)
+                Param::from_disco_param(
+                    param_id,
+                    &parse_quote! {crate::params},
+                    param_desc,
+                    &mut ident_tracker,
+                )
             })
             .collect();
         debug!("collecting resources");
@@ -93,6 +111,7 @@ impl APIDesc {
                     resource_id,
                     &parse_quote! {crate::resources},
                     resource_desc,
+                    &mut ident_tracker,
                 )
             })
             .collect();
@@ -101,7 +120,12 @@ impl APIDesc {
             .methods
             .iter()
             .map(|(method_id, method_desc)| {
-                Method::from_disco_method(method_id, &parse_quote! {crate}, method_desc)
+                Method::from_disco_method(
+                    method_id,
+                    &parse_quote! {crate},
+                    method_desc,
+                    &mut ident_tracker,
+                )
             })
             .collect();
         if any_method_supports_media(&resources) {
@@ -127,20 +151,15 @@ impl APIDesc {
         info!("getting all types");
         let mut schema_type_defs = Vec::new();
         for (schema_id, schema) in self.schemas.iter() {
-            if schema.type_def(&self.schemas).is_some() {
-                // The schemas is a composite type (enum or struct) and may
-                // contain other nested composite types. Add all nested type
-                // defs.
-                append_nested_type_defs(
-                    &RefOrType::Type(Cow::Borrowed(schema)),
-                    &self.schemas,
-                    &mut schema_type_defs,
-                );
-            } else {
-                // The schema is a simple type that doesn't require creating a
-                // new composite type, but we still create a type alias for it
-                // so that creating a path from a Ref will point to a valid
-                // type.
+            append_nested_type_defs(
+                &RefOrType::Type(Cow::Borrowed(schema)),
+                &self.schemas,
+                &mut schema_type_defs,
+            );
+            // This type does not normally need a type definition, but because
+            // it's a schema we will create a type alias for it so that
+            // references can be linked correctly.
+            if schema.type_def(&self.schemas).is_none() {
                 let type_path = schema.type_path();
                 schema_type_defs.push(quote! {pub type #schema_id = #type_path;});
             }
@@ -205,9 +224,9 @@ impl APIDesc {
                 #(#resource_actions)*
                 #(#method_actions)*
             }
+            #(#method_builders)*
             mod resources {
                 #(#resource_modules)*
-                #(#method_builders)*
             }
         }
     }
@@ -264,6 +283,7 @@ impl Resource {
         resource_id: &str,
         parent_path: &syn::Path,
         disco_resource: &discovery_parser::ResourceDesc,
+        ident_tracker: &mut TypeIdentTracker,
     ) -> Resource {
         let resource_ident = to_ident(&to_rust_varstr(&resource_id));
         let mut methods: Vec<Method> = disco_resource
@@ -274,6 +294,7 @@ impl Resource {
                     method_id,
                     &parse_quote! {#parent_path::#resource_ident},
                     method_desc,
+                    ident_tracker,
                 )
             })
             .collect();
@@ -285,6 +306,7 @@ impl Resource {
                     nested_id,
                     &parse_quote! {#parent_path::#resource_ident},
                     resource_desc,
+                    ident_tracker,
                 )
             })
             .collect();
@@ -331,21 +353,22 @@ impl Method {
         method_id: &str,
         parent_path: &syn::TypePath,
         disco_method: &discovery_parser::MethodDesc,
+        ident_tracker: &mut TypeIdentTracker,
     ) -> Method {
         let request = disco_method.request.as_ref().map(|req| {
-            let req_ident = to_ident(&to_rust_typestr(&format!("{}-request", method_id)));
             RefOrType::from_disco_ref_or_type(
-                &req_ident,
+                &format!("{}-request", method_id),
                 &parse_quote! {#parent_path::schemas},
                 req,
+                ident_tracker,
             )
         });
         let response = disco_method.response.as_ref().map(|resp| {
-            let resp_ident = to_ident(&to_rust_typestr(&format!("{}-response", method_id)));
             RefOrType::from_disco_ref_or_type(
-                &resp_ident,
+                &format!("{}-response", method_id),
                 &parse_quote! {#parent_path::schemas},
                 resp,
+                ident_tracker,
             )
         });
 
@@ -358,6 +381,7 @@ impl Method {
                     param_id,
                     &parse_quote! {#parent_path::params},
                     param_desc,
+                    ident_tracker,
                 )
             })
             .collect();
@@ -450,10 +474,17 @@ impl Param {
         param_id: &str,
         parent_path: &syn::Path,
         disco_param: &discovery_parser::ParamDesc,
+        ident_tracker: &mut TypeIdentTracker,
     ) -> Param {
         let ident = to_ident(&to_rust_varstr(&param_id));
-        let type_ident = to_ident(&to_rust_typestr(&param_id));
-        Param::with_ident(param_id, ident, type_ident, parent_path, disco_param)
+        Param::with_ident(
+            param_id,
+            ident,
+            param_id,
+            parent_path,
+            disco_param,
+            ident_tracker,
+        )
     }
 
     fn from_disco_method_param(
@@ -461,23 +492,33 @@ impl Param {
         param_id: &str,
         parent_path: &syn::Path,
         disco_param: &discovery_parser::ParamDesc,
+        ident_tracker: &mut TypeIdentTracker,
     ) -> Param {
         let ident = to_ident(&to_rust_varstr(param_id));
-        let type_ident = to_ident(&to_rust_typestr(&format!("{}-{}", &method_id, &param_id)));
-        Param::with_ident(param_id, ident, type_ident, parent_path, disco_param)
+        let type_id = format!("{}-{}", &method_id, &param_id);
+        Param::with_ident(
+            param_id,
+            ident,
+            &type_id,
+            parent_path,
+            disco_param,
+            ident_tracker,
+        )
     }
 
     fn with_ident(
         id: &str,
         ident: syn::Ident,
-        type_ident: syn::Ident,
+        type_id: &str,
         parent_path: &syn::Path,
         disco_param: &discovery_parser::ParamDesc,
+        ident_tracker: &mut TypeIdentTracker,
     ) -> Param {
         let typ = Type::from_disco_type(
-            &type_ident,
+            type_id,
             parent_path,
             &discovery_parser::TypeDesc::from_param(disco_param.clone()),
+            ident_tracker,
         );
         Param {
             id: id.to_owned(),
@@ -607,16 +648,16 @@ impl<'a> From<&'a Type> for Cow<'a, Type> {
 
 impl<'a> RefOrType<'a> {
     fn from_disco_ref_or_type(
-        ident: &syn::Ident,
+        id: &str,
         parent_path: &syn::Path,
         ref_or_type: &DiscoRefOrType<discovery_parser::TypeDesc>,
+        ident_tracker: &mut TypeIdentTracker,
     ) -> RefOrType<'static> {
-        debug!("from_disco_ref_or_type({})", ident);
         match ref_or_type {
             DiscoRefOrType::Ref(reference) => RefOrType::Ref(schema_id_to_ident(reference)),
-            DiscoRefOrType::Type(disco_type) => {
-                RefOrType::Type(Type::from_disco_type(ident, parent_path, disco_type).into())
-            }
+            DiscoRefOrType::Type(disco_type) => RefOrType::Type(
+                Type::from_disco_type(id, parent_path, disco_type, ident_tracker).into(),
+            ),
         }
     }
 
@@ -638,6 +679,108 @@ impl<'a> RefOrType<'a> {
     }
 }
 
+enum IdentRequestMethod<'a> {
+    /// Assign will always return a new ident, preferring an ident based on the
+    /// desired string and falling back to an alternative if the desired ident is
+    /// already taken.
+    Assign {
+        desired: &'a str,
+        parent_path: &'a syn::Path,
+    },
+    /// ClaimReserved will succeed only if there already exists a reserved ident
+    /// based on the desired string. It will not perform any fallback.
+    ClaimReserved {
+        desired: &'a str,
+        parent_path: &'a syn::Path,
+    },
+}
+
+enum IdentTrackerEntry {
+    Reserved,
+    Assigned,
+}
+
+/// TypeIdentTracker serves to ensure that auto generated types use unique names.
+/// This is somewhat complicated by the fact that types generated for top-level
+/// schemas need to use the schema.id as the name to allow for references to be
+/// followed correctly. Due to the way nested types are created in a depth-first
+/// fashion, a nested type of the first schema entry could take the name of the
+/// second schema entry if not accounted for. To account for that situation
+/// there's a notion of reserved idents. Before creating any types we iterate
+/// over all the schemas and reserve those names. Then during the recursive type
+/// cretion we claim the reserved name if we're creating a top level schema, and
+/// ask for an assignment of a name if not a top-level schema.
+struct TypeIdentTracker(HashMap<syn::Path, IdentTrackerEntry>);
+
+impl TypeIdentTracker {
+    fn new() -> Self {
+        TypeIdentTracker(HashMap::new())
+    }
+
+    fn reserve(&mut self, id: &str, parent_path: &syn::Path) {
+        use std::collections::hash_map::Entry;
+        let wanted = to_ident(&to_rust_typestr(&id));
+        let path: syn::Path = parse_quote! {#parent_path::#wanted};
+        match self.0.entry(path) {
+            Entry::Vacant(entry) => {
+                entry.insert(IdentTrackerEntry::Reserved);
+            }
+            Entry::Occupied(_) => panic!(format!("unable to reserve '{}' already exists", &wanted)),
+        }
+    }
+
+    fn get_ident(&mut self, req: IdentRequestMethod) -> syn::Ident {
+        use std::collections::hash_map::Entry;
+        match req {
+            IdentRequestMethod::Assign {
+                desired,
+                parent_path,
+            } => {
+                let mut wanted = to_ident(&to_rust_typestr(&desired));
+                for i in 2.. {
+                    let path: syn::Path = parse_quote! {#parent_path::#wanted};
+                    match self.0.entry(path) {
+                        Entry::Vacant(entry) => {
+                            entry.insert(IdentTrackerEntry::Assigned);
+                            return wanted;
+                        }
+                        Entry::Occupied(_) => {
+                            let next_wanted =
+                                to_ident(&to_rust_typestr(&format!("{}{}", desired, i)));
+                            debug!("{} already taken, falling back to {}", wanted, next_wanted);
+                            wanted = next_wanted;
+                        }
+                    }
+                }
+                unreachable!();
+            }
+            IdentRequestMethod::ClaimReserved {
+                desired,
+                parent_path,
+            } => {
+                let wanted = to_ident(&to_rust_typestr(&desired));
+                let path: syn::Path = parse_quote! {#parent_path::#wanted};
+                match self.0.entry(path) {
+                    Entry::Vacant(_) => panic!(format!(
+                        "unable to claim reserved ident '{}' it hasn't been reserved",
+                        &wanted
+                    )),
+                    Entry::Occupied(mut entry) => match entry.get() {
+                        IdentTrackerEntry::Reserved => {
+                            *entry.get_mut() = IdentTrackerEntry::Assigned;
+                            return wanted;
+                        }
+                        IdentTrackerEntry::Assigned => panic!(format!(
+                            "unable to claim reserved ident '{}' it's already been assigned",
+                            &wanted
+                        )),
+                    },
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 struct Type {
     id: syn::PathSegment,
@@ -646,24 +789,52 @@ struct Type {
 }
 
 impl Type {
-    fn from_disco_schema(disco_schema: &discovery_parser::SchemaDesc) -> Type {
-        Type::from_disco_type(
-            &schema_id_to_ident(&disco_schema.id),
+    fn from_disco_schema(
+        disco_schema: &discovery_parser::SchemaDesc,
+        ident_tracker: &mut TypeIdentTracker,
+    ) -> Type {
+        Type::from(
+            &disco_schema.id,
             &schema_parent_path(),
             &disco_schema.typ,
+            ident_tracker,
+            IdentRequestMethod::ClaimReserved {
+                desired: &disco_schema.id,
+                parent_path: &schema_parent_path(),
+            },
         )
     }
 
     fn from_disco_type(
-        ident: &syn::Ident,
+        id: &str,
         parent_path: &syn::Path,
         disco_type: &discovery_parser::TypeDesc,
+        ident_tracker: &mut TypeIdentTracker,
+    ) -> Type {
+        Type::from(
+            id,
+            parent_path,
+            disco_type,
+            ident_tracker,
+            IdentRequestMethod::Assign {
+                desired: id,
+                parent_path,
+            },
+        )
+    }
+
+    fn from(
+        id: &str,
+        parent_path: &syn::Path,
+        disco_type: &discovery_parser::TypeDesc,
+        ident_tracker: &mut TypeIdentTracker,
+        ident_req_method: IdentRequestMethod,
     ) -> Type {
         let empty_type_path = syn::Path {
             leading_colon: None,
             segments: syn::punctuated::Punctuated::new(),
         };
-        let type_desc = TypeDesc::from_disco_type(ident, parent_path, disco_type);
+        let type_desc = TypeDesc::from_disco_type(id, parent_path, disco_type, ident_tracker);
         match type_desc {
             TypeDesc::Any => Type {
                 id: parse_quote! {Value},
@@ -725,11 +896,14 @@ impl Type {
                 parent_path: parse_quote! {::chrono},
                 type_desc,
             },
-            TypeDesc::Enum(_) => Type {
-                id: parse_quote! {#ident},
-                parent_path: parent_path.clone(),
-                type_desc,
-            },
+            TypeDesc::Enum(_) => {
+                let ident = ident_tracker.get_ident(ident_req_method);
+                Type {
+                    id: parse_quote! {#ident},
+                    parent_path: parent_path.clone(),
+                    type_desc,
+                }
+            }
             TypeDesc::Array { ref items } => {
                 let item_path = items.type_path();
                 Type {
@@ -749,11 +923,14 @@ impl Type {
                         parent_path: parse_quote! {::std::collections},
                         type_desc,
                     },
-                    _ => Type {
-                        id: parse_quote! {#ident},
-                        parent_path: parent_path.clone(),
-                        type_desc,
-                    },
+                    _ => {
+                        let ident = ident_tracker.get_ident(ident_req_method);
+                        Type {
+                            id: parse_quote! {#ident},
+                            parent_path: parent_path.clone(),
+                            type_desc,
+                        }
+                    }
                 }
             }
         }
@@ -1067,9 +1244,10 @@ enum TypeDesc {
 
 impl TypeDesc {
     fn from_disco_type(
-        ident: &syn::Ident,
+        id: &str,
         parent_path: &syn::Path,
         disco_type: &discovery_parser::TypeDesc,
+        ident_tracker: &mut TypeIdentTracker,
     ) -> TypeDesc {
         match (
             disco_type.typ.as_str(),
@@ -1121,9 +1299,12 @@ impl TypeDesc {
             }
             ("array", None) => {
                 if let Some(ref items) = disco_type.items {
-                    let items_ident = to_ident(&to_rust_typestr(&format!("{}-items", ident)));
-                    let item_type =
-                        RefOrType::from_disco_ref_or_type(&items_ident, &parent_path, items);
+                    let item_type = RefOrType::from_disco_ref_or_type(
+                        &format!("{}-items", id),
+                        &parent_path,
+                        items,
+                        ident_tracker,
+                    );
                     TypeDesc::Array {
                         items: Box::new(item_type),
                     }
@@ -1138,10 +1319,12 @@ impl TypeDesc {
                     .iter()
                     .map(|(prop_id, DiscoPropDesc { description, typ })| {
                         let prop_ident = to_ident(&to_rust_varstr(&prop_id));
-                        let type_ident =
-                            to_ident(&to_rust_typestr(&format!("{}-{}", ident, prop_id)));
-                        let ref_or_type =
-                            RefOrType::from_disco_ref_or_type(&type_ident, &parent_path, &typ);
+                        let ref_or_type = RefOrType::from_disco_ref_or_type(
+                            &format!("{}-{}", id, prop_id),
+                            &parent_path,
+                            &typ,
+                            ident_tracker,
+                        );
                         (
                             prop_ident.clone(),
                             PropertyDesc {
@@ -1155,12 +1338,12 @@ impl TypeDesc {
                     .collect();
 
                 let add_props = disco_type.additional_properties.as_ref().map(|prop_desc| {
-                    let prop_id = format!("{}-additional-properties", &ident);
-                    let type_ident = to_ident(&to_rust_typestr(&prop_id));
+                    let prop_id = format!("{}-additional-properties", &id);
                     let ref_or_type = RefOrType::from_disco_ref_or_type(
-                        &type_ident,
+                        &prop_id,
                         &parent_path,
                         &prop_desc.typ,
+                        ident_tracker,
                     );
                     Box::new(PropertyDesc {
                         id: prop_id,
