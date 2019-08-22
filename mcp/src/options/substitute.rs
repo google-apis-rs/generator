@@ -2,7 +2,7 @@ use clap::ArgSettings;
 use failure::{bail, Error};
 use std::ffi::OsString;
 use structopt::StructOpt;
-use templating::substitute::{Spec, StreamOrPath};
+use templating::{Spec, StreamOrPath};
 
 #[derive(Debug, StructOpt)]
 #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]

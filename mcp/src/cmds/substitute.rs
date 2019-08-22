@@ -1,9 +1,9 @@
 use crate::options::substitute::Args;
 use failure::Error;
 use itertools::Itertools;
-use templating::substitute::StreamOrPath;
+use templating::StreamOrPath;
 
-use templating::substitute::substitute;
+use templating::substitute;
 
 pub fn execute(args: Args) -> Result<(), Error> {
     let args = args.sanitized()?;

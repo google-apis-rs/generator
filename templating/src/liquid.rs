@@ -1,6 +1,3 @@
-mod spec;
-mod util;
-
 use atty;
 use failure::{bail, err_msg, format_err, Error, ResultExt};
 use json;
@@ -15,7 +12,7 @@ use std::{
     os::unix::ffi::OsStrExt,
 };
 
-pub use self::{
+pub use super::{
     spec::*,
     util::{de_json_or_yaml, validate},
 };

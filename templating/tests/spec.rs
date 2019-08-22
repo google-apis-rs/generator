@@ -1,8 +1,7 @@
 extern crate templating;
 
 use std::path::PathBuf;
-use templating::substitute::Spec;
-use templating::substitute::StreamOrPath::*;
+use templating::{Spec, StreamOrPath::*};
 
 #[cfg(test)]
 mod parse {
