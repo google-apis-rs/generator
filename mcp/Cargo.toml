@@ -7,10 +7,14 @@ description = "A 'master control program' for handling generation of Google APIs
 exclude = ["src/shared/snapshots/"]
 publish = false
 
+[[bin]]
+name = "mcp"
+doctest = false
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sheesy-tools = { version = "4.0.6", default-features = false, features = ["substitute"] }
+templating = { path = "../templating" }
 clap = "2.33.0"
 failure = "0.1.5"
 itertools = "0.8.0"

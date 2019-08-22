@@ -7,5 +7,6 @@ members = [
     "google_rest_api_generator",
     "uri_template_parser",
     "shared",
+    "templating",
     "mcp",
 ]
