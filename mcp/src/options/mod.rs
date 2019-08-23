@@ -20,7 +20,7 @@ pub struct Args {
 #[derive(StructOpt, Debug)]
 pub enum SubCommand {
     #[structopt(name = "fetch-api-specs")]
-    /// Fetch all API specs, in parallel
+    /// Fetch all API specs, in parallel, and generate their Rust code
     FetchApiSpecs(fetch_specs::Args),
     #[structopt(name = "completions")]
     /// generate completions for supported shells

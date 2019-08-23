@@ -1,10 +1,13 @@
 use super::util::{log_error_and_continue, logged_write};
 use crate::options::fetch_specs::Args;
+use ci_info;
 use discovery_parser::{generated::ApiIndexV1, DiscoveryRestDesc, RestDescOrErr};
-use failure::{format_err, Error, ResultExt};
+use failure::{err_msg, format_err, Error, ResultExt};
+use google_rest_api_generator::generate as generate_library;
 use log::info;
 use rayon::prelude::*;
-use shared::{Api, MappedIndex};
+use shared::{Api, MappedIndex, SkipIfErrorIsPresent, Standard};
+use std::convert::TryFrom;
 use std::{convert::TryInto, fs, path::Path, time::Instant};
 
 fn write_artifacts(
@@ -52,10 +55,43 @@ fn fetch_spec(api: &Api) -> Result<DiscoveryRestDesc, Error> {
         .map_err(Into::into)
 }
 
+fn generate_code(
+    desc: DiscoveryRestDesc,
+    info: &ci_info::types::CiInfo,
+    spec_directory: &Path,
+    output_directory: &Path,
+) -> Result<DiscoveryRestDesc, Error> {
+    let api = Api::try_from(&desc)?.validated(
+        info,
+        spec_directory,
+        output_directory,
+        SkipIfErrorIsPresent::Generator,
+    )?;
+    let standard = Standard::default();
+    generate_library(
+        &api.crate_name,
+        &desc,
+        output_directory.join(standard.lib_dir),
+    )
+    .map_err(|e| {
+        let error = e.to_string();
+        let error_path = output_directory.join(api.gen_error_file);
+        fs::write(&error_path, &error).ok();
+        info!(
+            "Api '{}' failed to generate, marked it at '{}'",
+            api.id,
+            error_path.display()
+        );
+        err_msg(error)
+    })?;
+    Ok(desc)
+}
+
 pub fn execute(
     Args {
         index_path,
         spec_directory,
+        output_directory,
     }: Args,
 ) -> Result<(), Error> {
     let input = fs::read_to_string(&index_path)?;
@@ -71,6 +107,7 @@ pub fn execute(
             )
         })?;
     let time = Instant::now();
+    let info = ci_info::get();
     index
         .api
         .par_iter()
@@ -78,9 +115,11 @@ pub fn execute(
         .filter_map(log_error_and_continue)
         .map(|(api, v)| write_artifacts(api, v, &spec_directory))
         .filter_map(log_error_and_continue)
+        .map(|api| generate_code(api, &info, &spec_directory, &output_directory))
+        .filter_map(log_error_and_continue)
         .for_each(|api| info!("Successfully processed {}:{}", api.name, api.version));
     info!(
-        "Fetched {} specs in {}s",
+        "Fetched and generated {} specs in {}s",
         index.api.len(),
         time.elapsed().as_secs()
     );
