@@ -1,14 +1,16 @@
 use nom::{
-    combinator::complete,
     branch::alt,
     bytes::{streaming::tag, streaming::take_till, streaming::take_till1},
     character::streaming::line_ending,
+    combinator::complete,
+    combinator::map_parser,
     combinator::map_res,
     combinator::{map, opt},
+    dbg_dmp,
     multi::fold_many0,
     sequence::terminated,
     sequence::{delimited, tuple},
-    IResult
+    IResult,
 };
 use std::convert::TryFrom;
 use std::string::FromUtf8Error;
@@ -56,7 +58,7 @@ pub fn parse_errors(input: &[u8]) -> IResult<&[u8], Vec<Line>> {
     fold_many0(
         opt(alt((
             map(complete(line_with_error), Line::from),
-            map(line, Line::from),
+            map(line_without_ending, Line::from),
         ))),
         Vec::new(),
         |mut acc, c| {
@@ -72,20 +74,18 @@ fn is_newline(b: u8) -> bool {
     b == b'\n' || b == b'\r'
 }
 
-pub fn line(input: &[u8]) -> IResult<&[u8], &[u8]> {
+fn line_without_ending(input: &[u8]) -> IResult<&[u8], &[u8]> {
     terminated(take_till(is_newline), line_ending)(input)
 }
 
 pub fn line_with_error(input: &[u8]) -> IResult<&[u8], CrateWithError> {
-    let (input, line_input) = line(input)?;
-    //    dbg!(std::str::from_utf8(input).unwrap());
-    //    dbg!(std::str::from_utf8(line_input).unwrap());
-
-    let (_, c) = map_res(
-        tuple((tag(b"error:"), take_till1(|b| b == b'`'), quoted_name)),
-        |(_, _, name)| CrateWithError::try_from(name),
-    )(line_input)?;
-    Ok((input, c))
+    map_parser(
+        line_without_ending,
+        map_res(
+            tuple((tag(b"error:"), take_till1(|b| b == b'`'), quoted_name)),
+            |(_, _, name)| CrateWithError::try_from(name),
+        ),
+    )(input)
 }
 
 #[cfg(test)]

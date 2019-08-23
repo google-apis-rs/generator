@@ -37,17 +37,20 @@ mod quoted {
 }
 
 mod line {
-    use crate::line;
+    use crate::line_without_ending;
     use crate::tests::assert_incomplete_error;
 
     #[test]
     fn it_succeeds_on_valid_input() {
-        assert_eq!(line(b"foo\n").unwrap(), (&b""[..], &b"foo"[..]));
+        assert_eq!(
+            line_without_ending(b"foo\n").unwrap(),
+            (&b""[..], &b"foo"[..])
+        );
     }
 
     #[test]
     fn it_needs_a_complete_line() {
-        assert_incomplete_error(line(b"foo"))
+        assert_incomplete_error(line_without_ending(b"foo"))
     }
 }
 
