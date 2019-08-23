@@ -55,7 +55,7 @@ fn fetch_spec(api: &Api) -> Result<DiscoveryRestDesc, Error> {
 pub fn execute(
     Args {
         index_path,
-        output_directory,
+        spec_directory,
     }: Args,
 ) -> Result<(), Error> {
     let input = fs::read_to_string(&index_path)?;
@@ -76,7 +76,7 @@ pub fn execute(
         .par_iter()
         .map(|api| fetch_spec(api).map(|r| (api, r)))
         .filter_map(log_error_and_continue)
-        .map(|(api, v)| write_artifacts(api, v, &output_directory))
+        .map(|(api, v)| write_artifacts(api, v, &spec_directory))
         .filter_map(log_error_and_continue)
         .for_each(|api| info!("Successfully processed {}:{}", api.name, api.version));
     info!(

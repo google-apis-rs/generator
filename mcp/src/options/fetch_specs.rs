@@ -10,5 +10,5 @@ pub struct Args {
 
     /// The directory into which we will write all downloaded specifications
     #[structopt(parse(from_os_str))]
-    pub output_directory: PathBuf,
+    pub spec_directory: PathBuf,
 }
