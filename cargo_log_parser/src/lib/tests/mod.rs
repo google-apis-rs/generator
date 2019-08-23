@@ -55,20 +55,44 @@ mod line {
 }
 
 mod parse_errors {
-    use crate::parse_errors;
+    use crate::{parse_errors, CrateWithError};
     static CARGO_ERRORS: &[u8] = include_bytes!("./fixtures/check-with-error.log");
     static CARGO_ERRORS_PARALLEL: &[u8] =
         include_bytes!("./fixtures/check-with-error-parallel.log");
 
     #[test]
     fn it_succeeds_on_valid_sequential_input() {
-        assert_eq!(parse_errors(CARGO_ERRORS).unwrap(), (&b""[..], vec![]));
+        assert_eq!(
+            parse_errors(CARGO_ERRORS).unwrap(),
+            (
+                &b""[..],
+                vec![
+                    CrateWithError { name: "!".into() },
+                    CrateWithError {
+                        name: "google-urlshortener1".into()
+                    }
+                ]
+            )
+        );
     }
     #[test]
     fn it_succeeds_on_valid_parallel_input() {
         assert_eq!(
             parse_errors(CARGO_ERRORS_PARALLEL).unwrap(),
-            (&b""[..], vec![])
+            (
+                &b""[..],
+                vec![
+                    CrateWithError {
+                        name: "google-groupsmigration1".into()
+                    },
+                    CrateWithError {
+                        name: "google-oauth2".into()
+                    },
+                    CrateWithError {
+                        name: "google-pagespeedonline5".into()
+                    }
+                ]
+            )
         );
     }
 }

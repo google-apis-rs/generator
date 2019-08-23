@@ -6,7 +6,6 @@ use nom::{
     combinator::map_parser,
     combinator::map_res,
     combinator::{map, opt},
-    dbg_dmp,
     multi::fold_many0,
     sequence::terminated,
     sequence::{delimited, tuple},
@@ -43,7 +42,6 @@ pub enum Line {
 
 impl From<CrateWithError> for Line {
     fn from(c: CrateWithError) -> Self {
-        eprintln!("found {:?}", c);
         Line::Error(c)
     }
 }
@@ -54,15 +52,15 @@ impl From<&[u8]> for Line {
     }
 }
 
-pub fn parse_errors(input: &[u8]) -> IResult<&[u8], Vec<Line>> {
+pub fn parse_errors(input: &[u8]) -> IResult<&[u8], Vec<CrateWithError>> {
     fold_many0(
-        opt(alt((
+        complete(opt(alt((
             map(complete(line_with_error), Line::from),
             map(line_without_ending, Line::from),
-        ))),
+        )))),
         Vec::new(),
         |mut acc, c| {
-            if let Some(c) = c {
+            if let Some(Line::Error(c)) = c {
                 acc.push(c);
             }
             acc
