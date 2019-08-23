@@ -13,6 +13,7 @@ fn main() {
     let args = Args::from_args();
     simple_logger::init_with_level(args.log_level).ok();
     let res = match args.cmd {
+        CargoErrors(args) => cmds::cargo_errors::execute(args),
         MapApiIndex(args) => cmds::map_index::execute(args),
         Completions(args) => cmds::completions::execute(Args::clap(), args),
         FetchApiSpecs(args) => cmds::fetch_specs::execute(args),

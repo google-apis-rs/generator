@@ -35,8 +35,12 @@ pub enum SubCommand {
     #[structopt(raw(alias = "\"sub\""))]
     /// Substitutes templates using structured data.
     Substitute(substitute::Args),
+    #[structopt(name = "cargo-errors")]
+    /// Run cargo on workspace files and collect errors as we go
+    CargoErrors(cargo_errors::Args),
 }
 
+pub mod cargo_errors;
 pub mod completions;
 pub mod fetch_specs;
 pub mod generate;

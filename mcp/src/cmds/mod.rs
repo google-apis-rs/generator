@@ -1,3 +1,4 @@
+pub mod cargo_errors;
 pub mod completions;
 pub mod fetch_specs;
 pub mod generate;
