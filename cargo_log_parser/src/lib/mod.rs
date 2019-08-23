@@ -31,7 +31,7 @@ fn quoted_name(input: &[u8]) -> IResult<&[u8], &[u8]> {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Line {
+enum Line {
     Other,
     Error(CrateWithError),
 }
@@ -77,7 +77,7 @@ fn line_without_ending(input: &[u8]) -> IResult<&[u8], &[u8]> {
     terminated(take_till(is_newline), line_ending)(input)
 }
 
-pub fn line_with_error(input: &[u8]) -> IResult<&[u8], CrateWithError> {
+fn line_with_error(input: &[u8]) -> IResult<&[u8], CrateWithError> {
     map_parser(
         line_without_ending,
         map_res(

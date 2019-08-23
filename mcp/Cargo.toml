@@ -16,6 +16,7 @@ doctest = false
 [dependencies]
 discovery_parser = { path = "../discovery_parser" }
 google_rest_api_generator = { path = "../google_rest_api_generator" }
+cargo_log_parser = { path = "../cargo_log_parser" }
 shared = { path = "../shared" }
 templating = { path = "../templating" }
 clap = "2.33.0"
@@ -32,4 +33,5 @@ reqwest = "0.9.19"
 rayon = "1.1.0"
 serde = "1.0.99"
 ci_info = "0.8.0"
+nom = "5.0.1"
 
