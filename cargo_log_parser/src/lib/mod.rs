@@ -2,13 +2,9 @@ use nom::{
     branch::alt,
     bytes::{streaming::tag, streaming::take_till, streaming::take_till1},
     character::streaming::line_ending,
-    combinator::complete,
-    combinator::map_parser,
-    combinator::map_res,
-    combinator::{map, opt},
+    combinator::{complete, map, map_parser, map_res, opt},
     multi::fold_many0,
-    sequence::terminated,
-    sequence::{delimited, tuple},
+    sequence::{delimited, terminated, tuple},
     IResult,
 };
 use std::convert::TryFrom;
@@ -54,10 +50,15 @@ impl From<&[u8]> for Line {
 
 pub fn parse_errors(input: &[u8]) -> IResult<&[u8], Vec<CrateWithError>> {
     fold_many0(
-        complete(opt(alt((
-            map(complete(line_with_error), Line::from),
-            map(line_without_ending, Line::from),
-        )))),
+        |i: &[u8]| {
+            if i.len() == 0 {
+                return Err(nom::Err::Error((i, nom::error::ErrorKind::Eof)));
+            }
+            opt(alt((
+                map(complete(line_with_error), Line::from),
+                map(line_without_ending, Line::from),
+            )))(i)
+        },
         Vec::new(),
         |mut acc, c| {
             if let Some(Line::Error(c)) = c {
