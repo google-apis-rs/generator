@@ -1,4 +1,5 @@
 use nom::{
+    combinator::complete,
     branch::alt,
     bytes::{streaming::tag, streaming::take_till, streaming::take_till1},
     character::streaming::line_ending,
@@ -7,7 +8,7 @@ use nom::{
     multi::fold_many0,
     sequence::terminated,
     sequence::{delimited, tuple},
-    IResult,
+    IResult
 };
 use std::convert::TryFrom;
 use std::string::FromUtf8Error;
@@ -54,7 +55,7 @@ impl From<&[u8]> for Line {
 pub fn parse_errors(input: &[u8]) -> IResult<&[u8], Vec<Line>> {
     fold_many0(
         opt(alt((
-            map(line_with_error, Line::from),
+            map(complete(line_with_error), Line::from),
             map(line, Line::from),
         ))),
         Vec::new(),
