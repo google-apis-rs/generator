@@ -1,6 +1,7 @@
 //! This module, in some way or form, should contain all logic used to generate names.
 //! These must be reused throughout the library.
 //! You will find all/most of the constants here.
+use ci_info::types::CiInfo;
 use discovery_parser::{
     generated::{ApiIndexV1, Icons, Item, Kind},
     DiscoveryRestDesc,
@@ -114,43 +115,88 @@ impl TryFrom<&DiscoveryRestDesc> for Api {
     }
 }
 
+impl Api {
+    pub fn validated(
+        self,
+        info: &CiInfo,
+        spec_directory: &Path,
+        output_directory: &Path,
+        skip_mode: SkipIfErrorIsPresent,
+    ) -> Result<Self, Error> {
+        if api_is_valid(&self, info, spec_directory, output_directory, skip_mode) {
+            Ok(self)
+        } else {
+            bail!("Api '{}' is invalid", self.id)
+        }
+    }
+}
+
+pub const CI_WHITELIST: &[&'static str] = &["admin:directory_v1", "drive:v3", "oauth2:v2"];
+pub enum SkipIfErrorIsPresent {
+    GeneratorAndCargo,
+    Generator,
+}
+
+pub fn api_is_valid(
+    api: &Api,
+    info: &CiInfo,
+    spec_directory: &Path,
+    output_directory: &Path,
+    skip_mode: SkipIfErrorIsPresent,
+) -> bool {
+    let spec_path = spec_directory.join(&api.spec_file);
+    let is_allowed = if info.ci {
+        CI_WHITELIST.contains(&api.id.as_str())
+    } else {
+        true
+    };
+    if !is_allowed {
+        return false;
+    }
+    if !spec_path.is_file() {
+        error!(
+            "Dropping API '{}' as its spec file at '{}' does not exist",
+            api.crate_name,
+            spec_path.display(),
+        );
+        return false;
+    }
+    let skip_list = match skip_mode {
+        SkipIfErrorIsPresent::GeneratorAndCargo => vec![&api.gen_error_file, &api.cargo_error_file],
+        SkipIfErrorIsPresent::Generator => vec![&api.gen_error_file],
+    };
+    for error_log_file in skip_list {
+        let error_log_file = output_directory.join(error_log_file);
+        if error_log_file.is_file() {
+            error!(
+                "Dropping API '{}' as it previously failed with errors, see '{}' for details.",
+                api.crate_name,
+                error_log_file.display()
+            );
+            return false;
+        }
+    }
+    true
+}
+
 impl MappedIndex {
     pub fn validated(mut self, spec_directory: &Path, output_directory: &Path) -> Self {
-        let ci_whitelist = ["admin:directory_v1", "drive:v3", "oauth2:v2"];
         let info = ci_info::get();
         if info.ci {
             info!(
                 "Running on CI '{:?}' - limiting APIs to {whitelist:?}",
                 info.vendor,
-                whitelist = ci_whitelist
+                whitelist = CI_WHITELIST
             );
         }
         self.api.retain(|api| {
-            let spec_path = spec_directory.join(&api.spec_file);
-            let is_allowed = if info.ci {
-                ci_whitelist.contains(&api.id.as_str())
-            } else {
-                true
-            };
-            if !is_allowed {
-                return false;
-            }
-            if !spec_path.is_file() {
-                error!(
-                    "Dropping API '{}' as its spec file at '{}' does not exist",
-                    api.crate_name,
-                    spec_path.display(),
-                );
-                return false
-            }
-            for error_log_file in &[&api.gen_error_file, &api.cargo_error_file] {
-                let error_log_file = output_directory.join(error_log_file);
-                if error_log_file.is_file() {
-                    error!("Dropping API '{}' as it previously failed with errors, see '{}' for details.", api.crate_name, error_log_file.display());
-                    return false;
-                }
-            }
-            true
+            api_is_valid(
+                api,
+                &info,
+                spec_directory,
+                output_directory,
+                SkipIfErrorIsPresent::GeneratorAndCargo,
+            )
         });
         self
     }
