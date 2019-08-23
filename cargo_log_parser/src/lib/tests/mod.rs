@@ -54,7 +54,8 @@ mod line {
 mod parse_errors {
     use crate::parse_errors;
     static CARGO_ERRORS: &[u8] = include_bytes!("./fixtures/check-with-error.log");
-    static CARGO_ERRORS_PARALLEL: &[u8] = include_bytes!("./fixtures/check-with-error.log");
+    static CARGO_ERRORS_PARALLEL: &[u8] =
+        include_bytes!("./fixtures/check-with-error-parallel.log");
 
     #[test]
     fn it_succeeds_on_valid_sequential_input() {
@@ -98,7 +99,7 @@ mod error_line {
             b"    Checking google-videointelligence1_p3beta1 v0.1.0 (/Users/some/lib)\n",
         ));
 
-        assert_complete_error(line_with_error(
+        assert_incomplete_error(line_with_error(
             b"    Checking google-videointelligence1_p3beta1 v0.1.0 (/Users/s",
         ));
     }

@@ -1,10 +1,10 @@
-use nom::branch::alt;
-use nom::combinator::opt;
-use nom::multi::many0;
 use nom::{
+    branch::alt,
     bytes::{streaming::tag, streaming::take_till, streaming::take_till1},
     character::streaming::line_ending,
     combinator::map_res,
+    combinator::{map, opt},
+    multi::fold_many0,
     sequence::terminated,
     sequence::{delimited, tuple},
     IResult,
@@ -12,7 +12,7 @@ use nom::{
 use std::convert::TryFrom;
 use std::string::FromUtf8Error;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CrateWithError {
     pub name: String,
 }
@@ -32,42 +32,59 @@ fn quoted_name(input: &[u8]) -> IResult<&[u8], &[u8]> {
     delimited(backtick(), take_till1(|b| b == b'`'), backtick())(input)
 }
 
-pub fn parse_errors(mut input: &[u8]) -> IResult<&[u8], Vec<CrateWithError>> {
-    let mut out = Vec::new();
-    loop {
-        match line_with_error(input) {
-            Ok((i, r)) => {
-                out.push(r);
-                input = i;
-            }
-            Err(nom::Err::Error(_)) => unimplemented!(),
-            Err(e) => return Err(e),
-        }
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Line {
+    Other,
+    Error(CrateWithError),
+}
+
+impl From<CrateWithError> for Line {
+    fn from(c: CrateWithError) -> Self {
+        eprintln!("found {:?}", c);
+        Line::Error(c)
     }
-    //    let (i, e) = line_with_error(input)?;
-    //    many0(opt(alt((line_with_error, line))))(input)
-    //        .map(|v| v.into_iter().filter_map(|v| v).collect())
-    Ok((input, out))
+}
+
+impl From<&[u8]> for Line {
+    fn from(_: &[u8]) -> Self {
+        Line::Other
+    }
+}
+
+pub fn parse_errors(input: &[u8]) -> IResult<&[u8], Vec<Line>> {
+    fold_many0(
+        opt(alt((
+            map(line_with_error, Line::from),
+            map(line, Line::from),
+        ))),
+        Vec::new(),
+        |mut acc, c| {
+            if let Some(c) = c {
+                acc.push(c);
+            }
+            acc
+        },
+    )(input)
+}
+
+fn is_newline(b: u8) -> bool {
+    b == b'\n' || b == b'\r'
 }
 
 pub fn line(input: &[u8]) -> IResult<&[u8], &[u8]> {
-    terminated(take_till(|b| b == b'\n' || b == b'\r'), line_ending)(input)
+    terminated(take_till(is_newline), line_ending)(input)
 }
 
 pub fn line_with_error(input: &[u8]) -> IResult<&[u8], CrateWithError> {
-    let take_till_backtick = || take_till1(|b| b == b'`');
-    let take_till_newline = take_till(|b| b == b'\n' || b == b'\r');
+    let (input, line_input) = line(input)?;
+    //    dbg!(std::str::from_utf8(input).unwrap());
+    //    dbg!(std::str::from_utf8(line_input).unwrap());
 
-    map_res(
-        tuple((
-            tag(b"error:"),
-            take_till_backtick(),
-            quoted_name,
-            take_till_newline,
-            line_ending,
-        )),
-        |(_, _, name, _, _)| CrateWithError::try_from(name),
-    )(input)
+    let (_, c) = map_res(
+        tuple((tag(b"error:"), take_till1(|b| b == b'`'), quoted_name)),
+        |(_, _, name)| CrateWithError::try_from(name),
+    )(line_input)?;
+    Ok((input, c))
 }
 
 #[cfg(test)]
