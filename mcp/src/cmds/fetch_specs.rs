@@ -8,7 +8,7 @@ use log::info;
 use rayon::prelude::*;
 use shared::{Api, MappedIndex, SkipIfErrorIsPresent, Standard};
 use std::convert::TryFrom;
-use std::{convert::TryInto, fs, path::Path, time::Instant};
+use std::{convert::TryInto, fs, io, path::Path, time::Instant};
 
 fn write_artifacts(
     api: &Api,
@@ -68,6 +68,22 @@ fn generate_code(
         SkipIfErrorIsPresent::Generator,
     )?;
     let standard = Standard::default();
+    let should_generate = (|| -> Result<_, Error> {
+        let spec_path = spec_directory.join(&api.spec_file);
+        let buf = match fs::read(&spec_path) {
+            Ok(v) => Ok(v),
+            Err(ref e) if e.kind() == io::ErrorKind::NotFound => return Ok(true),
+            Err(e) => Err(e).with_context(|_| {
+                format_err!("Could not read spec file at '{}'", spec_path.display())
+            }),
+        }?;
+        let local_api: DiscoveryRestDesc = serde_json::from_slice(&buf)?;
+        Ok(local_api != desc)
+    })()?;
+    if !should_generate {
+        info!("Skipping generation of '{}' as it is up to date", api.id);
+        return Ok(desc);
+    }
     generate_library(
         &api.crate_name,
         &desc,
