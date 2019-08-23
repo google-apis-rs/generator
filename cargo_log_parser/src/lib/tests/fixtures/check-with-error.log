@@ -1,0 +1,131 @@
+    Checking google-testing1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/testing/v1/lib)
+    Checking google-bigquerydatatransfer1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/bigquerydatatransfer/v1/lib)
+    Checking google-groupssettings1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/groupssettings/v1/lib)
+    Checking google-servicebroker1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/servicebroker/v1/lib)
+    Checking google-genomics1_alpha2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/genomics/v1alpha2/lib)
+    Checking google-tpu1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/tpu/v1/lib)
+    Checking google-gmail1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/gmail/v1/lib)
+    Checking google-adexchangebuyer1d3 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/adexchangebuyer/v1.3/lib)
+    Checking google-securitycenter1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/securitycenter/v1/lib)
+    Checking google-cloudprivatecatalogproducer1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudprivatecatalogproducer/v1beta1/lib)
+    Checking google-drive3 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/drive/v3/lib)
+    Checking google-dialogflow2_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/dialogflow/v2beta1/lib)
+    Checking google-cloudfunctions1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudfunctions/v1/lib)
+    Checking google-spanner1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/spanner/v1/lib)
+    Checking google-playcustomapp1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/playcustomapp/v1/lib)
+    Checking google-plusDomains1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/plusDomains/v1/lib)
+    Checking google-sourcerepo1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/sourcerepo/v1/lib)
+    Checking google-pagespeedonline5 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/pagespeedonline/v5/lib)
+    Checking google-cloudtrace2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudtrace/v2/lib)
+    Checking google-serviceusage1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/serviceusage/v1beta1/lib)
+    Checking google-adexchangebuyer1d2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/adexchangebuyer/v1.2/lib)
+    Checking google-computealpha v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/compute/alpha/lib)
+    Checking google-oauth1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/oauth/v1/lib)
+    Checking google-licensing1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/licensing/v1/lib)
+    Checking google-deploymentmanageralpha v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/deploymentmanager/alpha/lib)
+    Checking google-computebeta v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/compute/beta/lib)
+    Checking google-vision1_p2beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/vision/v1p2beta1/lib)
+    Checking google-cloudshell1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudshell/v1/lib)
+    Checking google-abusiveexperiencereport1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/abusiveexperiencereport/v1/lib)
+    Checking google-dfareporting3d1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/dfareporting/v3.1/lib)
+    Checking google-cloudresourcemanager1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudresourcemanager/v1/lib)
+    Checking google-appsactivity1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/appsactivity/v1/lib)
+    Checking google-youtubeAnalytics2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/youtubeAnalytics/v2/lib)
+    Checking google-groupsmigration1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/groupsmigration/v1/lib)
+    Checking google-composer1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/composer/v1beta1/lib)
+warning: crate `google_plusDomains1` should have a snake case name
+  |
+  = note: #[warn(non_snake_case)] on by default
+  = help: convert the identifier to snake case: `google_plus_domains1`
+
+    Checking google-datastore1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/datastore/v1beta1/lib)
+    Checking google-discovery1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/discovery/v1/lib)
+    Checking google-storage1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/storage/v1/lib)
+warning: crate `google_youtubeAnalytics2` should have a snake case name
+  |
+  = note: #[warn(non_snake_case)] on by default
+  = help: convert the identifier to snake case: `google_youtube_analytics2`
+
+    Checking google-tagmanager1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/tagmanager/v1/lib)
+    Checking google-speech1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/speech/v1/lib)
+    Checking google-serviceconsumermanagement1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/serviceconsumermanagement/v1/lib)
+    Checking google-content2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/content/v2/lib)
+    Checking google-indexing3 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/indexing/v3/lib)
+    Checking google-oslogin1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/oslogin/v1/lib)
+    Checking google-kgsearch1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/kgsearch/v1/lib)
+    Checking google-language1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/language/v1beta1/lib)
+    Checking google-cloudprivatecatalog1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudprivatecatalog/v1beta1/lib)
+    Checking google-docs1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/docs/v1/lib)
+    Checking google-games1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/games/v1/lib)
+    Checking google-analytics2d4 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/analytics/v2.4/lib)
+    Checking google-civicinfo2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/civicinfo/v2/lib)
+    Checking google-dlp2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/dlp/v2/lib)
+    Checking google-cloudresourcemanager1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudresourcemanager/v1beta1/lib)
+    Checking google-appengine1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/appengine/v1/lib)
+    Checking google-containeranalysis1_alpha1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/containeranalysis/v1alpha1/lib)
+    Checking google-alertcenter1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/alertcenter/v1beta1/lib)
+    Checking google-oslogin1_alpha v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/oslogin/v1alpha/lib)
+    Checking google-cloudprofiler2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudprofiler/v2/lib)
+    Checking google-bigqueryreservation1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/bigqueryreservation/v1/lib)
+    Checking google-sqladmin1_beta4 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/sqladmin/v1beta4/lib)
+    Checking google-surveys2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/surveys/v2/lib)
+    Checking google-securitycenter1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/securitycenter/v1beta1/lib)
+    Checking google-adsensehost4d1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/adsensehost/v4.1/lib)
+    Checking google-container1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/container/v1/lib)
+    Checking google-vault1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/vault/v1/lib)
+    Checking google-cloudtrace1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudtrace/v1/lib)
+    Checking google-servicenetworking1_beta v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/servicenetworking/v1beta/lib)
+    Checking google-bigtableadmin2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/bigtableadmin/v2/lib)
+    Checking google-gamesManagement1_management v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/gamesManagement/v1management/lib)
+    Checking google-cloudidentity1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudidentity/v1beta1/lib)
+    Checking google-websecurityscanner1_beta v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/websecurityscanner/v1beta/lib)
+warning: crate `google_gamesManagement1_management` should have a snake case name
+  |
+  = note: #[warn(non_snake_case)] on by default
+  = help: convert the identifier to snake case: `google_games_management1_management`
+
+    Checking google-accesscontextmanager1_beta v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/accesscontextmanager/v1beta/lib)
+    Checking google-pagespeedonline4 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/pagespeedonline/v4/lib)
+    Checking google-cloudfunctions1_beta2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudfunctions/v1beta2/lib)
+    Checking google-run1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/run/v1/lib)
+    Checking google-plus1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/plus/v1/lib)
+    Checking google-file1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/file/v1/lib)
+    Checking google-cloudiot1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudiot/v1/lib)
+    Checking google-pagespeedonline1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/pagespeedonline/v1/lib)
+    Checking google-people1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/people/v1/lib)
+    Checking google-fusiontables2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/fusiontables/v2/lib)
+    Checking google-genomics2_alpha1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/genomics/v2alpha1/lib)
+    Checking google-searchconsole1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/searchconsole/v1/lib)
+    Checking google-slides1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/slides/v1/lib)
+    Checking google-servicebroker1_alpha1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/servicebroker/v1alpha1/lib)
+    Checking google-serviceusage1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/serviceusage/v1/lib)
+    Checking google-pagespeedonline2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/pagespeedonline/v2/lib)
+    Checking google-jobs3 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/jobs/v3/lib)
+    Checking google-cloudkms1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudkms/v1/lib)
+    Checking google-firestore1_beta2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/firestore/v1beta2/lib)
+    Checking google-healthcare1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/healthcare/v1beta1/lib)
+    Checking google-videointelligence1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/videointelligence/v1/lib)
+    Checking google-deploymentmanager2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/deploymentmanager/v2/lib)
+    Checking google-datafusion1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/datafusion/v1beta1/lib)
+    Checking google-storagetransfer1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/storagetransfer/v1/lib)
+    Checking google-cloudtasks2_beta3 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudtasks/v2beta3/lib)
+    Checking google-dns1_beta2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/dns/v1beta2/lib)
+    Checking google-adsense1d4 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/adsense/v1.4/lib)
+    Checking google-pubsub1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/pubsub/v1/lib)
+    Checking google-appengine1_beta v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/appengine/v1beta/lib)
+    Checking google-replicapool1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/replicapool/v1beta1/lib)
+    Checking google-cloudresourcemanager2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/cloudresourcemanager/v2/lib)
+    Checking google-urlshortener1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/urlshortener/v1/lib)
+error: expected one of `!` or `::`, found `#`
+ --> urlshortener/v1/lib/src/lib.rs:3:5
+  |
+2 |     foo
+  |        - expected one of `!` or `::` here
+3 |     #[derive(
+  |     ^ unexpected token
+
+error: aborting due to previous error
+
+error: Could not compile `google-urlshortener1`.
+warning: build failed, waiting for other jobs to finish...
+error: build failed

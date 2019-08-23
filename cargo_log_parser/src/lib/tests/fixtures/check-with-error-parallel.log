@@ -1,0 +1,87 @@
+    Checking google-calendar3 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/calendar/v3/lib)
+    Checking google-groupsmigration1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/groupsmigration/v1/lib)
+    Checking google-oslogin1_beta v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/oslogin/v1beta/lib)
+    Checking google-dns2_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/dns/v2beta1/lib)
+    Checking google-dataproc1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/dataproc/v1/lib)
+    Checking google-videointelligence1_p3beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/videointelligence/v1p3beta1/lib)
+    Checking google-compute1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/compute/v1/lib)
+    Checking google-pagespeedonline5 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/pagespeedonline/v5/lib)
+    Checking google-videointelligence1_beta2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/videointelligence/v1beta2/lib)
+    Checking google-videointelligence1_p2beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/videointelligence/v1p2beta1/lib)
+    Checking google-oauth2 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/oauth/v2/lib)
+    Checking google-container1_beta1 v0.1.0 (/Users/sthiel/dev/google-apis/generated/gen/container/v1beta1/lib)
+error[E0609]: no field `request` on type `resources::archive::InsertRequestBuilder<'a, A>`
+   --> groupsmigration/v1/lib/src/lib.rs:210:63
+    |
+210 |                 let request_json = ::serde_json::to_vec(&self.request)?;
+    |                                                               ^^^^^^^ help: a field with a similar name exists: `reqwest`
+
+error: aborting due to previous error
+
+For more information about this error, try `rustc --explain E0609`.
+error: Could not compile `google-groupsmigration1`.
+warning: build failed, waiting for other jobs to finish...
+error[E0412]: cannot find type `GetCertForOpenIdConnectRequestBuilder` in this scope
+   --> oauth/v2/lib/src/lib.rs:241:51
+    |
+241 |     pub fn get_cert_for_open_id_connect(&self) -> GetCertForOpenIdConnectRequestBuilder<A> {
+    |                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+help: possible candidate is found in another module, you can import it into scope
+    |
+1   | use crate::resources::GetCertForOpenIdConnectRequestBuilder;
+    |
+
+error[E0422]: cannot find struct, variant or union type `GetCertForOpenIdConnectRequestBuilder` in this scope
+   --> oauth/v2/lib/src/lib.rs:242:9
+    |
+242 |         GetCertForOpenIdConnectRequestBuilder {
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+help: possible candidate is found in another module, you can import it into scope
+    |
+1   | use crate::resources::GetCertForOpenIdConnectRequestBuilder;
+    |
+
+error[E0412]: cannot find type `TokeninfoRequestBuilder` in this scope
+   --> oauth/v2/lib/src/lib.rs:255:32
+    |
+255 |     pub fn tokeninfo(&self) -> TokeninfoRequestBuilder<A> {
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+help: possible candidate is found in another module, you can import it into scope
+    |
+1   | use crate::resources::TokeninfoRequestBuilder;
+    |
+
+error[E0422]: cannot find struct, variant or union type `TokeninfoRequestBuilder` in this scope
+   --> oauth/v2/lib/src/lib.rs:256:9
+    |
+256 |         TokeninfoRequestBuilder {
+    |         ^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+help: possible candidate is found in another module, you can import it into scope
+    |
+1   | use crate::resources::TokeninfoRequestBuilder;
+    |
+
+error[E0412]: cannot find type `RunpagespeedCategoryItems` in module `crate::resources::pagespeedapi::params`
+   --> pagespeedonline/v5/lib/src/lib.rs:737:68
+    |
+737 |                 Option<Vec<crate::resources::pagespeedapi::params::RunpagespeedCategoryItems>>,
+    |                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `crate::resources::pagespeedapi::params`
+
+error[E0412]: cannot find type `RunpagespeedCategoryItems` in module `crate::resources::pagespeedapi::params`
+   --> pagespeedonline/v5/lib/src/lib.rs:754:78
+    |
+754 |                 value: impl Into<Vec<crate::resources::pagespeedapi::params::RunpagespeedCategoryItems>>,
+    |                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `crate::resources::pagespeedapi::params`
+
+error: aborting due to 4 previous errors
+
+Some errors have detailed explanations: E0412, E0422.
+For more information about an error, try `rustc --explain E0412`.
+error: Could not compile `google-oauth2`.
+warning: build failed, waiting for other jobs to finish...
+error: aborting due to 2 previous errors
+
+For more information about this error, try `rustc --explain E0412`.
+error: Could not compile `google-pagespeedonline5`.
+warning: build failed, waiting for other jobs to finish...
+error: build failed

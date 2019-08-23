@@ -1,0 +1,13 @@
+[package]
+name = "cargo_log_parser"
+version = "0.1.0"
+authors = ["Sebastian Thiel <sthiel@thoughtworks.com>"]
+edition = "2018"
+
+[lib]
+path = "src/lib/mod.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+nom = "5.0.1"

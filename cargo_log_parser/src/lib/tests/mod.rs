@@ -1,0 +1,72 @@
+fn assert_complete_error<T: std::fmt::Debug, E: std::fmt::Debug>(res: Result<T, nom::Err<E>>) {
+    panic!(
+        "Not complete: {}",
+        match res {
+            Ok(t) => format!("{:?}", t),
+            Err(nom::Err::Failure(_)) | Err(nom::Err::Error(_)) => return,
+            Err(e) => format!("{:?}", e),
+        }
+    )
+}
+
+fn assert_incomplete_error<T: std::fmt::Debug, E: std::fmt::Debug>(res: Result<T, nom::Err<E>>) {
+    panic!(
+        "Not incomplete: {}",
+        match res {
+            Ok(t) => format!("{:?}", t),
+            Err(nom::Err::Incomplete(_)) => return,
+            Err(e) => format!("{:?}", e),
+        }
+    )
+}
+
+mod quoted {
+    use super::super::quoted_name;
+    use super::assert_incomplete_error;
+    #[test]
+    fn it_works_on_valid_input() {
+        assert_eq!(
+            quoted_name(b"`hello-there1`"),
+            Ok((&b""[..], &b"hello-there1"[..]))
+        );
+    }
+    #[test]
+    fn fails_on_partial_input() {
+        assert_incomplete_error(quoted_name(b"`hello-"))
+    }
+}
+
+mod error_line {
+    use super::super::line_with_error;
+    use crate::tests::{assert_complete_error, assert_incomplete_error};
+    use crate::CrateWithError;
+
+    #[test]
+    fn it_succeeds_and_parses_the_correct_crate_name_on_valid_input() {
+        assert_eq!(
+            line_with_error(&b"error: Could not compile `google-groupsmigration1`.\n"[..]),
+            Ok((
+                &b""[..],
+                CrateWithError {
+                    name: "google-groupsmigration1".into()
+                }
+            ))
+        );
+        assert_incomplete_error(line_with_error(
+            &b"error: Could not compile `google-groupsmigration1`"[..],
+        ));
+        assert_incomplete_error(line_with_error(&b"error: Could not "[..]));
+        assert_incomplete_error(line_with_error(&b"err"[..]));
+    }
+
+    #[test]
+    fn it_fails_on_invalid_input() {
+        assert_complete_error(line_with_error(
+            b"    Checking google-videointelligence1_p3beta1 v0.1.0 (/Users/some/lib)\n",
+        ));
+
+        assert_complete_error(line_with_error(
+            b"    Checking google-videointelligence1_p3beta1 v0.1.0 (/Users/s",
+        ));
+    }
+}
