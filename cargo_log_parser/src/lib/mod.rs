@@ -1,21 +1,25 @@
 use nom::{
     bytes::{streaming::tag, streaming::take_till, streaming::take_till1},
     character::streaming::line_ending,
-    combinator::map,
+    combinator::map_res,
     sequence::{delimited, tuple},
     IResult,
 };
+use std::convert::TryFrom;
+use std::string::FromUtf8Error;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct CrateWithError {
     pub name: String,
 }
 
-impl From<&[u8]> for CrateWithError {
-    fn from(name: &[u8]) -> Self {
-        CrateWithError {
-            name: String::from_utf8(name.to_owned()).unwrap(),
-        }
+impl TryFrom<&[u8]> for CrateWithError {
+    type Error = FromUtf8Error;
+
+    fn try_from(name: &[u8]) -> Result<Self, Self::Error> {
+        Ok(CrateWithError {
+            name: String::from_utf8(name.to_owned())?,
+        })
     }
 }
 
@@ -25,17 +29,18 @@ fn quoted_name(input: &[u8]) -> IResult<&[u8], &[u8]> {
 }
 
 pub fn line_with_error(input: &[u8]) -> IResult<&[u8], CrateWithError> {
-    let till_backtick = || take_till1(|b| b == b'`');
+    let take_till_backtick = || take_till1(|b| b == b'`');
+    let take_till_newline = take_till(|b| b == b'\n' || b == b'\r');
 
-    map(
+    map_res(
         tuple((
             tag(b"error:"),
-            till_backtick(),
+            take_till_backtick(),
             quoted_name,
-            take_till(|b| b == b'\n' || b == b'\r'),
+            take_till_newline,
             line_ending,
         )),
-        |(_, _, name, _, _)| CrateWithError::from(name),
+        |(_, _, name, _, _)| CrateWithError::try_from(name),
     )(input)
 }
 
