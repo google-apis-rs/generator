@@ -36,6 +36,39 @@ mod quoted {
     }
 }
 
+mod line {
+    use crate::line;
+    use crate::tests::assert_incomplete_error;
+
+    #[test]
+    fn it_succeeds_on_valid_input() {
+        assert_eq!(line(b"foo\n").unwrap(), (&b""[..], &b"foo"[..]));
+    }
+
+    #[test]
+    fn it_needs_a_complete_line() {
+        assert_incomplete_error(line(b"foo"))
+    }
+}
+
+mod parse_errors {
+    use crate::parse_errors;
+    static CARGO_ERRORS: &[u8] = include_bytes!("./fixtures/check-with-error.log");
+    static CARGO_ERRORS_PARALLEL: &[u8] = include_bytes!("./fixtures/check-with-error.log");
+
+    #[test]
+    fn it_succeeds_on_valid_sequential_input() {
+        assert_eq!(parse_errors(CARGO_ERRORS).unwrap(), (&b""[..], vec![]));
+    }
+    #[test]
+    fn it_succeeds_on_valid_parallel_input() {
+        assert_eq!(
+            parse_errors(CARGO_ERRORS_PARALLEL).unwrap(),
+            (&b""[..], vec![])
+        );
+    }
+}
+
 mod error_line {
     use super::super::line_with_error;
     use crate::tests::{assert_complete_error, assert_incomplete_error};
