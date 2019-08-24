@@ -1,18 +1,21 @@
 use crate::options::cargo_errors::Args;
 use cargo_log_parser::parse_errors;
 use failure::{bail, Error, ResultExt};
-use std::process::{Command, Stdio};
-
-use std::io::{self, Read};
+use std::{
+    io::{self, Read, Write},
+    process::{Command, Stdio},
+};
 
 pub fn execute(
     Args {
         index_path: _,
-        cargo_manifest_path: _,
+        cargo_manifest_path,
         output_directory: _,
-        cargo_arguments,
+        mut cargo_arguments,
     }: Args,
 ) -> Result<(), Error> {
+    cargo_arguments.push("--manifest-path".into());
+    cargo_arguments.push(cargo_manifest_path.into());
     let cargo = Command::new("cargo")
         .args(cargo_arguments)
         .stderr(Stdio::piped())
@@ -24,9 +27,12 @@ pub fn execute(
 
     let mut input = Vec::new();
     loop {
-        let to_read = match parse_errors(&input) {
-            Ok(parsed) => {
+        io::stderr().write(&input).ok();
+        let to_read = match parse_errors(&input).map(|(i, r)| (i.len(), r)) {
+            Ok((input_left_len, parsed)) => {
                 dbg!(parsed);
+                let input_len = input.len();
+                input = input.into_iter().skip(input_len - input_left_len).collect();
                 128
             }
             Err(nom::Err::Incomplete(needed)) => {
