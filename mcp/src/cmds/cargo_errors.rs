@@ -7,9 +7,9 @@ use std::io::{self, Read};
 
 pub fn execute(
     Args {
-        index_path,
-        cargo_manifest_path,
-        output_directory,
+        index_path: _,
+        cargo_manifest_path: _,
+        output_directory: _,
         cargo_arguments,
     }: Args,
 ) -> Result<(), Error> {
@@ -35,7 +35,7 @@ pub fn execute(
                     nom::Needed::Size(len) => len,
                 }
             }
-            Err(nom::Err::Failure(e)) | Err(nom::Err::Error(e)) => {
+            Err(nom::Err::Failure(_e)) | Err(nom::Err::Error(_e)) => {
                 bail!("TODO: proper error conversion if parsing really fails")
             }
         };
@@ -45,20 +45,20 @@ pub fn execute(
             .read_to_end(&mut input)
         {
             if e.kind() == io::ErrorKind::BrokenPipe {
-                return match parse_errors(&input) {
-                    Err(nom::Err::Error(e)) | Err(nom::Err::Failure(e)) => {
+                match parse_errors(&input) {
+                    Ok(parsed) => {
+                        dbg!(parsed);
+                        return Ok(());
+                    }
+                    Err(nom::Err::Error(_e)) | Err(nom::Err::Failure(_e)) => {
                         bail!("TODO: proper error conversion")
                     }
                     Err(nom::Err::Incomplete(_)) => {
                         panic!("Could not parse remaining input of length {}", input.len())
                     }
-                    Ok(parsed) => {
-                        dbg!(parsed);
-                        return Ok(());
-                    }
                 };
             }
-            unimplemented!("have to improved error handling!")
+            unimplemented!("have to improve error handling!")
         }
     }
 }
