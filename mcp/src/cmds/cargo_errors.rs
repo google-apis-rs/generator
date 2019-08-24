@@ -16,23 +16,25 @@ pub fn execute(
 ) -> Result<(), Error> {
     cargo_arguments.push("--manifest-path".into());
     cargo_arguments.push(cargo_manifest_path.into());
-    let cargo = Command::new("cargo")
+    let mut cargo = Command::new("cargo")
         .args(cargo_arguments)
         .stderr(Stdio::piped())
         .stdout(Stdio::inherit())
         .stdin(Stdio::null())
         .spawn()
         .with_context(|_| "failed to launch cargo")?;
-    let mut cargo_output = cargo.stderr.expect("cargo_output is set");
 
     let mut input = Vec::new();
+    let mut print_from = 0_usize;
     loop {
-        io::stderr().write(&input).ok();
+        let written_bytes = io::stderr().write(&input[print_from..])?;
+        print_from = written_bytes;
         let to_read = match parse_errors(&input).map(|(i, r)| (i.len(), r)) {
             Ok((input_left_len, parsed)) => {
                 dbg!(parsed);
                 let input_len = input.len();
                 input = input.into_iter().skip(input_len - input_left_len).collect();
+                print_from = 0;
                 128
             }
             Err(nom::Err::Incomplete(needed)) => {
@@ -46,7 +48,21 @@ pub fn execute(
             }
         };
 
-        if let Err(e) = (&mut cargo_output)
+        if let Some(status) = cargo.try_wait()? {
+            if input.len() > 0 {
+                unimplemented!("parse remaining bytes - avoid all that code duplication");
+            }
+            if status.success() {
+                return Ok(());
+            } else {
+                bail!("cargo exited with error: {:?}", status)
+            }
+        }
+
+        if let Err(e) = cargo
+            .stderr
+            .as_mut()
+            .expect("cargo_output is set")
             .take(to_read as u64)
             .read_to_end(&mut input)
         {
