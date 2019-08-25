@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{ffi::OsString, path::PathBuf};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -19,5 +19,5 @@ pub struct Args {
     /// All arguments to be provided to cargo
     #[structopt(parse(from_os_str))]
     #[structopt(raw(min_values = "1"))]
-    pub cargo_arguments: Vec<PathBuf>,
+    pub cargo_arguments: Vec<OsString>,
 }

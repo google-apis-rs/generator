@@ -2,8 +2,9 @@ use crate::options::cargo_errors::Args;
 use cargo_log_parser::parse_errors;
 use failure::{bail, format_err, Error, ResultExt};
 use log::{error, info};
-use shared::MappedIndex;
+use shared::{Api, MappedIndex};
 use std::{
+    ffi::OsString,
     fs,
     io::{self, Read, Write},
     path::Path,
@@ -15,29 +16,30 @@ pub fn execute(
         index_path,
         cargo_manifest_path,
         output_directory,
-        mut cargo_arguments,
+        cargo_arguments,
     }: Args,
 ) -> Result<(), Error> {
-    let mut excludes = Vec::new();
     let mut last_excludes_len = 0;
     let index: MappedIndex = serde_json::from_slice(&fs::read(index_path)?)?;
+    let mut excludes = Vec::<&Api>::new();
     let filter_parse_result = |parsed: Vec<cargo_log_parser::CrateWithError>| {
         parsed
             .into_iter()
             .map(|c| c.name)
-            .filter(|n| index.api.iter().any(|api| &api.crate_name == n))
+            .filter_map(|n| index.api.iter().find(|api| api.crate_name == n))
     };
 
     loop {
-        cargo_arguments.push("--manifest-path".into());
-        cargo_arguments.push(cargo_manifest_path.clone().into());
-        cargo_arguments.extend(
+        let mut args = cargo_arguments.clone();
+        args.push("--manifest-path".into());
+        args.push(cargo_manifest_path.clone().into());
+        args.extend(
             excludes
                 .iter()
-                .map(|crate_name| format!("--exclude={}", crate_name).into()),
+                .map(|api| format!("--exclude={}", api.crate_name).into()),
         );
         let mut cargo = Command::new("cargo")
-            .args(&cargo_arguments)
+            .args(&args)
             .stderr(Stdio::piped())
             .stdout(Stdio::inherit())
             .stdin(Stdio::null())
@@ -110,7 +112,7 @@ pub fn execute(
 
         collect_errors(
             &excludes[last_excludes_len..],
-            &index,
+            &args,
             output_directory.as_path(),
         )?;
 
@@ -121,7 +123,7 @@ pub fn execute(
             if !excludes.is_empty() {
                 info!(
                     "Recorded errors for the following workspace members: {:?}",
-                    excludes
+                    excludes.iter().map(|a| a.crate_name).collect::<Vec<_>>()
                 );
             }
             return Ok(());
@@ -138,21 +140,12 @@ pub fn execute(
 }
 
 fn collect_errors(
-    crate_names: &[String],
-    index: &MappedIndex,
-    output_directory: &Path,
+    crate_names: &[&Api],
+    cargo_arguments: &[OsString],
+    _output_directory: &Path,
 ) -> Result<(), Error> {
     for crate_name in crate_names {
-        let api = index
-            .api
-            .iter()
-            .find(|api| &api.crate_name == crate_name)
-            .ok_or_else(|| {
-                format_err!(
-                    "Could not find crate named '{}' to collect errors",
-                    crate_name
-                )
-            })?;
+        unimplemented!("todo :collect errors of crate");
     }
-    unimplemented!("todo :collect errors of crate");
+    Ok(())
 }
