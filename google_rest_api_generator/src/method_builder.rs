@@ -161,31 +161,30 @@ fn exec_method(
                     } else {
                         Some(fields)
                     };
-                    self.execute_fields(fields)
+                    self.execute_with_fields(fields)
                 }
 
-                // TODO: come up with a better name for this.
                 /// Execute the given operation. This will not provide any
                 /// `fields` selector indicating that the server will determine
                 /// the fields returned. This typically includes the most common
                 /// fields, but it will not include every possible attribute of
                 /// the response resource.
-                pub fn execute_standard(self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
-                    self.execute_fields::<_, &str>(None)
+                pub fn execute_with_default_fields(self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
+                    self.execute_with_fields(None::<&str>)
                 }
 
                 /// Execute the given operation. This will provide a `fields`
                 /// selector of `*`. This will include every attribute of the
                 /// response resource and should be limited to use during
                 /// development or debugging.
-                pub fn execute_debug(self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
-                    self.execute_fields(Some("*"))
+                pub fn execute_with_all_fields(self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
+                    self.execute_with_fields(Some("*"))
                 }
 
                 /// Execute the given operation. This will use the `fields`
                 /// selector provided and will deserialize the response into
                 /// whatever return value is provided.
-                pub fn execute_fields<T, F>(mut self, fields: Option<F>) -> Result<T, Box<dyn ::std::error::Error>>
+                pub fn execute_with_fields<T, F>(mut self, fields: Option<F>) -> Result<T, Box<dyn ::std::error::Error>>
                 where
                     T: ::serde::de::DeserializeOwned,
                     F: Into<String>,
@@ -453,38 +452,31 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
         let prop_id = &prop.id;
         let iter_method_ident: syn::Ident =
             to_ident(&to_rust_varstr(&format!("iter_{}", &prop.ident)));
-        let iter_method_ident_std: syn::Ident =
-            to_ident(&to_rust_varstr(&format!("{}_standard", &iter_method_ident)));
-        let iter_method_ident_debug: syn::Ident =
-            to_ident(&to_rust_varstr(&format!("{}_debug", &iter_method_ident)));
+        let iter_method_ident_default: syn::Ident =
+            to_ident(&to_rust_varstr(&format!("{}_with_default_fields", &iter_method_ident)));
+        let iter_method_ident_all: syn::Ident =
+            to_ident(&to_rust_varstr(&format!("{}_with_all_fields", &iter_method_ident)));
+        let iter_method_ident_fields: syn::Ident =
+            to_ident(&to_rust_varstr(&format!("{}_with_fields", &iter_method_ident)));
         quote! {
             /// Return an iterator that iterates over all `#prop_ident`. The
             /// items yielded by the iterator are chosen by the caller of this
             /// method and must implement `Deserialize` and `FieldSelector`. The
             /// populated fields in the yielded items will be determined by the
             /// `FieldSelector` implementation.
-            pub fn #iter_method_ident<T>(mut self) -> crate::iter::PageItemIter<Self, T>
+            pub fn #iter_method_ident<T>(self) -> crate::iter::PageItemIter<Self, T>
             where
                 T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
             {
-                let mut fields = concat!("nextPageToken,", #prop_id).to_owned();
-                let items_fields = T::field_selector();
-                if !items_fields.is_empty() {
-                    fields.push_str("(");
-                    fields.push_str(&items_fields);
-                    fields.push_str(")");
-                }
-                self.fields = Some(fields);
-                crate::iter::PageItemIter::new(self, #prop_id)
+                self.#iter_method_ident_fields(Some(T::field_selector()))
             }
 
             /// Return an iterator that iterates over all `#prop_ident`. The
             /// items yielded by the iterator are `#items_type`. The populated
             /// fields in `#items_type` will be the default fields populated by
             /// the server.
-            pub fn #iter_method_ident_std(mut self) -> crate::iter::PageItemIter<Self, #items_type> {
-                self.fields = Some(concat!("nextPageToken,", #prop_id).to_owned());
-                crate::iter::PageItemIter::new(self, #prop_id)
+            pub fn #iter_method_ident_default(self) -> crate::iter::PageItemIter<Self, #items_type> {
+                self.#iter_method_ident_fields(None::<String>)
             }
 
             /// Return an iterator that iterates over all `#prop_ident`. The
@@ -493,8 +485,25 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
             /// primarily be used during developement and debugging as fetching
             /// all fields can be expensive both in bandwidth and server
             /// resources.
-            pub fn #iter_method_ident_debug(mut self) -> crate::iter::PageItemIter<Self, #items_type> {
-                self.fields = Some(concat!("nextPageToken,", #prop_id, "(*)").to_owned());
+            pub fn #iter_method_ident_all(self) -> crate::iter::PageItemIter<Self, #items_type> {
+                self.#iter_method_ident_fields(Some("*"))
+            }
+
+            pub fn #iter_method_ident_fields<T, F>(mut self, fields: Option<F>) -> crate::iter::PageItemIter<Self, T>
+            where
+                T: ::serde::de::DeserializeOwned,
+                F: AsRef<str>,
+            {
+                self.fields = Some({
+                    let mut selector = concat!("nextPageToken,", #prop_id).to_owned();
+                    let items_fields = fields.as_ref().map(|x| x.as_ref()).unwrap_or("");
+                    if !items_fields.is_empty() {
+                        selector.push_str("(");
+                        selector.push_str(items_fields);
+                        selector.push_str(")");
+                    }
+                    selector
+                });
                 crate::iter::PageItemIter::new(self, #prop_id)
             }
         }
@@ -503,11 +512,27 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
     let iter_methods = quote! {
         #(#array_iter_methods)*
 
-        pub fn iter<T>(mut self) -> crate::iter::PageIter<Self, T>
+        pub fn iter<T>(self) -> crate::iter::PageIter<Self, T>
         where
             T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
         {
-            let mut fields = T::field_selector();
+            self.iter_with_fields(Some(T::field_selector()))
+        }
+
+        pub fn iter_with_default_fields(self) -> crate::iter::PageIter<Self, #response_type_path> {
+            self.iter_with_fields(None::<&str>)
+        }
+
+        pub fn iter_with_all_fields(self) -> crate::iter::PageIter<Self, #response_type_path> {
+            self.iter_with_fields(Some("*"))
+        }
+
+        pub fn iter_with_fields<T, F>(mut self, fields: Option<F>) -> crate::iter::PageIter<Self, T>
+        where
+            T: ::serde::de::DeserializeOwned,
+            F: AsRef<str>,
+        {
+            let mut fields = fields.as_ref().map(|x| x.as_ref()).unwrap_or("").to_owned();
             if !fields.is_empty() {
                 // Append nextPageToken to any non-empty field selector.
                 // Requesting the same field twice is not harmful, so this will
@@ -523,15 +548,6 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
                 fields.push_str("nextPageToken");
                 self.fields = Some(fields);
             }
-            crate::iter::PageIter::new(self)
-        }
-
-        pub fn iter_standard(self) -> crate::iter::PageIter<Self, #response_type_path> {
-            crate::iter::PageIter::new(self)
-        }
-
-        pub fn iter_debug(mut self) -> crate::iter::PageIter<Self, #response_type_path> {
-            self.fields = Some("*".to_owned());
             crate::iter::PageIter::new(self)
         }
     };
