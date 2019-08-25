@@ -1,7 +1,7 @@
 use crate::options::cargo_errors::Args;
 use cargo_log_parser::parse_errors;
 use failure::{bail, format_err, Error, ResultExt};
-use log::{error, info};
+use log::{error, info, warn};
 use shared::{Api, MappedIndex};
 use std::{
     ffi::OsString,
@@ -31,6 +31,7 @@ pub fn execute(
 
     loop {
         let mut args = cargo_arguments.clone();
+        args.push("--all".into());
         args.push("--manifest-path".into());
         args.push(cargo_manifest_path.clone().into());
         args.extend(
@@ -112,7 +113,7 @@ pub fn execute(
 
         collect_errors(
             &excludes[last_excludes_len..],
-            &args,
+            &cargo_arguments,
             output_directory.as_path(),
         )?;
 
@@ -123,14 +124,14 @@ pub fn execute(
             if !excludes.is_empty() {
                 info!(
                     "Recorded errors for the following workspace members: {:?}",
-                    excludes.iter().map(|a| a.crate_name).collect::<Vec<_>>()
+                    excludes.iter().map(|a| &a.crate_name).collect::<Vec<_>>()
                 );
             }
             return Ok(());
         } else {
             if last_excludes_len == excludes.len() {
                 bail!(
-                    "cargo seems to fail permanently and makes no progress: {:?}",
+                    "cargo seems to fail permanently and makes no progress: {:?}. Probably we cannot parse crate names from the error output.",
                     workspace_cargo_status
                 );
             }
@@ -140,12 +141,47 @@ pub fn execute(
 }
 
 fn collect_errors(
-    crate_names: &[&Api],
+    apis: &[&Api],
     cargo_arguments: &[OsString],
-    _output_directory: &Path,
+    output_directory: &Path,
 ) -> Result<(), Error> {
-    for crate_name in crate_names {
-        unimplemented!("todo :collect errors of crate");
+    for api in apis {
+        let mut args = cargo_arguments.to_owned();
+        let manifest_path = output_directory.join(&api.lib_cargo_file);
+        args.push("--manifest-path".into());
+        args.push(manifest_path.into());
+        info!(
+            "Launching cargo for '{}' with 'cargo {}'",
+            api.crate_name,
+            args.iter()
+                .map(|o| o.to_string_lossy())
+                .collect::<Vec<_>>()
+                .join(" ")
+        );
+        let output = Command::new("cargo")
+            .args(&args)
+            .stderr(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stdin(Stdio::null())
+            .output()
+            .with_context(|_| "failed to launch cargo and collect output")?;
+        let output_path = output_directory.join(&api.cargo_error_file);
+        if output.status.success() {
+            warn!("Command succeeded unexpectedly - no file error log written.");
+            continue;
+        }
+        let mut fh = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&output_path)
+            .with_context(|_| {
+                format_err!("Could not output path at '{}'", output_path.display())
+            })?;
+        fh.write_all(&output.stderr)?;
+        fh.write_all(&output.stdout)?;
+        fh.flush()?;
+        info!("Wrote cargo error log to '{}'", output_path.display());
     }
     Ok(())
 }
