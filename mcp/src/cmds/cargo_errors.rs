@@ -1,11 +1,12 @@
 use crate::options::cargo_errors::Args;
 use cargo_log_parser::parse_errors;
-use failure::{bail, Error, ResultExt};
+use failure::{bail, format_err, Error, ResultExt};
 use log::{error, info};
 use shared::MappedIndex;
 use std::{
     fs,
     io::{self, Read, Write},
+    path::Path,
     process::{Command, Stdio},
 };
 
@@ -13,7 +14,7 @@ pub fn execute(
     Args {
         index_path,
         cargo_manifest_path,
-        output_directory: _,
+        output_directory,
         mut cargo_arguments,
     }: Args,
 ) -> Result<(), Error> {
@@ -107,6 +108,12 @@ pub fn execute(
             ),
         };
 
+        collect_errors(
+            &excludes[last_excludes_len..],
+            &index,
+            output_directory.as_path(),
+        )?;
+
         let workspace_cargo_status = cargo.try_wait()?.expect("cargo ended");
 
         if workspace_cargo_status.success() {
@@ -128,4 +135,24 @@ pub fn execute(
             last_excludes_len = excludes.len();
         }
     }
+}
+
+fn collect_errors(
+    crate_names: &[String],
+    index: &MappedIndex,
+    output_directory: &Path,
+) -> Result<(), Error> {
+    for crate_name in crate_names {
+        let api = index
+            .api
+            .iter()
+            .find(|api| &api.crate_name == crate_name)
+            .ok_or_else(|| {
+                format_err!(
+                    "Could not find crate named '{}' to collect errors",
+                    crate_name
+                )
+            })?;
+    }
+    unimplemented!("todo :collect errors of crate");
 }
