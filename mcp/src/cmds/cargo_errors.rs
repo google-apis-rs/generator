@@ -39,6 +39,7 @@ pub fn execute(
                 .iter()
                 .map(|api| format!("--exclude={}", api.crate_name).into()),
         );
+        command_info("<workspace>", &args);
         let mut cargo = Command::new("cargo")
             .args(&args)
             .stderr(Stdio::piped())
@@ -51,11 +52,10 @@ pub fn execute(
         let mut print_from = 0_usize;
         loop {
             let written_bytes = io::stderr().write(&input[print_from..])?;
-            print_from = written_bytes;
+            print_from += written_bytes;
 
             let to_read = match parse_errors(&input).map(|(i, r)| (i.len(), r)) {
                 Ok((input_left_len, parsed)) => {
-                    dbg!(&parsed);
                     let input_len = input.len();
                     input = input.into_iter().skip(input_len - input_left_len).collect();
                     print_from = 0;
@@ -99,7 +99,6 @@ pub fn execute(
 
         match parse_errors(&input) {
             Ok((_, parsed)) => {
-                dbg!(&parsed);
                 excludes.extend(filter_parse_result(parsed));
             }
             Err(nom::Err::Error(e)) | Err(nom::Err::Failure(e)) => {
@@ -140,6 +139,17 @@ pub fn execute(
     }
 }
 
+fn command_info(prefix: &str, args: &[OsString]) {
+    info!(
+        "({}) Running 'cargo {}'",
+        prefix,
+        args.iter()
+            .map(|o| o.to_string_lossy())
+            .collect::<Vec<_>>()
+            .join(" ")
+    );
+}
+
 fn collect_errors(
     apis: &[&Api],
     cargo_arguments: &[OsString],
@@ -150,14 +160,8 @@ fn collect_errors(
         let manifest_path = output_directory.join(&api.lib_cargo_file);
         args.push("--manifest-path".into());
         args.push(manifest_path.into());
-        info!(
-            "Launching cargo for '{}' with 'cargo {}'",
-            api.crate_name,
-            args.iter()
-                .map(|o| o.to_string_lossy())
-                .collect::<Vec<_>>()
-                .join(" ")
-        );
+        command_info(&api.crate_name, &args);
+
         let output = Command::new("cargo")
             .args(&args)
             .stderr(Stdio::piped())
