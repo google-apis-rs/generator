@@ -1,6 +1,7 @@
 use crate::options::cargo_errors::Args;
 use cargo_log_parser::parse_errors;
 use failure::{bail, Error, ResultExt};
+use log::error;
 use std::{
     io::{self, Read, Write},
     process::{Command, Stdio},
@@ -29,6 +30,7 @@ pub fn execute(
     loop {
         let written_bytes = io::stderr().write(&input[print_from..])?;
         print_from = written_bytes;
+
         let to_read = match parse_errors(&input).map(|(i, r)| (i.len(), r)) {
             Ok((input_left_len, parsed)) => {
                 dbg!(parsed);
@@ -48,15 +50,8 @@ pub fn execute(
             }
         };
 
-        if let Some(status) = cargo.try_wait()? {
-            if input.len() > 0 {
-                unimplemented!("parse remaining bytes - avoid all that code duplication");
-            }
-            if status.success() {
-                return Ok(());
-            } else {
-                bail!("cargo exited with error: {:?}", status)
-            }
+        if let Some(_) = cargo.try_wait()? {
+            break;
         }
 
         if let Err(e) = cargo
@@ -66,21 +61,36 @@ pub fn execute(
             .take(to_read as u64)
             .read_to_end(&mut input)
         {
-            if e.kind() == io::ErrorKind::BrokenPipe {
-                match parse_errors(&input) {
-                    Ok(parsed) => {
-                        dbg!(parsed);
-                        return Ok(());
-                    }
-                    Err(nom::Err::Error(_e)) | Err(nom::Err::Failure(_e)) => {
-                        bail!("TODO: proper error conversion")
-                    }
-                    Err(nom::Err::Incomplete(_)) => {
-                        panic!("Could not parse remaining input of length {}", input.len())
-                    }
-                };
-            }
-            unimplemented!("have to improve error handling!")
+            error!("Failed to read cargo output: {}", e);
+            break;
         }
+    }
+
+    cargo
+        .stderr
+        .as_mut()
+        .expect("cargo_output is set")
+        .read_to_end(&mut input)?;
+
+    match parse_errors(&input) {
+        Ok(parsed) => {
+            dbg!(parsed);
+            return Ok(());
+        }
+        Err(nom::Err::Error(e)) | Err(nom::Err::Failure(e)) => {
+            error!("Ignoring parse error after cargo ended: {:?}", e.1);
+        }
+        Err(nom::Err::Incomplete(_)) => panic!(
+            "Could not parse remaining input: {:?}",
+            std::str::from_utf8(&input)
+        ),
+    };
+
+    let status = cargo.try_wait()?.expect("cargo ended");
+
+    if status.success() {
+        Ok(())
+    } else {
+        bail!("cargo exited with error: {:?}", status)
     }
 }
