@@ -2,14 +2,16 @@ use crate::options::cargo_errors::Args;
 use cargo_log_parser::parse_errors;
 use failure::{bail, Error, ResultExt};
 use log::{error, info};
+use shared::MappedIndex;
 use std::{
+    fs,
     io::{self, Read, Write},
     process::{Command, Stdio},
 };
 
 pub fn execute(
     Args {
-        index_path: _,
+        index_path,
         cargo_manifest_path,
         output_directory: _,
         mut cargo_arguments,
@@ -17,6 +19,13 @@ pub fn execute(
 ) -> Result<(), Error> {
     let mut excludes = Vec::new();
     let mut last_excludes_len = 0;
+    let index: MappedIndex = serde_json::from_slice(&fs::read(index_path)?)?;
+    let filter_parse_result = |parsed: Vec<cargo_log_parser::CrateWithError>| {
+        parsed
+            .into_iter()
+            .map(|c| c.name)
+            .filter(|n| index.api.iter().any(|api| &api.crate_name == n))
+    };
 
     loop {
         cargo_arguments.push("--manifest-path".into());
@@ -46,7 +55,7 @@ pub fn execute(
                     let input_len = input.len();
                     input = input.into_iter().skip(input_len - input_left_len).collect();
                     print_from = 0;
-                    excludes.extend(parsed.into_iter().map(|c| c.name));
+                    excludes.extend((filter_parse_result)(parsed));
                     128
                 }
                 Err(nom::Err::Incomplete(needed)) => {
@@ -87,7 +96,7 @@ pub fn execute(
         match parse_errors(&input) {
             Ok((_, parsed)) => {
                 dbg!(&parsed);
-                excludes.extend(parsed.into_iter().map(|c| c.name));
+                excludes.extend(filter_parse_result(parsed));
             }
             Err(nom::Err::Error(e)) | Err(nom::Err::Failure(e)) => {
                 error!("Ignoring parse error after cargo ended: {:?}", e.1);
