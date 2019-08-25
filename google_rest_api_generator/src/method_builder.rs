@@ -410,58 +410,6 @@ fn request_method<'a>(
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
-enum PageTokenParam {
-    None,
-    Optional,
-    Required,
-}
-
-fn is_iter_method(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> PageTokenParam {
-    // The requirements to qualify as an iterator are
-    // The method needs to define a response object.
-    // The response object needs to have a nextPageToken.
-    // There needs to be a pageToken query param.
-    let response_contains_next_page_token = method
-        .response
-        .as_ref()
-        .map(|resp_type| {
-            if let TypeDesc::Object { props, .. } = &resp_type.get_type(schemas).type_desc {
-                props
-                    .values()
-                    .find(|PropertyDesc { id, typ, .. }| {
-                        if let TypeDesc::String = typ.get_type(schemas).type_desc {
-                            if id == "nextPageToken" {
-                                return true;
-                            }
-                        }
-                        false
-                    })
-                    .is_some()
-            } else {
-                false
-            }
-        })
-        .unwrap_or(false);
-    if !response_contains_next_page_token {
-        return PageTokenParam::None;
-    }
-
-    let page_token_param = method.params.iter().find(|param| {
-        if let TypeDesc::String = param.typ.type_desc {
-            if param.id == "pageToken" {
-                return true;
-            }
-        }
-        false
-    });
-    match page_token_param {
-        Some(param) if param.required => PageTokenParam::Required,
-        Some(_) => PageTokenParam::Optional,
-        None => PageTokenParam::None,
-    }
-}
-
 fn iterable_method_impl<'a>(method: &Method) -> TokenStream {
     let builder_name = method.builder_name();
     quote! {
@@ -481,11 +429,12 @@ fn iterable_method_impl<'a>(method: &Method) -> TokenStream {
 }
 
 fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStream, TokenStream) {
-    let page_token_param = is_iter_method(method, schemas);
+    use crate::PageTokenParam;
+    let page_token_param = method.is_iterable(schemas);
     if page_token_param == PageTokenParam::None {
         return (quote! {}, quote! {});
     }
-    let response = method.response.as_ref().unwrap(); // unwrap safe because is_iter_method returned true.
+    let response = method.response.as_ref().unwrap(); // unwrap safe because is_iterable returned true.
     let response_type_path = response.type_path();
     let response_type_desc: &TypeDesc = &response.get_type(schemas).type_desc;
     let array_props: Vec<(&PropertyDesc, syn::TypePath)> =
@@ -498,7 +447,7 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
                 })
                 .collect()
         } else {
-            panic!("is_iter_method that doesn't return an object");
+            panic!("is_iterable that doesn't return an object");
         };
     let array_iter_methods = array_props.iter().map(|(prop, items_type)| {
         let prop_id = &prop.id;

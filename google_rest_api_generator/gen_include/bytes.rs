@@ -1,8 +1,7 @@
 // Bytes in google apis are represented as urlsafe base64 encoded strings.
 // This defines a Bytes type that is a simple wrapper around a Vec<u8> used
 // internally to handle byte fields in google apis.
-#[allow(dead_code)]
-mod bytes {
+pub mod bytes {
     use radix64::URL_SAFE as BASE64_CFG;
 
     #[derive(Debug,Clone,Eq,PartialEq,Ord,PartialOrd,Hash)]

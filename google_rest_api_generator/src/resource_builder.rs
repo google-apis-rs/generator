@@ -1,7 +1,6 @@
-use crate::{method_actions, method_builder, Param, RefOrType, Resource, Type};
+use crate::{method_actions, method_builder, Param, Resource, Type};
 use proc_macro2::TokenStream;
 use quote::quote;
-use std::borrow::Cow;
 use std::collections::BTreeMap;
 
 pub(crate) fn generate(
@@ -12,18 +11,18 @@ pub(crate) fn generate(
     schemas: &BTreeMap<syn::Ident, Type>,
 ) -> TokenStream {
     let ident = &resource.ident;
-    let mut param_type_defs = Vec::new();
-    for param in resource
+    let param_type_defs = resource
         .methods
         .iter()
         .flat_map(|method| method.params.iter())
-    {
-        crate::append_nested_type_defs(
-            &RefOrType::Type(Cow::Borrowed(&param.typ)),
-            schemas,
-            &mut param_type_defs,
-        );
-    }
+        .fold(Vec::new(), |accum, param| {
+            param.typ.fold_nested(accum, |mut accum, typ| {
+                if let Some(type_def) = typ.type_def(schemas) {
+                    accum.push(type_def);
+                }
+                accum
+            })
+        });
     let method_builders = resource.methods.iter().map(|method| {
         method_builder::generate(root_url, service_path, global_params, method, schemas)
     });

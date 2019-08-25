@@ -40,16 +40,45 @@ where
     let cargo_contents = cargo::cargo_toml(api_name).to_string();
     std::fs::write(&cargo_toml_path, &cargo_contents)?;
 
+    let any_resumable_upload_methods = api_desc.fold_methods(false, |accum, method| {
+        accum
+            || method
+                .media_upload
+                .as_ref()
+                .and_then(|media_upload| media_upload.resumable_path.as_ref())
+                .is_some()
+    });
+    let any_bytes_types = api_desc.fold_types(false, |accum, typ| {
+        accum
+            || match &typ.type_desc {
+                TypeDesc::Bytes => true,
+                _ => false,
+            }
+    });
+    let any_iterable_methods = api_desc.fold_methods(false, |accum, method| {
+        accum
+            || match method.is_iterable(&api_desc.schemas) {
+                PageTokenParam::None => false,
+                PageTokenParam::Optional | PageTokenParam::Required => true,
+            }
+    });
+
     info!("writing lib '{}'", lib_path.display());
     let output_file = std::fs::File::create(&lib_path)?;
     let mut rustfmt_writer = crate::rustfmt::RustFmtWriter::new(output_file)?;
     rustfmt_writer.write_all(api_desc.generate().to_string().as_bytes())?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/percent_encode_consts.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;
-    rustfmt_writer.write_all(include_bytes!("../gen_include/resumable_upload.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/parsed_string.rs"))?;
-    rustfmt_writer.write_all(include_bytes!("../gen_include/iter.rs"))?;
-    rustfmt_writer.write_all(include_bytes!("../gen_include/bytes.rs"))?;
+    if any_resumable_upload_methods {
+        rustfmt_writer.write_all(include_bytes!("../gen_include/resumable_upload.rs"))?;
+    }
+    if any_iterable_methods {
+        rustfmt_writer.write_all(include_bytes!("../gen_include/iter.rs"))?;
+    }
+    if any_bytes_types {
+        rustfmt_writer.write_all(include_bytes!("../gen_include/bytes.rs"))?;
+    }
     rustfmt_writer.close()?;
     info!("done");
     Ok(())
@@ -149,29 +178,33 @@ impl APIDesc {
 
     fn generate(&self) -> TokenStream {
         info!("getting all types");
-        let mut schema_type_defs = Vec::new();
-        for (schema_id, schema) in self.schemas.iter() {
-            append_nested_type_defs(
-                &RefOrType::Type(Cow::Borrowed(schema)),
-                &self.schemas,
-                &mut schema_type_defs,
-            );
-            // This type does not normally need a type definition, but because
-            // it's a schema we will create a type alias for it so that
-            // references can be linked correctly.
-            if schema.type_def(&self.schemas).is_none() {
-                let type_path = schema.type_path();
-                schema_type_defs.push(quote! {pub type #schema_id = #type_path;});
-            }
-        }
-        let mut param_type_defs = Vec::new();
-        for param in &self.params {
-            append_nested_type_defs(
-                &RefOrType::Type(Cow::Borrowed(&param.typ)),
-                &self.schemas,
-                &mut param_type_defs,
-            );
-        }
+        let schema_type_defs =
+            self.schemas
+                .iter()
+                .fold(Vec::new(), |mut accum, (schema_id, typ)| {
+                    accum = typ.fold_nested(accum, |mut accum, typ| {
+                        if let Some(type_def) = typ.type_def(&self.schemas) {
+                            accum.push(type_def);
+                        }
+                        accum
+                    });
+                    if typ.type_def(&self.schemas).is_none() {
+                        // This type does not normally need a type definition, but because
+                        // it's a schema we will create a type alias for it so that
+                        // references can be linked correctly.
+                        let type_path = typ.type_path();
+                        accum.push(quote! {pub type #schema_id = #type_path;});
+                    }
+                    accum
+                });
+        let param_type_defs = self.params.iter().fold(Vec::new(), |accum, param| {
+            param.typ.fold_nested(accum, |mut accum, typ| {
+                if let Some(type_def) = typ.type_def(&self.schemas) {
+                    accum.push(type_def);
+                }
+                accum
+            })
+        });
         info!("generating resources");
         let resource_modules = self.resources.iter().map(|resource| {
             resource_builder::generate(
@@ -230,6 +263,68 @@ impl APIDesc {
             }
         }
     }
+
+    // Perform a fold ('reduce') on each resource. The provided function is
+    // invoked for every resource including recursively nested resources.
+    fn fold_resources<A, F>(&self, mut accum: A, f: F) -> A
+    where
+        F: Fn(A, &Resource) -> A + Copy,
+    {
+        fn _fold_resource<A, F>(resource: &Resource, mut accum: A, f: F) -> A
+        where
+            F: Fn(A, &Resource) -> A + Copy,
+        {
+            accum = f(accum, resource);
+            for resource in &resource.resources {
+                accum = _fold_resource(resource, accum, f);
+            }
+            accum
+        }
+        for resource in &self.resources {
+            accum = _fold_resource(resource, accum, f);
+        }
+        accum
+    }
+
+    // Perform a fold ('reduce') on each method. The provided function is
+    // invoked for every method including methods of recursively nested
+    // resources.
+    fn fold_methods<A, F>(&self, mut accum: A, f: F) -> A
+    where
+        F: Fn(A, &Method) -> A + Copy,
+    {
+        accum = self.fold_resources(accum, |accum, resource| {
+            resource.methods.iter().fold(accum, f)
+        });
+        self.methods.iter().fold(accum, f)
+    }
+
+    // Performs a fold ('reduce') on each Type. The provided function is invoked
+    // for every Type referenced by the APIDesc.
+    fn fold_types<A, F>(&self, mut accum: A, f: F) -> A
+    where
+        F: Fn(A, &Type) -> A + Copy,
+    {
+        accum = self.fold_methods(accum, |mut accum, method| {
+            for param in &method.params {
+                accum = param.typ.fold_nested(accum, f);
+            }
+            if let Some(RefOrType::Type(req)) = method.request.as_ref() {
+                accum = req.fold_nested(accum, f);
+            }
+            if let Some(RefOrType::Type(resp)) = method.response.as_ref() {
+                accum = resp.fold_nested(accum, f);
+            }
+            accum
+        });
+        for schema in self.schemas.values() {
+            accum = schema.fold_nested(accum, f);
+        }
+        for param in &self.params {
+            accum = param.typ.fold_nested(accum, f);
+        }
+        accum
+    }
 }
 
 fn schema_id_to_ident(id: &str) -> syn::Ident {
@@ -238,36 +333,6 @@ fn schema_id_to_ident(id: &str) -> syn::Ident {
 
 fn schema_parent_path() -> syn::Path {
     parse_quote! {crate::schemas}
-}
-
-fn append_nested_type_defs(
-    ref_or_type: &RefOrType,
-    schemas: &BTreeMap<syn::Ident, Type>,
-    out: &mut Vec<TokenStream>,
-) {
-    fn add_type(typ: &Type, schemas: &BTreeMap<syn::Ident, Type>, out: &mut Vec<TokenStream>) {
-        match &typ.type_desc {
-            TypeDesc::Array { items } => {
-                append_nested_type_defs(&items, schemas, out);
-            }
-            TypeDesc::Object { props, add_props } => {
-                for prop in props.values() {
-                    append_nested_type_defs(&prop.typ, schemas, out);
-                }
-                if let Some(boxed_prop) = add_props {
-                    append_nested_type_defs(&boxed_prop.typ, schemas, out);
-                }
-            }
-            _ => {}
-        };
-        if let Some(type_def) = typ.type_def(schemas) {
-            out.push(type_def);
-        }
-    }
-    match ref_or_type {
-        RefOrType::Ref(_) => {}
-        RefOrType::Type(typ) => add_type(typ, schemas, out),
-    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -460,6 +525,51 @@ impl Method {
 
     fn builder_name(&self) -> syn::Ident {
         to_ident(&to_rust_typestr(&format!("{}-RequestBuilder", &self.id)))
+    }
+
+    fn is_iterable(&self, schemas: &BTreeMap<syn::Ident, Type>) -> PageTokenParam {
+        // The requirements to qualify as an iterator are
+        // The method needs to define a response object.
+        // The response object needs to have a nextPageToken.
+        // There needs to be a pageToken query param.
+        let response_contains_next_page_token = self
+            .response
+            .as_ref()
+            .map(|resp_type| {
+                if let TypeDesc::Object { props, .. } = &resp_type.get_type(schemas).type_desc {
+                    props
+                        .values()
+                        .find(|PropertyDesc { id, typ, .. }| {
+                            if let TypeDesc::String = typ.get_type(schemas).type_desc {
+                                if id == "nextPageToken" {
+                                    return true;
+                                }
+                            }
+                            false
+                        })
+                        .is_some()
+                } else {
+                    false
+                }
+            })
+            .unwrap_or(false);
+        if !response_contains_next_page_token {
+            return PageTokenParam::None;
+        }
+
+        let page_token_param = self.params.iter().find(|param| {
+            if let TypeDesc::String = param.typ.type_desc {
+                if param.id == "pageToken" {
+                    return true;
+                }
+            }
+            false
+        });
+        match page_token_param {
+            Some(param) if param.required => PageTokenParam::Required,
+            Some(_) => PageTokenParam::Optional,
+            None => PageTokenParam::None,
+        }
     }
 }
 
@@ -953,16 +1063,16 @@ impl Type {
 
     fn type_def(&self, schemas: &BTreeMap<syn::Ident, Type>) -> Option<TokenStream> {
         let mut derives = vec![quote! {Debug}, quote! {Clone}, quote! {PartialEq}];
-        if self.nested_type_desc_fold(schemas, true, |accum, typ| accum && typ.is_hashable()) {
+        if self.is_hashable(schemas) {
             derives.push(quote! {Hash});
         }
-        if self.nested_type_desc_fold(schemas, true, |accum, typ| accum && typ.is_partial_ord()) {
+        if self.is_partial_ord(schemas) {
             derives.push(quote! {PartialOrd});
         }
-        if self.nested_type_desc_fold(schemas, true, |accum, typ| accum && typ.is_ord()) {
+        if self.is_ord(schemas) {
             derives.push(quote! {Ord});
         }
-        if self.nested_type_desc_fold(schemas, true, |accum, typ| accum && typ.is_eq()) {
+        if self.is_eq(schemas) {
             derives.push(quote! {Eq});
         }
         let name = &self.id;
@@ -1147,6 +1257,106 @@ impl Type {
         }
     }
 
+    // Perform a fold ('reduce') operation on this type and all nested types
+    // defined within it. This does *not* follow references.
+    fn fold_nested<A, F>(&self, mut accum: A, f: F) -> A
+    where
+        F: Fn(A, &Type) -> A + Copy,
+    {
+        accum = f(accum, self);
+        match &self.type_desc {
+            TypeDesc::Array { items } => match &**items {
+                RefOrType::Type(typ) => accum = typ.fold_nested(accum, f),
+                RefOrType::Ref(_) => {}
+            },
+            TypeDesc::Object { props, add_props } => {
+                for prop in props.values() {
+                    match &prop.typ {
+                        RefOrType::Type(typ) => accum = typ.fold_nested(accum, f),
+                        RefOrType::Ref(_) => {}
+                    }
+                }
+                if let Some(add_props) = add_props {
+                    match &add_props.typ {
+                        RefOrType::Type(typ) => accum = typ.fold_nested(accum, f),
+                        RefOrType::Ref(_) => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+        accum
+    }
+
+    // Perform a fold ('reduce') operation on this type and all nested types
+    // defined within it. This *does* follow references.
+    fn fold_nested_follow_refs<A, F>(
+        &self,
+        schemas: &BTreeMap<syn::Ident, Type>,
+        accum: A,
+        f: F,
+    ) -> A
+    where
+        F: Fn(A, &Type) -> A + Copy,
+    {
+        fn _fold_nested_ref_or_type<'a, 'b, A, F>(
+            ref_or_type: &'a RefOrType,
+            schemas: &'a BTreeMap<syn::Ident, Type>,
+            mut accum: A,
+            f: F,
+            already_seen: &'b mut Vec<&'a syn::Ident>,
+        ) -> A
+        where
+            F: FnMut(A, &Type) -> A + Copy,
+        {
+            match ref_or_type {
+                RefOrType::Ref(reference) => {
+                    if already_seen.iter().find(|&x| x == &reference).is_none() {
+                        already_seen.push(reference);
+                        let typ = schemas.get(reference).unwrap();
+                        accum = _fold_nested_follow_refs(typ, schemas, accum, f, already_seen);
+                        already_seen.pop();
+                    }
+                }
+                RefOrType::Type(typ) => {
+                    accum = _fold_nested_follow_refs(typ, schemas, accum, f, already_seen)
+                }
+            }
+            accum
+        }
+        // Since this method follows references we need to protect against type loops.
+        fn _fold_nested_follow_refs<'a, 'b, A, F>(
+            typ: &'a Type,
+            schemas: &'a BTreeMap<syn::Ident, Type>,
+            mut accum: A,
+            mut f: F,
+            already_seen: &'b mut Vec<&'a syn::Ident>,
+        ) -> A
+        where
+            F: FnMut(A, &Type) -> A + Copy,
+        {
+            accum = f(accum, typ);
+            match &typ.type_desc {
+                TypeDesc::Array { items } => {
+                    _fold_nested_ref_or_type(&*items, schemas, accum, f, already_seen)
+                }
+                TypeDesc::Object { props, add_props } => {
+                    for prop in props.values() {
+                        accum =
+                            _fold_nested_ref_or_type(&prop.typ, schemas, accum, f, already_seen);
+                    }
+                    if let Some(prop) = add_props {
+                        accum =
+                            _fold_nested_ref_or_type(&prop.typ, schemas, accum, f, already_seen);
+                    }
+                    accum
+                }
+                _ => accum,
+            }
+        }
+        _fold_nested_follow_refs(self, schemas, accum, f, &mut Vec::new())
+    }
+
     // Determine if the current type requires pointer indirection when it's a
     // member of the provided type. Pointer indirection is necessary when there
     // are recursive types. This method traverses the non-pointer members of the
@@ -1195,74 +1405,92 @@ impl Type {
         _requires_pointer_indirection_when_within(self, typ, schemas, &mut Vec::new())
     }
 
-    fn nested_type_desc_fold<F, B>(&self, schemas: &BTreeMap<syn::Ident, Type>, init: B, f: F) -> B
-    where
-        F: FnMut(B, &TypeDesc) -> B + Copy,
-    {
-        fn _nested_ref_or_type<'a, F, B>(
-            ref_or_type: &'a RefOrType,
-            schemas: &'a BTreeMap<syn::Ident, Type>,
-            init: B,
-            f: F,
-            already_seen: &'a [&'a syn::Ident],
-        ) -> B
-        where
-            F: FnMut(B, &TypeDesc) -> B + Copy,
-        {
-            match ref_or_type {
-                RefOrType::Ref(reference) => {
-                    if already_seen.iter().find(|&x| x == &reference).is_none() {
-                        let mut already_seen = already_seen.to_vec();
-                        already_seen.push(reference);
-                        let typ = schemas.get(reference).unwrap();
-                        _nested_type(typ, schemas, init, f, &already_seen)
-                    } else {
-                        init
-                    }
+    fn is_hashable(&self, schemas: &BTreeMap<syn::Ident, Type>) -> bool {
+        self.fold_nested_follow_refs(schemas, true, |accum, typ| {
+            accum
+                && match &typ.type_desc {
+                    TypeDesc::Any => false,
+                    TypeDesc::String => true,
+                    TypeDesc::Bool => true,
+                    TypeDesc::Int32 => true,
+                    TypeDesc::Uint32 => true,
+                    TypeDesc::Float32 => false,
+                    TypeDesc::Int64 => true,
+                    TypeDesc::Uint64 => true,
+                    TypeDesc::Float64 => false,
+                    TypeDesc::Bytes => true,
+                    TypeDesc::Date => true,
+                    TypeDesc::DateTime => true,
+                    TypeDesc::Enum(_) => true,
+                    TypeDesc::Array { .. } | TypeDesc::Object { .. } => accum,
                 }
-                RefOrType::Type(typ) => _nested_type(typ, schemas, init, f, already_seen),
-            }
-        }
-        fn _nested_type<'a, F, B>(
-            typ: &'a Type,
-            schemas: &'a BTreeMap<syn::Ident, Type>,
-            mut init: B,
-            mut f: F,
-            already_seen: &'a [&'a syn::Ident],
-        ) -> B
-        where
-            F: FnMut(B, &TypeDesc) -> B + Copy,
-        {
-            match &typ.type_desc {
-                TypeDesc::Any
-                | TypeDesc::String
-                | TypeDesc::Bool
-                | TypeDesc::Int32
-                | TypeDesc::Uint32
-                | TypeDesc::Float32
-                | TypeDesc::Int64
-                | TypeDesc::Uint64
-                | TypeDesc::Float64
-                | TypeDesc::Bytes
-                | TypeDesc::Date
-                | TypeDesc::DateTime
-                | TypeDesc::Enum(_) => f(init, &typ.type_desc),
-                TypeDesc::Array { items } => {
-                    _nested_ref_or_type(items, schemas, init, f, already_seen)
-                }
-                TypeDesc::Object { props, add_props } => {
-                    if let Some(prop) = add_props {
-                        init = _nested_ref_or_type(&prop.typ, schemas, init, f, already_seen);
-                    }
+        })
+    }
 
-                    for prop in props.values() {
-                        init = _nested_ref_or_type(&prop.typ, schemas, init, f, already_seen);
-                    }
-                    init
+    fn is_partial_ord(&self, schemas: &BTreeMap<syn::Ident, Type>) -> bool {
+        self.fold_nested_follow_refs(schemas, true, |accum, typ| {
+            accum
+                && match &typ.type_desc {
+                    TypeDesc::Any => false,
+                    TypeDesc::String => true,
+                    TypeDesc::Bool => true,
+                    TypeDesc::Int32 => true,
+                    TypeDesc::Uint32 => true,
+                    TypeDesc::Float32 => true,
+                    TypeDesc::Int64 => true,
+                    TypeDesc::Uint64 => true,
+                    TypeDesc::Float64 => true,
+                    TypeDesc::Bytes => true,
+                    TypeDesc::Date => true,
+                    TypeDesc::DateTime => true,
+                    TypeDesc::Enum(_) => true,
+                    TypeDesc::Array { .. } | TypeDesc::Object { .. } => accum,
                 }
-            }
-        }
-        _nested_type(self, schemas, init, f, &Vec::new())
+        })
+    }
+
+    fn is_ord(&self, schemas: &BTreeMap<syn::Ident, Type>) -> bool {
+        self.fold_nested_follow_refs(schemas, true, |accum, typ| {
+            accum
+                && match &typ.type_desc {
+                    TypeDesc::Any => false,
+                    TypeDesc::String => true,
+                    TypeDesc::Bool => true,
+                    TypeDesc::Int32 => true,
+                    TypeDesc::Uint32 => true,
+                    TypeDesc::Float32 => false,
+                    TypeDesc::Int64 => true,
+                    TypeDesc::Uint64 => true,
+                    TypeDesc::Float64 => false,
+                    TypeDesc::Bytes => true,
+                    TypeDesc::Date => true,
+                    TypeDesc::DateTime => true,
+                    TypeDesc::Enum(_) => true,
+                    TypeDesc::Array { .. } | TypeDesc::Object { .. } => accum,
+                }
+        })
+    }
+
+    fn is_eq(&self, schemas: &BTreeMap<syn::Ident, Type>) -> bool {
+        self.fold_nested_follow_refs(schemas, true, |accum, typ| {
+            accum
+                && match &typ.type_desc {
+                    TypeDesc::Any => false,
+                    TypeDesc::String => true,
+                    TypeDesc::Bool => true,
+                    TypeDesc::Int32 => true,
+                    TypeDesc::Uint32 => true,
+                    TypeDesc::Float32 => false,
+                    TypeDesc::Int64 => true,
+                    TypeDesc::Uint64 => true,
+                    TypeDesc::Float64 => false,
+                    TypeDesc::Bytes => true,
+                    TypeDesc::Date => true,
+                    TypeDesc::DateTime => true,
+                    TypeDesc::Enum(_) => true,
+                    TypeDesc::Array { .. } | TypeDesc::Object { .. } => accum,
+                }
+        })
     }
 }
 
@@ -1438,90 +1666,6 @@ impl TypeDesc {
             ),
         }
     }
-
-    fn is_hashable(&self) -> bool {
-        match self {
-            TypeDesc::Any => false,
-            TypeDesc::String => true,
-            TypeDesc::Bool => true,
-            TypeDesc::Int32 => true,
-            TypeDesc::Uint32 => true,
-            TypeDesc::Float32 => false,
-            TypeDesc::Int64 => true,
-            TypeDesc::Uint64 => true,
-            TypeDesc::Float64 => false,
-            TypeDesc::Bytes => true,
-            TypeDesc::Date => true,
-            TypeDesc::DateTime => true,
-            TypeDesc::Enum(_) => true,
-            TypeDesc::Array { .. } | TypeDesc::Object { .. } => {
-                panic!("is_hashable should only be called on non-composite types")
-            }
-        }
-    }
-
-    fn is_ord(&self) -> bool {
-        match self {
-            TypeDesc::Any => false,
-            TypeDesc::String => true,
-            TypeDesc::Bool => true,
-            TypeDesc::Int32 => true,
-            TypeDesc::Uint32 => true,
-            TypeDesc::Float32 => false,
-            TypeDesc::Int64 => true,
-            TypeDesc::Uint64 => true,
-            TypeDesc::Float64 => false,
-            TypeDesc::Bytes => true,
-            TypeDesc::Date => true,
-            TypeDesc::DateTime => true,
-            TypeDesc::Enum(_) => true,
-            TypeDesc::Array { .. } | TypeDesc::Object { .. } => {
-                panic!("is_ord should only be called on non-composite types")
-            }
-        }
-    }
-
-    fn is_partial_ord(&self) -> bool {
-        match self {
-            TypeDesc::Any => false,
-            TypeDesc::String => true,
-            TypeDesc::Bool => true,
-            TypeDesc::Int32 => true,
-            TypeDesc::Uint32 => true,
-            TypeDesc::Float32 => true,
-            TypeDesc::Int64 => true,
-            TypeDesc::Uint64 => true,
-            TypeDesc::Float64 => true,
-            TypeDesc::Bytes => true,
-            TypeDesc::Date => true,
-            TypeDesc::DateTime => true,
-            TypeDesc::Enum(_) => true,
-            TypeDesc::Array { .. } | TypeDesc::Object { .. } => {
-                panic!("is_ord should only be called on non-composite types")
-            }
-        }
-    }
-
-    fn is_eq(&self) -> bool {
-        match self {
-            TypeDesc::Any => false,
-            TypeDesc::String => true,
-            TypeDesc::Bool => true,
-            TypeDesc::Int32 => true,
-            TypeDesc::Uint32 => true,
-            TypeDesc::Float32 => false,
-            TypeDesc::Int64 => true,
-            TypeDesc::Uint64 => true,
-            TypeDesc::Float64 => false,
-            TypeDesc::Bytes => true,
-            TypeDesc::Date => true,
-            TypeDesc::DateTime => true,
-            TypeDesc::Enum(_) => true,
-            TypeDesc::Array { .. } | TypeDesc::Object { .. } => {
-                panic!("is_eq should only be called on non-composite types")
-            }
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1568,4 +1712,13 @@ fn add_media_to_alt_param(params: &mut [Param]) {
             }
         }
     }
+}
+
+/// What type of PageToken does this method have. Non-iterable methods provide
+/// None, iterable methods are either optional or required.
+#[derive(Copy, Clone, PartialEq, Eq)]
+enum PageTokenParam {
+    None,
+    Optional,
+    Required,
 }

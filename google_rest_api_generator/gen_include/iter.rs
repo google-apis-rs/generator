@@ -1,4 +1,3 @@
-#[allow(dead_code)]
 pub mod iter {
     pub trait IterableMethod {
         fn set_page_token(&mut self, value: String);
