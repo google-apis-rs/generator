@@ -125,7 +125,7 @@ Let's keep in mind what worked and what didn't.
    * Even though they worked, it was another thing that had to be installed by `make`, and could just fail [for some](https://github.com/Byron/google-apis-rs/issues/234)
 1. **arbitrary smartness**
    * In order to fix issues with the type system and make numbers more easily usable by converting "strings" into integers/floats, what worked in one API broke another.
-1. **artificial strupidity when dealing with dates and time**
+1. **artificial stupidity when dealing with dates and time**
    * as opposed to trying to be smart with numbers, we were not converting the uniformly represented date formats into something like `chrono::*`.
 1. **it's cumbersome to actually use a CLI**
    * Even though authentication was dealt with nicely for the most part, actually using APIs required them to be enabled via the developer console. From there one would download a file and deposit it in the right spot. Only then one could start using the CLI.
