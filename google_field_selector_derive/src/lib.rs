@@ -34,12 +34,16 @@ fn expand_derive_field_selector(input: &DeriveInput) -> Result<TokenStream2, Box
         const #dummy_const: () = {
             extern crate google_field_selector as _google_field_selector;
             impl #impl_generics _google_field_selector::FieldSelector for #ident #ty_generics #where_clause {
-                fn field_selector_with_ident(ident: &str, selector: &mut String) {
-                    match selector.chars().rev().nth(0) {
-                        Some(',') | None => {},
-                        _ => selector.push_str(","),
-                    }
+                fn fields() -> Vec<_google_field_selector::Field> {
+                    let mut fields = Vec::new();
                     #(#field_output)*
+                    fields
+                }
+            }
+
+            impl #impl_generics _google_field_selector::ToFieldType for #ident #ty_generics #where_clause {
+                fn field_type() -> _google_field_selector::FieldType {
+                    _google_field_selector::FieldType::Struct(<Self as _google_field_selector::FieldSelector>::fields())
                 }
             }
         };
@@ -86,63 +90,41 @@ fn selector_for_field<'a>(field: &serdei::ast::Field<'a>) -> TokenStream2 {
 
     let field_name = field.attrs.name().deserialize_name();
     match attr_override {
-        Some(AttrOverride::ContainerOf(typ_path)) => {
+        Some(AttrOverride::ContainerOf(type_path)) => {
             quote! {
-                match selector.chars().rev().nth(0) {
-                    Some(',') | None => {},
-                    _ => selector.push_str(","),
-                }
-                if ident.is_empty() {
-                    selector.push_str(#field_name);
-                } else {
-                    let mut ident = ident.to_owned();
-                    ident.push_str("/");
-                    ident.push_str(#field_name);
-                    selector.push_str(&ident);
-                }
-                let mut inner_selector = String::new();
-                #typ_path::field_selector_with_ident("", &mut inner_selector);
-                if !inner_selector.is_empty() {
-                    selector.push_str("(");
-                    selector.push_str(&inner_selector);
-                    selector.push_str(")");
-                }
+                fields.push(
+                    _google_field_selector::Field{
+                        field_name: #field_name,
+                        field_type: _google_field_selector::FieldType::Container(
+                            Box::new(<#type_path as _google_field_selector::ToFieldType>::field_type()))
+                    }
+                );
             }
         }
         Some(AttrOverride::Leaf) => {
             quote! {
-                match selector.chars().rev().nth(0) {
-                    Some(',') | None => {},
-                    _ => selector.push_str(","),
-                }
-                if ident.is_empty() {
-                    selector.push_str(#field_name);
-                } else {
-                    let mut ident = ident.to_owned();
-                    ident.push_str("/");
-                    ident.push_str(#field_name);
-                    selector.push_str(&ident);
-                }
+                fields.push(
+                    _google_field_selector::Field{
+                        field_name: #field_name,
+                        field_type: _google_field_selector::FieldType::Leaf
+                    }
+                );
             }
         }
         None => {
             let typ = field.ty;
             if field.attrs.flatten() {
                 quote! {
-                    <#typ>::field_selector_with_ident(ident, selector);
+                    fields.extend(<#typ as _google_field_selector::FieldSelector>::fields());
                 }
             } else {
                 quote! {
-                    <#typ>::field_selector_with_ident(&{
-                        if ident.is_empty() {
-                            #field_name.to_owned()
-                        } else {
-                            let mut ident = ident.to_owned();
-                            ident.push_str("/");
-                            ident.push_str(#field_name);
-                            ident
-                        }},
-                        selector);
+                    fields.push(
+                        _google_field_selector::Field{
+                            field_name: #field_name,
+                            field_type: <#typ as _google_field_selector::ToFieldType>::field_type()
+                        }
+                    );
                 }
             }
         }

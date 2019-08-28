@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use google_field_selector::FieldSelector;
+use google_field_selector::{to_string, FieldSelector};
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -30,7 +30,7 @@ fn basic() {
     }
 
     assert_eq!(
-        Response::field_selector(),
+        to_string::<Response>(),
         "nextPageToken,files(id,mimeType,sharingUser/me,sharingUser/emailAddress,sharingUser/userAttrs)"
     );
 }
@@ -54,7 +54,7 @@ fn generic_with_flatten() {
         files: Vec<File>,
     }
     assert_eq!(
-        Response::<ListFiles>::field_selector(),
+        to_string::<Response::<ListFiles>>(),
         "nextPageToken,files(id,mimeType,sharingUser/me,sharingUser/emailAddress,sharingUser/userAttrs)"
     );
 }
@@ -87,7 +87,7 @@ fn external_types() {
     }
 
     assert_eq!(
-        Response::field_selector(),
+        to_string::<Response>(),
         "nextPageToken,files(id,viewed_by_me_time)"
     );
 }
