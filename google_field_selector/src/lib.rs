@@ -22,34 +22,44 @@ pub fn to_string<T: FieldSelector>() -> String {
     }
 
     fn append_field(parents: &mut Vec<&str>, field: &Field, output: &mut String) {
-        match &field.field_type {
-            FieldType::Leaf => {
-                for &parent in parents.iter() {
-                    output.push_str(parent);
-                    output.push_str("/");
-                }
-                output.push_str(&field.field_name);
+        let append_parents = |output: &mut String| {
+            for &parent in parents.iter() {
+                output.push_str(parent);
+                output.push_str("/");
             }
-            FieldType::Container(inner_field_type) => {
-                for &parent in parents.iter() {
-                    output.push_str(parent);
-                    output.push_str("/");
+        };
+
+        match field {
+            Field::Glob => {
+                append_parents(output);
+                output.push_str("*");
+            }
+            Field::Named {
+                field_name,
+                field_type,
+            } => match field_type {
+                FieldType::Leaf => {
+                    append_parents(output);
+                    output.push_str(field_name);
                 }
-                output.push_str(&field.field_name);
-                match &**inner_field_type {
-                    FieldType::Leaf | FieldType::Container(_) => {}
-                    FieldType::Struct(fields) => {
-                        output.push_str("(");
-                        append_fields(&mut Vec::new(), fields, output);
-                        output.push_str(")");
+                FieldType::Container(inner_field_type) => {
+                    append_parents(output);
+                    output.push_str(field_name);
+                    match &**inner_field_type {
+                        FieldType::Leaf | FieldType::Container(_) => {}
+                        FieldType::Struct(fields) => {
+                            output.push_str("(");
+                            append_fields(&mut Vec::new(), fields, output);
+                            output.push_str(")");
+                        }
                     }
                 }
-            }
-            FieldType::Struct(fields) => {
-                parents.push(&field.field_name);
-                append_fields(parents, fields, output);
-                parents.pop();
-            }
+                FieldType::Struct(fields) => {
+                    parents.push(field_name);
+                    append_fields(parents, fields, output);
+                    parents.pop();
+                }
+            },
         }
     }
 
@@ -58,9 +68,12 @@ pub fn to_string<T: FieldSelector>() -> String {
     output
 }
 
-pub struct Field {
-    pub field_name: &'static str,
-    pub field_type: FieldType,
+pub enum Field {
+    Glob,
+    Named {
+        field_name: &'static str,
+        field_type: FieldType,
+    },
 }
 
 pub enum FieldType {

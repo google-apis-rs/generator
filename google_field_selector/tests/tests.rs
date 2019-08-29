@@ -91,3 +91,42 @@ fn external_types() {
         "nextPageToken,files(id,viewed_by_me_time)"
     );
 }
+
+#[test]
+fn glob_selector() {
+    use google_field_selector::{Field, FieldType, ToFieldType};
+    #[derive(Deserialize)]
+    struct Foo;
+
+    impl FieldSelector for Foo {
+        fn fields() -> Vec<Field> {
+            vec![Field::Glob]
+        }
+    }
+
+    impl ToFieldType for Foo {
+        fn field_type() -> FieldType {
+            FieldType::Struct(Self::fields())
+        }
+    }
+
+    assert_eq!(to_string::<Foo>(), "*");
+
+    #[derive(Deserialize, FieldSelector)]
+    #[serde(rename_all = "camelCase")]
+    struct NestedFoo {
+        attr_1: String,
+        foo: Foo,
+    }
+
+    assert_eq!(to_string::<NestedFoo>(), "attr1,foo/*");
+
+    #[derive(Deserialize, FieldSelector)]
+    #[serde(rename_all = "camelCase")]
+    struct ContainedFoo {
+        attr_1: String,
+        foo: Vec<Foo>,
+    }
+
+    assert_eq!(to_string::<ContainedFoo>(), "attr1,foo(*)");
+}

@@ -93,7 +93,7 @@ fn selector_for_field<'a>(field: &serdei::ast::Field<'a>) -> TokenStream2 {
         Some(AttrOverride::ContainerOf(type_path)) => {
             quote! {
                 fields.push(
-                    _google_field_selector::Field{
+                    _google_field_selector::Field::Named{
                         field_name: #field_name,
                         field_type: _google_field_selector::FieldType::Container(
                             Box::new(<#type_path as _google_field_selector::ToFieldType>::field_type()))
@@ -104,7 +104,7 @@ fn selector_for_field<'a>(field: &serdei::ast::Field<'a>) -> TokenStream2 {
         Some(AttrOverride::Leaf) => {
             quote! {
                 fields.push(
-                    _google_field_selector::Field{
+                    _google_field_selector::Field::Named{
                         field_name: #field_name,
                         field_type: _google_field_selector::FieldType::Leaf
                     }
@@ -120,7 +120,7 @@ fn selector_for_field<'a>(field: &serdei::ast::Field<'a>) -> TokenStream2 {
             } else {
                 quote! {
                     fields.push(
-                        _google_field_selector::Field{
+                        _google_field_selector::Field::Named{
                             field_name: #field_name,
                             field_type: <#typ as _google_field_selector::ToFieldType>::field_type()
                         }
