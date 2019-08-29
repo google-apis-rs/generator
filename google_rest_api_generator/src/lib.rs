@@ -1141,13 +1141,15 @@ impl Type {
                         }
                     }
 
-                    impl ::field_selector::FieldSelector for #name {
-                        fn field_selector_with_ident(ident: &str, selector: &mut String) {
-                            match selector.chars().rev().nth(0) {
-                                Some(',') | None => {},
-                                _ => selector.push_str(","),
-                            }
-                            selector.push_str(ident);
+                    impl ::google_field_selector::FieldSelector for #name {
+                        fn fields() -> Vec<::google_field_selector::Field> {
+                            Vec::new()
+                        }
+                    }
+
+                    impl ::google_field_selector::ToFieldType for #name {
+                        fn field_type() -> ::google_field_selector::FieldType {
+                            ::google_field_selector::FieldType::Leaf
                         }
                     }
                 })
@@ -1226,13 +1228,15 @@ impl Type {
                             #(#fields,)*
                         }
 
-                        impl ::field_selector::FieldSelector for #name {
-                            fn field_selector_with_ident(ident: &str, selector: &mut String) {
-                                match selector.chars().rev().nth(0) {
-                                    Some(',') | None => {},
-                                    _ => selector.push_str(","),
-                                }
-                                selector.push_str(ident);
+                        impl ::google_field_selector::FieldSelector for #name {
+                            fn fields() -> Vec<::google_field_selector::Field> {
+                                Vec::new()
+                            }
+                        }
+
+                        impl ::google_field_selector::ToFieldType for #name {
+                            fn field_type() -> ::google_field_selector::FieldType {
+                                ::google_field_selector::FieldType::Leaf
                             }
                         }
                     })
@@ -1247,8 +1251,16 @@ impl Type {
                         #[derive(#(#derives,)*)]
                         pub struct #name;
 
-                        impl ::field_selector::FieldSelector for #name {
-                            fn field_selector_with_ident(_ident: &str, _selector: &mut String) {}
+                        impl ::google_field_selector::FieldSelector for #name {
+                            fn fields() -> Vec<::google_field_selector::Field> {
+                                Vec::new()
+                            }
+                        }
+
+                        impl ::google_field_selector::ToFieldType for #name {
+                            fn field_type() -> ::google_field_selector::FieldType {
+                                ::google_field_selector::FieldType::Leaf
+                            }
                         }
                     })
                 }

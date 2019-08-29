@@ -153,9 +153,9 @@ fn exec_method(
                 /// fields.
                 pub fn execute<T>(self) -> Result<T, Box<dyn ::std::error::Error>>
                 where
-                    T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
+                    T: ::serde::de::DeserializeOwned + ::google_field_selector::FieldSelector,
                 {
-                    let fields = T::field_selector();
+                    let fields = ::google_field_selector::to_string::<T>();
                     let fields: Option<String> = if fields.is_empty() {
                         None
                     } else {
@@ -466,9 +466,15 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
             /// `FieldSelector` implementation.
             pub fn #iter_method_ident<T>(self) -> crate::iter::PageItemIter<Self, T>
             where
-                T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
+                T: ::serde::de::DeserializeOwned + ::google_field_selector::FieldSelector,
             {
-                self.#iter_method_ident_fields(Some(T::field_selector()))
+                let fields = ::google_field_selector::to_string::<T>();
+                let fields: Option<String> = if fields.is_empty() {
+                    None
+                } else {
+                    Some(fields)
+                };
+                self.#iter_method_ident_fields(fields)
             }
 
             /// Return an iterator that iterates over all `#prop_ident`. The
@@ -514,9 +520,15 @@ fn iter_defs(method: &Method, schemas: &BTreeMap<syn::Ident, Type>) -> (TokenStr
 
         pub fn iter<T>(self) -> crate::iter::PageIter<Self, T>
         where
-            T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
+            T: ::serde::de::DeserializeOwned + ::google_field_selector::FieldSelector,
         {
-            self.iter_with_fields(Some(T::field_selector()))
+            let fields = ::google_field_selector::to_string::<T>();
+            let fields: Option<String> = if fields.is_empty() {
+                None
+            } else {
+                Some(fields)
+            };
+            self.iter_with_fields(fields)
         }
 
         pub fn iter_with_default_fields(self) -> crate::iter::PageIter<Self, #response_type_path> {
@@ -593,12 +605,15 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                     quote!{
                         pub fn upload<T, R>(mut self, content: R, mime_type: ::mime::Mime) -> Result<T, Box<dyn ::std::error::Error>>
                         where
-                            T: ::serde::de::DeserializeOwned + ::field_selector::FieldSelector,
+                            T: ::serde::de::DeserializeOwned + ::google_field_selector::FieldSelector,
                             R: ::std::io::Read + ::std::io::Seek + Send + 'static,
                         {
-                            if self.fields.is_none() {
-                                self.fields = Some(T::field_selector());
-                            }
+                            let fields = ::google_field_selector::to_string::<T>();
+                            self.fields = if fields.is_empty() {
+                                None
+                            } else {
+                                Some(fields)
+                            };
                             let req = self._request(&self._simple_upload_path());
                             let req = req.query(&[("uploadType", "multipart")]);
                             use crate::multipart::{RelatedMultiPart, Part};

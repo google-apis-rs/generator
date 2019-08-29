@@ -14,7 +14,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 chrono = { version = "0.4", features = ["serde"] }
 reqwest = "0.9"
-field_selector = { git = "https://github.com/ggriffiniii/google-apis" }
+google_field_selector = { git = "https://github.com/google-apis-rs/generator" }
 mime = "0.3"
 textnonce = "0.6"
 yup-oauth2 = "3"
