@@ -5,5 +5,8 @@
 pub trait GetAccessToken {
     type Error: ::std::error::Error + 'static;
 
-    fn access_token(&self) -> Result<&str, Self::Error>;
+    fn access_token(&self) -> Result<String, Self::Error>;
 }
+
+#[cfg(feature = "yup-oauth2")]
+pub mod yup_oauth2;

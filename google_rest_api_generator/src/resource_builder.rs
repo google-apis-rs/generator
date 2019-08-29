@@ -48,9 +48,9 @@ pub(crate) fn generate(
 
             pub struct #action_ident<'a, A> {
                 pub(crate) reqwest: &'a reqwest::Client,
-                pub(crate) auth: &'a std::sync::Mutex<A>,
+                pub(crate) auth: &'a A,
             }
-            impl<'a, A: yup_oauth2::GetToken> #action_ident<'a, A> {
+            impl<'a, A: ::google_api_auth::GetAccessToken> #action_ident<'a, A> {
                 #(#method_actions)*
                 #(#nested_resource_actions)*
             }

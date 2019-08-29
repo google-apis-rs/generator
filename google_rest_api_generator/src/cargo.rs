@@ -15,10 +15,10 @@ serde_json = "1"
 chrono = { version = "0.4", features = ["serde"] }
 reqwest = "0.9"
 google_field_selector = { git = "https://github.com/google-apis-rs/generator" }
+#google_api_auth = { git = "https://github.com/google-apis-rs/generator" }
+google_api_auth = { path = "/usr/local/google/home/glenng/src/google-apis/google_api_auth" }
 mime = "0.3"
 textnonce = "0.6"
-yup-oauth2 = "3"
-tokio = "0.1"
 percent-encoding = "2"
 radix64 = "0.6"
 "#;

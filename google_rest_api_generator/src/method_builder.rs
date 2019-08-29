@@ -101,7 +101,7 @@ pub(crate) fn generate(
         &method.path,
         &method.params,
     );
-    let request_method = request_method(&method.http_method, &method.scopes, all_params);
+    let request_method = request_method(&method.http_method, all_params);
     let exec_method = exec_method(method.request.as_ref(), method.response.as_ref());
     let (iter_methods, iter_types_and_impls) = iter_defs(method, schemas);
     let download_method = download_method(&base_url, method);
@@ -111,11 +111,11 @@ pub(crate) fn generate(
         #[derive(Debug,Clone)]
         pub struct #builder_name<'a, A> {
             pub(crate) reqwest: &'a ::reqwest::Client,
-            pub(crate) auth: &'a ::std::sync::Mutex<A>,
+            pub(crate) auth: &'a A,
             #(#builder_fields,)*
         }
 
-        impl<'a, A: yup_oauth2::GetToken> #builder_name<'a, A> {
+        impl<'a, A: ::google_api_auth::GetAccessToken> #builder_name<'a, A> {
             #(#param_methods)*
 
             #iter_methods
@@ -197,7 +197,7 @@ fn exec_method(
                 where
                     T: ::serde::de::DeserializeOwned,
                 {
-                    let req = self._request(&self._path());
+                    let req = self._request(&self._path())?;
                     #set_body
                     Ok(req.send()?.error_for_status()?.json()?)
                 }
@@ -206,7 +206,7 @@ fn exec_method(
         None => {
             quote! {
                 pub fn execute(self) -> Result<(), Box<dyn ::std::error::Error>> {
-                    let req = self._request(&self._path());
+                    let req = self._request(&self._path())?;
                     #set_body
                     req.send()?.error_for_status()?;
                     Ok(())
@@ -362,23 +362,7 @@ fn reqwest_http_method(http_method: &::reqwest::Method) -> syn::Path {
     }
 }
 
-fn method_auth_scope<'a>(http_method: &::reqwest::Method, scopes: &'a [String]) -> Option<&'a str> {
-    scopes.get(0).map(|default| {
-        if http_method.is_safe() {
-            scopes.iter().find(|scope| scope.contains("readonly"))
-        } else {
-            None
-        }
-        .unwrap_or(default)
-        .as_str()
-    })
-}
-
-fn request_method<'a>(
-    http_method: &str,
-    scopes: &[String],
-    params: impl Iterator<Item = &'a Param>,
-) -> TokenStream {
+fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>) -> TokenStream {
     let query_params = params
         .filter(|param| param.location == "query")
         .map(|param| {
@@ -390,21 +374,12 @@ fn request_method<'a>(
     let http_method = ::reqwest::Method::from_str(http_method)
         .expect(format!("unknown http method: {}", http_method).as_str());
     let reqwest_method = reqwest_http_method(&http_method);
-    let auth = method_auth_scope(&http_method, scopes).map(|scope| {
-        quote! {
-            let mut auth = self.auth.lock().unwrap();
-            let fut = auth.token(vec![#scope]);
-            let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
-            let token = runtime.block_on(fut).unwrap().access_token;
-            let req = req.bearer_auth(&token);
-        }
-    });
     quote! {
-        fn _request(&self, path: &str) -> ::reqwest::RequestBuilder {
+        fn _request(&self, path: &str) -> Result<::reqwest::RequestBuilder, Box<dyn ::std::error::Error>> {
             let req = self.reqwest.request(#reqwest_method, path);
             #(let req = req.query(&[#query_params]);)*
-            #auth
-            req
+            let req = req.bearer_auth(self.auth.access_token()?);
+            Ok(req)
         }
     }
 }
@@ -412,7 +387,7 @@ fn request_method<'a>(
 fn iterable_method_impl<'a>(method: &Method) -> TokenStream {
     let builder_name = method.builder_name();
     quote! {
-        impl<'a, A: yup_oauth2::GetToken> crate::iter::IterableMethod for #builder_name<'a, A> {
+        impl<'a, A: ::google_api_auth::GetAccessToken> crate::iter::IterableMethod for #builder_name<'a, A> {
             fn set_page_token(&mut self, value: String) {
                 self.page_token = value.into();
             }
@@ -585,7 +560,7 @@ fn download_method(base_url: &str, method: &Method) -> TokenStream {
             W: ::std::io::Write + ?Sized,
         {
             self.alt = Some(crate::params::Alt::Media);
-            Ok(self._request(&self._path()).send()?.error_for_status()?.copy_to(output)?)
+            Ok(self._request(&self._path())?.send()?.error_for_status()?.copy_to(output)?)
         }
     }
 }
@@ -614,7 +589,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                             } else {
                                 Some(fields)
                             };
-                            let req = self._request(&self._simple_upload_path());
+                            let req = self._request(&self._simple_upload_path())?;
                             let req = req.query(&[("uploadType", "multipart")]);
                             use crate::multipart::{RelatedMultiPart, Part};
                             let mut multipart = RelatedMultiPart::new();
@@ -632,7 +607,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                         where
                             R: ::std::io::Read + ::std::io::Seek + Send + 'static,
                         {
-                            let req = self._request(&self._simple_upload_path());
+                            let req = self._request(&self._simple_upload_path())?;
                             let req = req.query(&[("uploadType", "multipart")]);
                             use crate::multipart::{RelatedMultiPart, Part};
                             let mut multipart = RelatedMultiPart::new();
@@ -667,7 +642,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
             );
             let upload_fn = quote!{
                 pub fn start_resumable_upload(self, mime_type: ::mime::Mime) -> Result<crate::ResumableUpload, Box<dyn ::std::error::Error>> {
-                    let req = self._request(&self._resumable_upload_path());
+                    let req = self._request(&self._resumable_upload_path())?;
                     let req = req.query(&[("uploadType", "resumable")]);
                     let req = req.header(::reqwest::header::HeaderName::from_static("x-upload-content-type"), mime_type.to_string());
                     #set_body

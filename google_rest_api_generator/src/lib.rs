@@ -244,19 +244,23 @@ impl APIDesc {
             }
             pub struct Client<A> {
                 reqwest: ::reqwest::Client,
-                auth: ::std::sync::Mutex<A>,
+                auth: A,
             }
-            impl<A: yup_oauth2::GetToken> Client<A> {
+            impl<A> Client<A>
+            where
+                A: ::google_api_auth::GetAccessToken,
+            {
                 pub fn new(auth: A) -> Self {
                     Client {
                         reqwest: ::reqwest::Client::builder().timeout(None).build().unwrap(),
-                        auth: ::std::sync::Mutex::new(auth),
+                        auth,
                     }
                 }
 
                 #(#resource_actions)*
                 #(#method_actions)*
             }
+
             #(#method_builders)*
             pub mod resources {
                 #(#resource_modules)*
