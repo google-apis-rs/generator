@@ -2,6 +2,7 @@
 
 members = [
     "discovery_parser",
+    "google_api_auth",
     "google_field_selector",
     "google_field_selector_derive",
     "google_rest_api_generator",
