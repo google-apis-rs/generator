@@ -3,7 +3,7 @@
 /// library optionally provides a variety of implementations, but users are also
 /// free to implement whatever logic they want for retrieving a token.
 pub trait GetAccessToken {
-    type Error: ::std::error::Error;
+    type Error: ::std::error::Error + 'static;
 
     fn access_token(&self) -> Result<&str, Self::Error>;
 }
