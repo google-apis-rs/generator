@@ -18,8 +18,8 @@ struct YupAuthenticator<T> {
 }
 
 impl<T> ::std::fmt::Debug for YupAuthenticator<T> {
-    fn fmt(&self, f: ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "YupAuthenticator{..}");
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "{}", "YupAuthenticator{..}")
     }
 }
 
