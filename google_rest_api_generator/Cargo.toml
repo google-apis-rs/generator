@@ -30,3 +30,6 @@ percent-encoding = "2.1.0"
 env_logger = "0.6.2"
 structopt = "0.2.18"
 
+[build-dependencies]
+chrono = "0.4.7"
+

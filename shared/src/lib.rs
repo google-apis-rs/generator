@@ -19,6 +19,8 @@ pub struct Standard {
     pub cargo_toml_path: String,
     /// A project relative path to the Rust library implementation
     pub lib_path: String,
+    /// A project relative path to the file providing metadata about the generator
+    pub metadata_path: String,
     /// The name of the folder into which we want to generate the library projects
     pub lib_dir: String,
     /// The name of the folder containing specification files, as seen from the 'generated' repository
@@ -29,6 +31,7 @@ impl Default for Standard {
     fn default() -> Self {
         Standard {
             cargo_toml_path: "Cargo.toml".into(),
+            metadata_path: "meta.json".into(),
             lib_path: "src/lib.rs".into(),
             lib_dir: "lib".into(),
             spec_dir: "etc/api".into(),
@@ -48,6 +51,8 @@ pub struct Api {
     pub name: String,
     /// The official API id, good for identification
     pub id: String,
+    /// A 'gen' directory relative path to generator metadata
+    pub metadata_file: PathBuf,
     /// A 'gen' directory relative path to the project manifest
     pub lib_cargo_file: PathBuf,
     /// A 'gen' directory relative path to the file containing errors happening during code generation
@@ -76,6 +81,7 @@ impl TryFrom<Item> for Api {
         Ok(Api {
             spec_file: gen_dir.join("spec.json"),
             id: value.id,
+            metadata_file: gen_dir.join(standard.metadata_path),
             lib_cargo_file: gen_dir
                 .join(standard.lib_dir)
                 .join(standard.cargo_toml_path),

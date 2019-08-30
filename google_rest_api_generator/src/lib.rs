@@ -1,9 +1,9 @@
 #![recursion_limit = "256"] // for quote macro
-
 use discovery_parser::{DiscoveryRestDesc, RefOrType as DiscoRefOrType};
 use log::{debug, info};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
+use serde::{Deserialize, Serialize};
 use shared;
 use std::collections::HashMap;
 use std::{borrow::Cow, collections::BTreeMap, error::Error};
@@ -18,6 +18,21 @@ mod resource_actions;
 mod resource_builder;
 mod rustfmt;
 
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
+pub struct Metadata {
+    pub git_hash: String,
+    pub ymd_date: String,
+}
+
+impl Default for Metadata {
+    fn default() -> Self {
+        Metadata {
+            git_hash: env!("GIT_HASH").into(),
+            ymd_date: env!("BUILD_DATE").into(),
+        }
+    }
+}
+
 pub fn generate<P>(
     api_name: &str,
     discovery_desc: &DiscoveryRestDesc,
@@ -28,6 +43,10 @@ where
 {
     use std::io::Write;
     let constants = shared::Standard::default();
+    std::fs::write(
+        base_dir.as_ref().join(constants.metadata_path),
+        serde_json::to_string_pretty(&Metadata::default())?,
+    )?;
     let base_dir = base_dir.as_ref().join(constants.lib_dir);
     let lib_path = base_dir.join(constants.lib_path);
     let cargo_toml_path = base_dir.join(constants.cargo_toml_path);
