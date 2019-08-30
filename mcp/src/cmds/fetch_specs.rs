@@ -3,10 +3,10 @@ use crate::options::fetch_specs::Args;
 use ci_info;
 use discovery_parser::{generated::ApiIndexV1, DiscoveryRestDesc, RestDescOrErr};
 use failure::{err_msg, format_err, Error, ResultExt};
-use google_rest_api_generator::generate as generate_library;
+use google_rest_api_generator::generate;
 use log::info;
 use rayon::prelude::*;
-use shared::{Api, MappedIndex, SkipIfErrorIsPresent, Standard};
+use shared::{Api, MappedIndex, SkipIfErrorIsPresent};
 use std::convert::TryFrom;
 use std::{convert::TryInto, fs, io, path::Path, time::Instant};
 
@@ -67,8 +67,15 @@ fn generate_code(
         output_directory,
         SkipIfErrorIsPresent::Generator,
     )?;
-    let standard = Standard::default();
     let should_generate = (|| -> Result<_, Error> {
+        let cargo_path = output_directory.join(&api.lib_cargo_file);
+        if !cargo_path.exists() {
+            info!(
+                "Need to generate '{}' as it was never generated before.",
+                api.crate_name
+            );
+            return Ok(true);
+        }
         let spec_path = spec_directory.join(&api.spec_file);
         let buf = match fs::read(&spec_path) {
             Ok(v) => Ok(v),
@@ -84,12 +91,7 @@ fn generate_code(
         info!("Skipping generation of '{}' as it is up to date", api.id);
         return Ok(desc);
     }
-    generate_library(
-        &api.crate_name,
-        &desc,
-        output_directory.join(standard.lib_dir),
-    )
-    .map_err(|e| {
+    generate(&api.crate_name, &desc, output_directory.join(&api.gen_dir)).map_err(|e| {
         let error = e.to_string();
         let error_path = output_directory.join(api.gen_error_file);
         fs::write(&error_path, &error).ok();

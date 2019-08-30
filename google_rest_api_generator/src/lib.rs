@@ -28,8 +28,9 @@ where
 {
     use std::io::Write;
     let constants = shared::Standard::default();
-    let lib_path = base_dir.as_ref().join(constants.lib_path);
-    let cargo_toml_path = base_dir.as_ref().join(constants.cargo_toml_path);
+    let base_dir = base_dir.as_ref().join(constants.lib_dir);
+    let lib_path = base_dir.join(constants.lib_path);
+    let cargo_toml_path = base_dir.join(constants.cargo_toml_path);
 
     info!("building api desc");
     let api_desc = APIDesc::from_discovery(discovery_desc);
