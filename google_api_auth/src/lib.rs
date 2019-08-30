@@ -8,5 +8,5 @@ pub trait GetAccessToken {
     fn access_token(&self) -> Result<String, Self::Error>;
 }
 
-#[cfg(feature = "yup-oauth2")]
+#[cfg(feature = "with-yup-oauth2")]
 pub mod yup_oauth2;

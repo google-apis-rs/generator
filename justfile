@@ -10,7 +10,7 @@ mcp-tests:  mcpd
 
 # run all tests driven by cargo
 cargo-tests:
-	cargo test --tests --examples
+	cargo test --tests --examples --all-features
 
 # update everything that was generated in <this> repository
 update-generated-fixtures: discovery-spec known-versions-fixture discovery-rs
