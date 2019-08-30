@@ -46,10 +46,10 @@ pub(crate) fn generate(method: &Method, global_params: &[Param]) -> TokenStream 
         .unwrap_or_else(String::new);
     quote! {
         #[doc = #method_description]
-        pub fn #method_ident(&self#(, #required_args)*) -> #method_builder_type<A> {
+        pub fn #method_ident(&self#(, #required_args)*) -> #method_builder_type {
             #method_builder_type{
                 reqwest: &self.reqwest,
-                auth: &self.auth,
+                auth: self.auth_ref(),
                 #(#method_builder_initializers,)*
             }
         }

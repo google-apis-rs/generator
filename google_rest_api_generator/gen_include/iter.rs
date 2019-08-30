@@ -1,7 +1,7 @@
 pub mod iter {
     pub trait IterableMethod {
         fn set_page_token(&mut self, value: String);
-        fn execute<T>(&mut self) -> Result<T, Box<dyn ::std::error::Error>>
+        fn execute<T>(&mut self) -> Result<T, crate::Error>
         where
             T: ::serde::de::DeserializeOwned;
     }
@@ -31,9 +31,9 @@ pub mod iter {
         M: IterableMethod,
         T: ::serde::de::DeserializeOwned,
     {
-        type Item = Result<T, Box<dyn ::std::error::Error>>;
+        type Item = Result<T, crate::Error>;
 
-        fn next(&mut self) -> Option<Result<T, Box<dyn ::std::error::Error>>> {
+        fn next(&mut self) -> Option<Result<T, crate::Error>> {
             if self.finished {
                 return None;
             }
@@ -79,9 +79,9 @@ pub mod iter {
         M: IterableMethod,
         T: ::serde::de::DeserializeOwned,
     {
-        type Item = Result<T, Box<dyn ::std::error::Error>>;
+        type Item = Result<T, crate::Error>;
 
-        fn next(&mut self) -> Option<Result<T, Box<dyn ::std::error::Error>>> {
+        fn next(&mut self) -> Option<Result<T, crate::Error>> {
             loop {
                 if let Some(v) = self.items.next() {
                     return Some(Ok(v));
@@ -95,7 +95,7 @@ pub mod iter {
                         let mut next_page: ::serde_json::Map<String, ::serde_json::Value> = next_page;
                         let items_array = match next_page.remove(self.items_field) {
                             Some(items) => items,
-                            None => return Some(Err(format!("no {} field found in iter response", self.items_field).into())),
+                            None => return Some(Err(crate::Error::Other(format!("no {} field found in iter response", self.items_field).into()))),
                         };
                         let items_vec: Result<Vec<T>, _> = ::serde_json::from_value(items_array);
                         match items_vec {

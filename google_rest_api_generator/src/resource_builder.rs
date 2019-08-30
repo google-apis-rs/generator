@@ -46,11 +46,15 @@ pub(crate) fn generate(
                 #(#param_type_defs)*
             }
 
-            pub struct #action_ident<'a, A> {
+            pub struct #action_ident<'a> {
                 pub(crate) reqwest: &'a reqwest::Client,
-                pub(crate) auth: &'a A,
+                pub(crate) auth: &'a dyn ::google_api_auth::GetAccessToken,
             }
-            impl<'a, A: ::google_api_auth::GetAccessToken> #action_ident<'a, A> {
+            impl<'a> #action_ident<'a> {
+                fn auth_ref(&self) -> &dyn ::google_api_auth::GetAccessToken {
+                    self.auth
+                }
+
                 #(#method_actions)*
                 #(#nested_resource_actions)*
             }

@@ -103,6 +103,7 @@ where
     let output_file = std::fs::File::create(&lib_path)?;
     let mut rustfmt_writer = crate::rustfmt::RustFmtWriter::new(output_file)?;
     rustfmt_writer.write_all(api_desc.generate().to_string().as_bytes())?;
+    rustfmt_writer.write_all(include_bytes!("../gen_include/error.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/percent_encode_consts.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/parsed_string.rs"))?;
@@ -278,19 +279,23 @@ impl APIDesc {
             pub mod params {
                 #(#param_type_defs)*
             }
-            pub struct Client<A> {
+            pub struct Client {
                 reqwest: ::reqwest::Client,
-                auth: A,
+                auth: Box<dyn ::google_api_auth::GetAccessToken>,
             }
-            impl<A> Client<A>
-            where
-                A: ::google_api_auth::GetAccessToken,
-            {
-                pub fn new(auth: A) -> Self {
+            impl Client {
+                pub fn new<A>(auth: A) -> Self
+                where
+                    A: Into<Box<dyn ::google_api_auth::GetAccessToken>>,
+                {
                     Client {
                         reqwest: ::reqwest::Client::builder().timeout(None).build().unwrap(),
-                        auth,
+                        auth: auth.into(),
                     }
+                }
+
+                fn auth_ref(&self) -> &dyn ::google_api_auth::GetAccessToken {
+                    self.auth.as_ref()
                 }
 
                 #(#resource_actions)*

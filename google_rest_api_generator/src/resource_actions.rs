@@ -12,10 +12,10 @@ pub(crate) fn generate(resource: &Resource) -> TokenStream {
     );
     quote! {
         #[doc= #description]
-        pub fn #resource_ident(&self) -> #parent_path::#resource_ident::#action_ident<A> {
+        pub fn #resource_ident(&self) -> #parent_path::#resource_ident::#action_ident {
             #parent_path::#resource_ident::#action_ident{
                 reqwest: &self.reqwest,
-                auth: &self.auth
+                auth: self.auth_ref(),
             }
         }
     }

@@ -12,6 +12,7 @@ where
     }
 }
 
+#[derive(Debug)]
 struct YupAuthenticator<T> {
     auth: Mutex<T>,
     scopes: Vec<String>,
@@ -21,9 +22,7 @@ impl<T> crate::GetAccessToken for YupAuthenticator<T>
 where
     T: ::yup_oauth2::GetToken,
 {
-    type Error = ::yup_oauth2::RequestError;
-
-    fn access_token(&self) -> Result<String, Self::Error> {
+    fn access_token(&self) -> Result<String, Box<::std::error::Error>> {
         let mut auth = self
             .auth
             .lock()

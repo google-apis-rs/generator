@@ -109,13 +109,13 @@ pub(crate) fn generate(
 
     quote! {
         #[derive(Debug,Clone)]
-        pub struct #builder_name<'a, A> {
+        pub struct #builder_name<'a> {
             pub(crate) reqwest: &'a ::reqwest::Client,
-            pub(crate) auth: &'a A,
+            pub(crate) auth: &'a dyn ::google_api_auth::GetAccessToken,
             #(#builder_fields,)*
         }
 
-        impl<'a, A: ::google_api_auth::GetAccessToken> #builder_name<'a, A> {
+        impl<'a> #builder_name<'a> {
             #(#param_methods)*
 
             #iter_methods
@@ -151,7 +151,7 @@ fn exec_method(
                 /// are not generic over the return type and deserialize the
                 /// response into an auto-generated struct will all possible
                 /// fields.
-                pub fn execute<T>(self) -> Result<T, Box<dyn ::std::error::Error>>
+                pub fn execute<T>(self) -> Result<T, crate::Error>
                 where
                     T: ::serde::de::DeserializeOwned + ::google_field_selector::FieldSelector,
                 {
@@ -169,7 +169,7 @@ fn exec_method(
                 /// the fields returned. This typically includes the most common
                 /// fields, but it will not include every possible attribute of
                 /// the response resource.
-                pub fn execute_with_default_fields(self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
+                pub fn execute_with_default_fields(self) -> Result<#resp_type_path, crate::Error> {
                     self.execute_with_fields(None::<&str>)
                 }
 
@@ -177,14 +177,14 @@ fn exec_method(
                 /// selector of `*`. This will include every attribute of the
                 /// response resource and should be limited to use during
                 /// development or debugging.
-                pub fn execute_with_all_fields(self) -> Result<#resp_type_path, Box<dyn ::std::error::Error>> {
+                pub fn execute_with_all_fields(self) -> Result<#resp_type_path, crate::Error> {
                     self.execute_with_fields(Some("*"))
                 }
 
                 /// Execute the given operation. This will use the `fields`
                 /// selector provided and will deserialize the response into
                 /// whatever return value is provided.
-                pub fn execute_with_fields<T, F>(mut self, fields: Option<F>) -> Result<T, Box<dyn ::std::error::Error>>
+                pub fn execute_with_fields<T, F>(mut self, fields: Option<F>) -> Result<T, crate::Error>
                 where
                     T: ::serde::de::DeserializeOwned,
                     F: Into<String>,
@@ -193,7 +193,7 @@ fn exec_method(
                     self._execute()
                 }
 
-                fn _execute<T>(&mut self) -> Result<T, Box<dyn ::std::error::Error>>
+                fn _execute<T>(&mut self) -> Result<T, crate::Error>
                 where
                     T: ::serde::de::DeserializeOwned,
                 {
@@ -205,7 +205,7 @@ fn exec_method(
         }
         None => {
             quote! {
-                pub fn execute(self) -> Result<(), Box<dyn ::std::error::Error>> {
+                pub fn execute(self) -> Result<(), crate::Error> {
                     let req = self._request(&self._path())?;
                     #set_body
                     req.send()?.error_for_status()?;
@@ -375,10 +375,10 @@ fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>
         .expect(format!("unknown http method: {}", http_method).as_str());
     let reqwest_method = reqwest_http_method(&http_method);
     quote! {
-        fn _request(&self, path: &str) -> Result<::reqwest::RequestBuilder, Box<dyn ::std::error::Error>> {
+        fn _request(&self, path: &str) -> Result<::reqwest::RequestBuilder, crate::Error> {
             let req = self.reqwest.request(#reqwest_method, path);
             #(let req = req.query(&[#query_params]);)*
-            let req = req.bearer_auth(self.auth.access_token()?);
+            let req = req.bearer_auth(self.auth.access_token().map_err(|err| crate::Error::OAuth2(err))?);
             Ok(req)
         }
     }
@@ -387,12 +387,12 @@ fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>
 fn iterable_method_impl<'a>(method: &Method) -> TokenStream {
     let builder_name = method.builder_name();
     quote! {
-        impl<'a, A: ::google_api_auth::GetAccessToken> crate::iter::IterableMethod for #builder_name<'a, A> {
+        impl<'a> crate::iter::IterableMethod for #builder_name<'a> {
             fn set_page_token(&mut self, value: String) {
                 self.page_token = value.into();
             }
 
-            fn execute<T>(&mut self) -> Result<T, Box<dyn ::std::error::Error>>
+            fn execute<T>(&mut self) -> Result<T, crate::Error>
             where
                 T: ::serde::de::DeserializeOwned,
             {
@@ -555,7 +555,7 @@ fn download_method(base_url: &str, method: &Method) -> TokenStream {
     );
     quote! {
         #download_path_method
-        pub fn download<W>(mut self, output: &mut W) -> Result<u64, Box<dyn ::std::error::Error>>
+        pub fn download<W>(mut self, output: &mut W) -> Result<u64, crate::Error>
         where
             W: ::std::io::Write + ?Sized,
         {
@@ -578,7 +578,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
             let upload_fn = match &method.response {
                 Some(_response) => {
                     quote!{
-                        pub fn upload<T, R>(mut self, content: R, mime_type: ::mime::Mime) -> Result<T, Box<dyn ::std::error::Error>>
+                        pub fn upload<T, R>(mut self, content: R, mime_type: ::mime::Mime) -> Result<T, crate::Error>
                         where
                             T: ::serde::de::DeserializeOwned + ::google_field_selector::FieldSelector,
                             R: ::std::io::Read + ::std::io::Seek + Send + 'static,
@@ -603,7 +603,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                 },
                 None => {
                     quote!{
-                        pub fn upload<R>(self, content: R, mime_type: ::mime::Mime) -> Result<(), Box<dyn ::std::error::Error>>
+                        pub fn upload<R>(self, content: R, mime_type: ::mime::Mime) -> Result<(), crate::Error>
                         where
                             R: ::std::io::Read + ::std::io::Seek + Send + 'static,
                         {
@@ -641,14 +641,14 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                 &method.params,
             );
             let upload_fn = quote!{
-                pub fn start_resumable_upload(self, mime_type: ::mime::Mime) -> Result<crate::ResumableUpload, Box<dyn ::std::error::Error>> {
+                pub fn start_resumable_upload(self, mime_type: ::mime::Mime) -> Result<crate::ResumableUpload, crate::Error> {
                     let req = self._request(&self._resumable_upload_path())?;
                     let req = req.query(&[("uploadType", "resumable")]);
                     let req = req.header(::reqwest::header::HeaderName::from_static("x-upload-content-type"), mime_type.to_string());
                     #set_body
                     let resp = req.send()?.error_for_status()?;
-                    let location_header = resp.headers().get(::reqwest::header::LOCATION).ok_or_else(|| format!("No LOCATION header returned when initiating resumable upload"))?;
-                    let upload_url = ::std::str::from_utf8(location_header.as_bytes())?.to_owned();
+                    let location_header = resp.headers().get(::reqwest::header::LOCATION).ok_or_else(|| crate::Error::Other(format!("No LOCATION header returned when initiating resumable upload").into()))?;
+                    let upload_url = ::std::str::from_utf8(location_header.as_bytes()).map_err(|_| crate::Error::Other(format!("Non UTF8 LOCATION header returned").into()))?.to_owned();
                     Ok(crate::ResumableUpload::new(self.reqwest.clone(), upload_url))
                 }
             };
