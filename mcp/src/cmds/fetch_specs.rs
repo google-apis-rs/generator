@@ -144,9 +144,11 @@ pub fn execute(
         .par_iter()
         .map(|api| fetch_spec(api).map(|r| (api, r)))
         .filter_map(log_error_and_continue)
-        .map(|(api, v)| write_artifacts(api, v, &spec_directory))
+        .map(|(api, v)| {
+            generate_code(v, &info, &spec_directory, &output_directory).map(|v| (api, v))
+        })
         .filter_map(log_error_and_continue)
-        .map(|api| generate_code(api, &info, &spec_directory, &output_directory))
+        .map(|(api, v)| write_artifacts(api, v, &spec_directory))
         .filter_map(log_error_and_continue)
         .for_each(|api| info!("Successfully processed {}:{}", api.name, api.version));
     info!(
