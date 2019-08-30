@@ -41,13 +41,29 @@ pub fn generate<P>(
 where
     P: AsRef<std::path::Path>,
 {
-    use std::io::Write;
     let constants = shared::Standard::default();
     std::fs::write(
         base_dir.as_ref().join(constants.metadata_path),
         serde_json::to_string_pretty(&Metadata::default())?,
     )?;
-    let base_dir = base_dir.as_ref().join(constants.lib_dir);
+    generate_library(
+        api_name,
+        discovery_desc,
+        base_dir.as_ref().join(constants.lib_dir),
+    )
+}
+
+pub fn generate_library<P>(
+    api_name: &str,
+    discovery_desc: &DiscoveryRestDesc,
+    base_dir: P,
+) -> Result<(), Box<dyn Error>>
+where
+    P: AsRef<std::path::Path>,
+{
+    use std::io::Write;
+    let constants = shared::Standard::default();
+    let base_dir = base_dir.as_ref();
     let lib_path = base_dir.join(constants.lib_path);
     let cargo_toml_path = base_dir.join(constants.cargo_toml_path);
 
