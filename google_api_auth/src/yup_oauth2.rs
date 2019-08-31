@@ -1,6 +1,6 @@
 use ::std::sync::Mutex;
 
-pub fn from_authenticator<T, I, S>(auth: T, scopes: I) -> impl crate::GetAccessToken + Send + Sync
+pub fn from_authenticator<T, I, S>(auth: T, scopes: I) -> impl crate::GetAccessToken
 where
     T: ::yup_oauth2::GetToken + Send,
     I: IntoIterator<Item = S>,
@@ -25,7 +25,7 @@ impl<T> ::std::fmt::Debug for YupAuthenticator<T> {
 
 impl<T> crate::GetAccessToken for YupAuthenticator<T>
 where
-    T: ::yup_oauth2::GetToken,
+    T: ::yup_oauth2::GetToken + Send,
 {
     fn access_token(&self) -> Result<String, Box<dyn ::std::error::Error>> {
         let mut auth = self
