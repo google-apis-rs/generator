@@ -7,8 +7,7 @@ use google_rest_api_generator::{generate, Metadata};
 use log::info;
 use rayon::prelude::*;
 use shared::{Api, MappedIndex, SkipIfErrorIsPresent};
-use std::convert::TryFrom;
-use std::{convert::TryInto, fs, io, path::Path, time::Instant};
+use std::{convert::TryFrom, convert::TryInto, fs, io, path::Path, time::Instant};
 
 fn write_artifacts(
     api: &Api,
