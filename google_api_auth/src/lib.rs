@@ -6,7 +6,10 @@ pub trait GetAccessToken: ::std::fmt::Debug + Send + Sync {
     fn access_token(&self) -> Result<String, Box<dyn ::std::error::Error>>;
 }
 
-impl<T> From<T> for Box<dyn GetAccessToken> where T: GetAccessToken + 'static {
+impl<T> From<T> for Box<dyn GetAccessToken>
+where
+    T: GetAccessToken + 'static,
+{
     fn from(x: T) -> Self {
         Box::new(x)
     }
