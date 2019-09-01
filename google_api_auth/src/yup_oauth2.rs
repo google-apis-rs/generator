@@ -42,27 +42,18 @@ where
 mod tests {
     use super::*;
     use crate::GetAccessToken;
-    use hyper;
-    use std::path::PathBuf;
     use yup_oauth2 as oauth2;
 
     #[test]
     fn it_works() {
-        let client = hyper::Client::new();
         let inf = oauth2::InstalledFlow::new(
-            client.clone(),
-            yup_oauth2::DefaultFlowDelegate,
             oauth2::ApplicationSecret::default(),
             yup_oauth2::InstalledFlowReturnMethod::HTTPRedirect(8081),
         );
 
-        let auth = oauth2::Authenticator::new_disk(
-            client,
-            inf,
-            oauth2::DefaultAuthenticatorDelegate,
-            PathBuf::from("./").join("token.json").to_string_lossy(),
-        )
-        .expect("create a new statically known client");
+        let auth = oauth2::Authenticator::new(inf)
+            .build()
+            .expect("create a new statically known client");
         let auth = from_authenticator(auth, vec!["foo", "bar"]);
 
         fn this_should_work<T: GetAccessToken>(_x: T) {};

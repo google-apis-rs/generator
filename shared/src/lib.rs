@@ -137,7 +137,12 @@ impl Api {
     }
 }
 
-pub const CI_WHITELIST: &[&'static str] = &["urlshortener:v1", "admin:directory_v1", "drive:v3", "oauth2:v2"];
+pub const CI_WHITELIST: &[&'static str] = &[
+    "urlshortener:v1",
+    "admin:directory_v1",
+    "drive:v3",
+    "oauth2:v2",
+];
 pub enum SkipIfErrorIsPresent {
     GeneratorAndCargo,
     Generator,
