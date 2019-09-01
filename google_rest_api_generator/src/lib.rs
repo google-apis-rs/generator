@@ -1141,9 +1141,12 @@ impl Type {
                 let to_string_arms = enums.iter().map(|EnumDesc { ident, value, .. }| {
                     quote! {#name::#ident => #value}
                 });
-                let from_string_arms = enums.iter().map(|EnumDesc { ident, value, .. }| {
-                    quote! {#value => #name::#ident}
-                });
+                let from_string_arms = &enums
+                    .iter()
+                    .map(|EnumDesc { ident, value, .. }| {
+                        quote! {#value => #name::#ident}
+                    })
+                    .collect::<Vec<_>>();
 
                 Some(quote! {
                     #[derive(#(#derives,)*)]
@@ -1156,6 +1159,23 @@ impl Type {
                             match self {
                                 #(#to_string_arms,)*
                             }
+                        }
+                    }
+
+                    impl ::std::convert::AsRef<str> for #name {
+                        fn as_ref(&self) -> &str {
+                            self.as_str()
+                        }
+                    }
+
+                    impl ::std::str::FromStr for #name {
+                        type Err = ();
+
+                        fn from_str(s: &str) -> ::std::result::Result<#name, ()> {
+                            Ok(match s {
+                                #(#from_string_arms,)*
+                                _ => return Err(()),
+                            })
                         }
                     }
 
