@@ -4,29 +4,50 @@ use serde_json;
 use shared;
 use simple_logger;
 use std::{
+    error::Error,
     io,
     path::Path,
     process::Stdio,
     process::{Command, ExitStatus},
+    str::FromStr,
 };
 use tempfile::TempDir;
+use toml_edit;
 
 static SPEC: &str = include_str!("./spec.json");
 
+fn fixup(path: &Path, standard: &shared::Standard) -> Result<(), Box<dyn Error>> {
+    let cargo_toml_path = path.join(&standard.cargo_toml_path);
+    let toml = std::fs::read_to_string(&cargo_toml_path)?;
+    let mut document = toml_edit::Document::from_str(&toml)?;
+
+    document["workspace"] = toml_edit::table();
+    let dependencies = &mut document["dependencies"];
+    for name in &["google_field_selector", "google_api_auth"] {
+        let dep = dependencies[name].as_inline_table_mut().expect(name);
+
+        dep.remove("git");
+        dep.get_or_insert("path", format!("../../../../../{}", name));
+    }
+
+    std::fs::write(&cargo_toml_path, &document.to_string().as_bytes())?;
+    Ok(())
+}
+
 #[test]
-fn valid_code_is_produced_for_complex_spec() -> Result<(), Box<dyn std::error::Error>> {
+fn valid_code_is_produced_for_complex_spec() -> Result<(), Box<dyn Error>> {
     simple_logger::init_with_level("INFO".parse()?)?;
     let spec: DiscoveryRestDesc = serde_json::from_str(SPEC)?;
     let temp_dir = TempDir::new_in(Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/output"))?;
-    lib::generate("spec", &spec, &temp_dir)?;
+    lib::generate("generated-api", &spec, &temp_dir)?;
+
     let standard = shared::Standard::default();
-    let lib_path = temp_dir.path().join(standard.lib_dir);
+    let lib_path = temp_dir.path().join(&standard.lib_dir);
+
+    fixup(&lib_path, &standard)?;
 
     let status = cargo(&lib_path, "check")?;
     assert!(status.success(), "cargo check failed on library");
-
-    let status = cargo(&lib_path, "doc")?;
-    assert!(status.success(), "cargo doc failed on library");
 
     Ok(())
 }
