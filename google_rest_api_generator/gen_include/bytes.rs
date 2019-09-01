@@ -5,7 +5,7 @@ pub mod bytes {
     use radix64::URL_SAFE as BASE64_CFG;
 
     #[derive(Debug,Clone,Eq,PartialEq,Ord,PartialOrd,Hash)]
-    pub struct Bytes(Vec<u8>);
+    pub struct Bytes(pub Vec<u8>);
 
     impl ::std::convert::From<Vec<u8>> for Bytes {
         fn from(x: Vec<u8>) -> Bytes {
