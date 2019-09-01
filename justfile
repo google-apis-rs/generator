@@ -22,6 +22,7 @@ mcpd:
 # fetch the spec used as fixture in our tests
 discovery-spec:
 	curl https://www.googleapis.com/discovery/v1/apis/admin/directory_v1/rest -o discovery_parser/tests/spec.json
+	curl https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest -o google_rest_api_generator/tests/spec.json
 
 # Update a fixture with all API versions encountered in the Google API index
 known-versions-fixture:
