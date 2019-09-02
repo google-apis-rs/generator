@@ -1,6 +1,5 @@
 use discovery_parser::DiscoveryRestDesc;
 use google_rest_api_generator as lib;
-use ci_info;
 use serde_json;
 use shared;
 use simple_logger;
@@ -19,11 +18,6 @@ static SPEC: &str = include_str!("./spec.json");
 
 #[test]
 fn valid_code_is_produced_for_complex_spec() -> Result<(), Box<dyn Error>> {
-    // On CI, we run more thorough integration tests at the end, which includes
-    // cargo check and cargo doc
-    if ci_info::is_ci() {
-        return Ok(())
-    }
     simple_logger::init_with_level("INFO".parse()?)?;
     let spec: DiscoveryRestDesc = serde_json::from_str(SPEC)?;
     let temp_dir = TempDir::new_in(Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/output"))?;
