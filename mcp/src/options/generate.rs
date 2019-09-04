@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
+#[structopt(setting = structopt::clap::AppSettings::ColoredHelp)]
 /// Generate libraries and command-line interface for said libraries based on Google API specifications.
 ///
 /// The output will always be formatted using rustfmt. You can set the RUSTFMT environment variable to an

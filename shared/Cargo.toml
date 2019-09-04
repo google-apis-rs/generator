@@ -17,5 +17,5 @@ ci_info = "0.8.0"
 
 [dev-dependencies]
 itertools = "0.8.0"
-insta = "0.10.1"
+insta = "0.11"
 

@@ -2,7 +2,7 @@ use std::{ffi::OsString, path::PathBuf};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
+#[structopt(setting = structopt::clap::AppSettings::ColoredHelp)]
 pub struct Args {
     /// The mapped index with information about APIs. It should correspond to the Cargo workspace file.
     #[structopt(parse(from_os_str))]
@@ -18,6 +18,6 @@ pub struct Args {
 
     /// All arguments to be provided to cargo
     #[structopt(parse(from_os_str))]
-    #[structopt(raw(min_values = "1"))]
+    #[structopt(min_values = 1)]
     pub cargo_arguments: Vec<OsString>,
 }

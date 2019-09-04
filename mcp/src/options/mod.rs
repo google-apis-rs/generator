@@ -5,13 +5,13 @@ pub fn _output_formats() -> &'static [&'static str] {
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-#[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
-#[structopt(raw(setting = "structopt::clap::AppSettings::VersionlessSubcommands"))]
-#[structopt(raw(setting = "structopt::clap::AppSettings::DeriveDisplayOrder"))]
+#[structopt(setting = structopt::clap::AppSettings::ColoredHelp)]
+#[structopt(setting = structopt::clap::AppSettings::VersionlessSubcommands)]
+#[structopt(setting = structopt::clap::AppSettings::DeriveDisplayOrder)]
 pub struct Args {
     /// The desired log level.
     #[structopt(short = "l", long = "log-level", default_value = "INFO")]
-    #[structopt(raw(possible_values = r#"&["INFO", "ERROR", "DEBUG"]"#))]
+    #[structopt(possible_values = &["INFO", "ERROR", "DEBUG"])]
     pub log_level: log::Level,
     #[structopt(subcommand)]
     pub(crate) cmd: SubCommand,
@@ -32,7 +32,7 @@ pub enum SubCommand {
     /// Transform the API index into data we can use during substitution
     MapApiIndex(map_index::Args),
     #[structopt(name = "substitute")]
-    #[structopt(raw(alias = "\"sub\""))]
+    #[structopt(alias = "sub")]
     /// Substitutes templates using structured data.
     Substitute(substitute::Args),
     #[structopt(name = "cargo-errors")]

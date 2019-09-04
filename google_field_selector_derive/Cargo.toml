@@ -10,7 +10,7 @@ doctest = false
 proc-macro = true
 
 [dependencies]
-serde_derive_internals = "0.24"
-syn = "0.15"
-quote = "0.6"
-proc-macro2 = "0.4"
+serde_derive_internals = { git = "https://github.com/serde-rs/serde", version = "0.24.1" } # just for syn 1.0 dependencies
+syn = "1"
+quote = "1"
+proc-macro2 = "1"

@@ -15,8 +15,16 @@ pub fn derive_field_selector(input: TokenStream) -> TokenStream {
 
 fn expand_derive_field_selector(input: &DeriveInput) -> Result<TokenStream2, Box<dyn Error>> {
     let ctx = serdei::Ctxt::new();
-    let cont = serdei::ast::Container::from_ast(&ctx, &input, serdei::Derive::Deserialize);
-    ctx.check()?;
+    let cont = serdei::ast::Container::from_ast(&ctx, input, serdei::Derive::Deserialize);
+    if let Err(errors) = ctx.check() {
+        return Err(errors
+            .into_iter()
+            .map(|e| e.to_string())
+            .collect::<Vec<_>>()
+            .join("\n")
+            .into());
+    }
+    let cont = cont.expect("no option if there are no errors");
     let field_output: Vec<proc_macro2::TokenStream> = match cont.data {
         serdei::ast::Data::Struct(serdei::ast::Style::Struct, fields) => {
             fields.iter().map(selector_for_field).collect()
@@ -61,7 +69,7 @@ fn selector_for_field<'a>(field: &serdei::ast::Field<'a>) -> TokenStream2 {
             Ok(meta @ syn::Meta::List(_)) => meta,
             _ => return None,
         };
-        if metalist.name() != "field_selector" {
+        if metalist.path().get_ident().map(|n| n.to_string()) != Some("field_selector".into()) {
             return None;
         }
         let nestedlist = match metalist {
@@ -71,15 +79,17 @@ fn selector_for_field<'a>(field: &serdei::ast::Field<'a>) -> TokenStream2 {
         for meta in nestedlist.iter() {
             match meta {
                 syn::NestedMeta::Meta(syn::Meta::NameValue(syn::MetaNameValue {
-                    ident: name,
+                    path: name,
                     lit: syn::Lit::Str(value),
                     ..
-                })) if name == "container_of" => {
+                })) if name.get_ident().map(|n| n.to_string()) == Some("container_of".into()) => {
                     if let Ok(typ_path) = value.parse() {
                         return Some(AttrOverride::ContainerOf(typ_path));
                     }
                 }
-                syn::NestedMeta::Meta(syn::Meta::Word(word)) if word == "leaf" => {
+                syn::NestedMeta::Meta(syn::Meta::Path(word))
+                    if word.get_ident().map(|x| x.to_string()) == Some("leaf".into()) =>
+                {
                     return Some(AttrOverride::Leaf);
                 }
                 _ => {}

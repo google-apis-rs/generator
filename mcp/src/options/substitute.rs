@@ -1,12 +1,11 @@
-use clap::ArgSettings;
 use failure::{bail, Error};
 use std::ffi::OsString;
 use structopt::StructOpt;
 use templating::{Spec, StreamOrPath};
 
 #[derive(Debug, StructOpt)]
-#[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
-#[structopt(raw(setting = "structopt::clap::AppSettings::AllowLeadingHyphen"))]
+#[structopt(setting = structopt::clap::AppSettings::ColoredHelp)]
+#[structopt(setting = structopt::clap::AppSettings::AllowLeadingHyphen)]
 /// Substitutes templates using structured data.
 ///
 /// The idea is to build a tree of data that is used to substitute in various templates, using multiple inputs and outputs.
@@ -15,7 +14,7 @@ use templating::{Spec, StreamOrPath};
 /// Read more on their website at https://shopify.github.io/liquid .
 pub struct Args {
     #[structopt(parse(from_os_str))]
-    #[structopt(raw(set = "ArgSettings::RequireEquals"))]
+    #[structopt(set = structopt::clap::ArgSettings::RequireEquals)]
     #[structopt(
         short = "s",
         long = "separator",
@@ -29,8 +28,8 @@ pub struct Args {
     /// The separator is also used when writing multiple templates into the same file, like in 'a:out b:out'.
     pub separator: OsString,
 
-    #[structopt(raw(set = "ArgSettings::RequireEquals"))]
-    #[structopt(raw(use_delimiter = "true"))]
+    #[structopt(set = structopt::clap::ArgSettings::RequireEquals)]
+    #[structopt(use_delimiter = true)]
     #[structopt(
         long = "replace",
         value_delimiter = ":",
@@ -46,16 +45,16 @@ pub struct Args {
     /// If both of them are invalid, the command will fail.
     pub validate: bool,
 
-    #[structopt(raw(set = "ArgSettings::RequireEquals"))]
+    #[structopt(set = structopt::clap::ArgSettings::RequireEquals)]
     #[structopt(short = "d", long = "data", name = "path")]
-    #[structopt(parse(try_from_str = "stream_from_str"))]
+    #[structopt(parse(try_from_str = stream_from_str))]
     /// Structured data in YAML or JSON format to use when instantiating/substituting the template.
     /// If set, everything from standard input is interpreted as template.
     pub data: Option<StreamOrPath>,
 
-    #[structopt(raw(set = "ArgSettings::RequireEquals"))]
+    #[structopt(set = structopt::clap::ArgSettings::RequireEquals)]
     #[structopt(value_name = "template-spec")]
-    #[structopt(parse(try_from_str = "spec_from_str"))]
+    #[structopt(parse(try_from_str = spec_from_str))]
     /// Identifies the how to map template files to output.
     ///
     /// The syntax is '<src>:<dst>'.

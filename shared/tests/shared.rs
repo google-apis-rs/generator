@@ -34,7 +34,7 @@ mod make_target {
 }
 
 mod parse_version {
-    use insta::assert_snapshot_matches;
+    use insta::assert_snapshot;
     use itertools::Itertools;
     use shared::parse_version;
     use std::io::{BufRead, BufReader};
@@ -54,6 +54,6 @@ mod parse_version {
                 )
             })
             .join("\n");
-        assert_snapshot_matches!(expected);
+        assert_snapshot!(expected);
     }
 }
