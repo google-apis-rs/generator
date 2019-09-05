@@ -73,7 +73,15 @@ where
     info!("creating directory and Cargo.toml");
     std::fs::create_dir_all(&lib_path.parent().expect("file in directory"))?;
 
-    let cargo_contents = cargo::cargo_toml(api_name).to_string();
+    let any_bytes_types = api_desc.fold_types(false, |accum, typ| {
+        accum
+            || match &typ.type_desc {
+                TypeDesc::Bytes => true,
+                _ => false,
+            }
+    });
+
+    let cargo_contents = cargo::cargo_toml(api_name, any_bytes_types).to_string();
     std::fs::write(&cargo_toml_path, &cargo_contents)?;
 
     let any_resumable_upload_methods = api_desc.fold_methods(false, |accum, method| {
@@ -83,13 +91,6 @@ where
                 .as_ref()
                 .and_then(|media_upload| media_upload.resumable_path.as_ref())
                 .is_some()
-    });
-    let any_bytes_types = api_desc.fold_types(false, |accum, typ| {
-        accum
-            || match &typ.type_desc {
-                TypeDesc::Bytes => true,
-                _ => false,
-            }
     });
     let any_iterable_methods = api_desc.fold_methods(false, |accum, method| {
         accum
@@ -112,9 +113,6 @@ where
     }
     if any_iterable_methods {
         rustfmt_writer.write_all(include_bytes!("../gen_include/iter.rs"))?;
-    }
-    if any_bytes_types {
-        rustfmt_writer.write_all(include_bytes!("../gen_include/bytes.rs"))?;
     }
     rustfmt_writer.close()?;
     info!("done");
@@ -1043,7 +1041,7 @@ impl Type {
             },
             TypeDesc::Bytes => Type {
                 id: parse_quote! {Bytes},
-                parent_path: parse_quote! {crate::bytes},
+                parent_path: parse_quote! {::google_api_bytes},
                 type_desc,
             },
             TypeDesc::Date => Type {

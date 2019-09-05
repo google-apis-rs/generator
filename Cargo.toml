@@ -11,6 +11,7 @@ debug-assertions = false
 members = [
     "discovery_parser",
     "google_api_auth",
+    "google_api_bytes",
     "google_field_selector",
     "google_field_selector_derive",
     "google_rest_api_generator",

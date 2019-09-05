@@ -19,13 +19,15 @@ google_api_auth = { git = "https://github.com/google-apis-rs/generator" }
 mime = "0.3"
 textnonce = "0.6"
 percent-encoding = "2"
-radix64 = "0.6"
 "#;
 
-pub(crate) fn cargo_toml(crate_name: impl Into<String>) -> Document {
+pub(crate) fn cargo_toml(crate_name: impl Into<String>, include_bytes_dep: bool) -> Document {
     let mut doc: Document = CARGO_TOML.trim().parse().unwrap();
     let package = &mut doc["package"];
     package["name"] = value(crate_name.into());
     package["version"] = value("0.1.0");
+    if include_bytes_dep {
+        doc["dependencies"]["google_api_bytes"]["git"] = value("https://github.com/google-apis-rs/generator");
+    }
     doc
 }
