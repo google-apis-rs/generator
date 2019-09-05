@@ -49,13 +49,29 @@ where
     )?;
 
     let lib_dir = base_dir.as_ref().join(constants.lib_dir);
+    let cli_dir = base_dir.as_ref().join(constants.cli_dir);
     crossbeam::scope(|s| {
         s.spawn(|_| {
             generate_library(api_name, lib_dir, &discovery_desc).map_err(|e| e.to_string())
         });
+        s.spawn(|_| generate_cli(api_name, cli_dir, &discovery_desc).map_err(|e| e.to_string()));
     })
     .unwrap();
-    
+
+    Ok(())
+}
+
+fn generate_cli<P>(
+    _api_name: &str,
+    _base_dir: P,
+    discovery_desc: &DiscoveryRestDesc,
+) -> Result<(), Box<dyn Error>>
+where
+    P: AsRef<std::path::Path>,
+{
+    info!("cli: building api desc");
+    let _api_desc = APIDesc::from_discovery(discovery_desc);
+
     Ok(())
 }
 
@@ -73,8 +89,11 @@ where
     let lib_path = base_dir.join(constants.lib_path);
     let cargo_toml_path = base_dir.join(constants.cargo_toml_path);
 
-    info!("creating directory and Cargo.toml");
+    info!("api: creating directory and Cargo.toml");
     std::fs::create_dir_all(&lib_path.parent().expect("file in directory"))?;
+
+    info!("api: building api desc");
+    let api_desc = APIDesc::from_discovery(discovery_desc);
 
     let any_bytes_types = api_desc.fold_types(false, |accum, typ| {
         accum
@@ -87,7 +106,7 @@ where
     let cargo_contents = cargo::cargo_toml(api_name, any_bytes_types).to_string();
     std::fs::write(&cargo_toml_path, &cargo_contents)?;
 
-    info!("building api desc");
+    info!("api: building api desc");
     let api_desc = APIDesc::from_discovery(discovery_desc);
 
     let any_resumable_upload_methods = api_desc.fold_methods(false, |accum, method| {
@@ -106,7 +125,7 @@ where
             }
     });
 
-    info!("writing lib '{}'", lib_path.display());
+    info!("api: writing lib '{}'", lib_path.display());
     let output_file = std::fs::File::create(&lib_path)?;
     let mut rustfmt_writer = crate::rustfmt::RustFmtWriter::new(output_file)?;
     rustfmt_writer.write_all(api_desc.generate().to_string().as_bytes())?;
@@ -121,7 +140,7 @@ where
         rustfmt_writer.write_all(include_bytes!("../gen_include/iter.rs"))?;
     }
     rustfmt_writer.close()?;
-    info!("done");
+    info!("api: done");
     Ok(())
 }
 

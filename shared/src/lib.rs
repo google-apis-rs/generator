@@ -21,8 +21,10 @@ pub struct Standard {
     pub lib_path: String,
     /// A project relative path to the file providing metadata about the generator
     pub metadata_path: String,
-    /// The name of the folder into which we want to generate the library projects
+    /// The name of the folder into which we want to generate the library project
     pub lib_dir: String,
+    /// The name of the folder into which we want to generate the command-line interface project
+    pub cli_dir: String,
     /// The name of the folder containing specification files, as seen from the 'generated' repository
     pub spec_dir: String,
 }
@@ -34,6 +36,7 @@ impl Default for Standard {
             metadata_path: "meta.json".into(),
             lib_path: "src/lib.rs".into(),
             lib_dir: "lib".into(),
+            cli_dir: "cli".into(),
             spec_dir: "etc/api".into(),
         }
     }
