@@ -11,6 +11,6 @@ proc-macro = true
 
 [dependencies]
 serde_derive_internals = { git = "https://github.com/serde-rs/serde", version = "0.24.1" } # just for syn 1.0 dependencies
-syn = "1"
+syn = "1.0.3"
 quote = "1"
 proc-macro2 = "1"
