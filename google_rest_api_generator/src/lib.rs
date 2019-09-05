@@ -48,20 +48,21 @@ where
         serde_json::to_string_pretty(&Metadata::default())?,
     )?;
 
-    info!("building api desc");
-    let api_desc = APIDesc::from_discovery(discovery_desc);
-
-    generate_library(
-        api_name,
-        base_dir.as_ref().join(constants.lib_dir),
-        &api_desc,
-    )
+    let lib_dir = base_dir.as_ref().join(constants.lib_dir);
+    crossbeam::scope(|s| {
+        s.spawn(|_| {
+            generate_library(api_name, lib_dir, &discovery_desc).map_err(|e| e.to_string())
+        });
+    })
+    .unwrap();
+    
+    Ok(())
 }
 
 fn generate_library<P>(
     api_name: &str,
     base_dir: P,
-    api_desc: &APIDesc,
+    discovery_desc: &DiscoveryRestDesc,
 ) -> Result<(), Box<dyn Error>>
 where
     P: AsRef<std::path::Path>,
@@ -85,6 +86,9 @@ where
 
     let cargo_contents = cargo::cargo_toml(api_name, any_bytes_types).to_string();
     std::fs::write(&cargo_toml_path, &cargo_contents)?;
+
+    info!("building api desc");
+    let api_desc = APIDesc::from_discovery(discovery_desc);
 
     let any_resumable_upload_methods = api_desc.fold_methods(false, |accum, method| {
         accum
