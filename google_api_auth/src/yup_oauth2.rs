@@ -27,7 +27,7 @@ impl<T> crate::GetAccessToken for YupAuthenticator<T>
 where
     T: ::yup_oauth2::GetToken + Send,
 {
-    fn access_token(&self) -> Result<String, Box<dyn ::std::error::Error>> {
+    fn access_token(&self) -> Result<String, Box<dyn ::std::error::Error + Send + Sync>> {
         let mut auth = self
             .auth
             .lock()

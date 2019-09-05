@@ -1,9 +1,9 @@
 #[derive(Debug)]
 pub enum Error {
-    OAuth2(Box<dyn ::std::error::Error>),
+    OAuth2(Box<dyn ::std::error::Error + Send + Sync>),
     JSON(::serde_json::Error),
     Reqwest(::reqwest::Error),
-    Other(Box<dyn ::std::error::Error>),
+    Other(Box<dyn ::std::error::Error + Send + Sync>),
 }
 
 impl Error {
