@@ -11,5 +11,5 @@ default = []
 with-yup-oauth2 = ["yup-oauth2", "tokio"]
 
 [dependencies]
-yup-oauth2 = { git = "https://github.com/dermesser/yup-oauth2", optional = true } # Use released version once it includes 778e5af
+yup-oauth2 = { git = "https://github.com/dermesser/yup-oauth2", optional = true, rev = "778e5af" } # Use released version once it includes 778e5af
 tokio = { version = "0.1", optional = true }
