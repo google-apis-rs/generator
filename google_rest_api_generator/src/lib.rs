@@ -47,17 +47,21 @@ where
         base_dir.as_ref().join(constants.metadata_path),
         serde_json::to_string_pretty(&Metadata::default())?,
     )?;
+
+    info!("building api desc");
+    let api_desc = APIDesc::from_discovery(discovery_desc);
+
     generate_library(
         api_name,
-        discovery_desc,
         base_dir.as_ref().join(constants.lib_dir),
+        &api_desc,
     )
 }
 
-pub fn generate_library<P>(
+fn generate_library<P>(
     api_name: &str,
-    discovery_desc: &DiscoveryRestDesc,
     base_dir: P,
+    api_desc: &APIDesc,
 ) -> Result<(), Box<dyn Error>>
 where
     P: AsRef<std::path::Path>,
@@ -67,9 +71,6 @@ where
     let base_dir = base_dir.as_ref();
     let lib_path = base_dir.join(constants.lib_path);
     let cargo_toml_path = base_dir.join(constants.cargo_toml_path);
-
-    info!("building api desc");
-    let api_desc = APIDesc::from_discovery(discovery_desc);
 
     info!("creating directory and Cargo.toml");
     std::fs::create_dir_all(&lib_path.parent().expect("file in directory"))?;
