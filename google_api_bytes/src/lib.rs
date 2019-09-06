@@ -14,6 +14,18 @@ impl ::std::convert::From<Vec<u8>> for Bytes {
     }
 }
 
+impl ::std::convert::From<Bytes> for Vec<u8> {
+    fn from(x: Bytes) -> Vec<u8> {
+        x.0
+    }
+}
+
+impl AsRef<[u8]> for Bytes {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
+
 impl fmt::Display for Bytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         ::radix64::Display::new(BASE64_CFG, &self.0).fmt(f)
