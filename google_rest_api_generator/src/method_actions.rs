@@ -1,10 +1,10 @@
-use crate::{markdown, to_ident, to_rust_varstr, Method, Param, ParamInitMethod};
+use crate::{markdown, Method, Param, ParamInitMethod};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::parse_quote;
 
 pub(crate) fn generate(method: &Method, global_params: &[Param]) -> TokenStream {
-    let method_ident = to_ident(&to_rust_varstr(&method.id));
+    let method_ident = &method.ident;
     let method_builder_type = method.builder_name();
     let mut required_args: Vec<syn::FnArg> = Vec::new();
     let mut method_builder_initializers: Vec<syn::FieldValue> = Vec::new();

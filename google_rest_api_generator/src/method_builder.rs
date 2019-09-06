@@ -13,6 +13,7 @@ pub(crate) fn generate(
     service_path: &str,
     global_params: &[Param],
     method: &Method,
+    creator_ident: &syn::Ident,
     schemas: &BTreeMap<syn::Ident, Type>,
 ) -> TokenStream {
     let builder_name = method.builder_name();
@@ -106,8 +107,10 @@ pub(crate) fn generate(
     let (iter_methods, iter_types_and_impls) = iter_defs(method, schemas);
     let download_method = download_method(&base_url, method);
     let upload_methods = upload_methods(root_url, method);
+    let builder_doc = builder_doc(method, creator_ident);
 
     quote! {
+        #[doc = #builder_doc]
         #[derive(Debug,Clone)]
         pub struct #builder_name<'a> {
             pub(crate) reqwest: &'a ::reqwest::Client,
@@ -665,4 +668,11 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
     } else {
         quote! {}
     }
+}
+
+fn builder_doc(method: &Method, creator_ident: &syn::Ident) -> String {
+    format!(
+        "Created via [{}::{}()](struct.{}.html#method.{})",
+        creator_ident, &method.ident, creator_ident, &method.ident
+    )
 }

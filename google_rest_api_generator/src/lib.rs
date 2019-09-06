@@ -13,6 +13,7 @@ mod cargo;
 mod markdown;
 mod method_actions;
 mod method_builder;
+mod package_doc;
 mod path_templates;
 mod resource_actions;
 mod resource_builder;
@@ -262,6 +263,7 @@ impl APIDesc {
                 &self.service_path,
                 &self.params,
                 method,
+                &parse_quote! {Client},
                 &self.schemas,
             )
         });
@@ -269,8 +271,10 @@ impl APIDesc {
             .methods
             .iter()
             .map(|method| method_actions::generate(method, &self.params));
+        let package_doc = package_doc::generate(self);
         info!("outputting");
         quote! {
+            #![doc = #package_doc]
             pub mod schemas {
                 #(#schema_type_defs)*
             }
@@ -441,6 +445,7 @@ impl Resource {
 #[derive(Clone, Debug, PartialEq)]
 struct Method {
     id: String,
+    ident: syn::Ident,
     path: String,
     http_method: String,
     description: Option<String>,
@@ -553,6 +558,7 @@ impl Method {
 
         Method {
             id: method_id.to_owned(),
+            ident: to_ident(&to_rust_varstr(method_id)),
             path: disco_method.path.clone(),
             http_method: disco_method.http_method.clone(),
             description: disco_method.description.clone(),

@@ -27,7 +27,8 @@ pub(crate) fn cargo_toml(crate_name: impl Into<String>, include_bytes_dep: bool)
     package["name"] = value(crate_name.into());
     package["version"] = value("0.1.0");
     if include_bytes_dep {
-        doc["dependencies"]["google_api_bytes"]["git"] = value("https://github.com/google-apis-rs/generator");
+        doc["dependencies"]["google_api_bytes"]["git"] =
+            value("https://github.com/google-apis-rs/generator");
     }
     doc
 }

@@ -24,7 +24,14 @@ pub(crate) fn generate(
             })
         });
     let method_builders = resource.methods.iter().map(|method| {
-        method_builder::generate(root_url, service_path, global_params, method, schemas)
+        method_builder::generate(
+            root_url,
+            service_path,
+            global_params,
+            method,
+            &resource.action_type_name(),
+            schemas,
+        )
     });
     let nested_resource_mods = resource
         .resources
