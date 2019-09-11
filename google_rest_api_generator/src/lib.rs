@@ -1272,7 +1272,7 @@ impl Type {
                                 field.attrs.extend(
                                     syn::Attribute::parse_outer
                                         .parse2(quote! {
-                                            #[serde(rename=#id,default)]
+                                            #[serde(rename=#id,default,skip_serializing_if="std::option::Option::is_none")]
                                         })
                                         .expect("failed to parse serde attr"),
                                 );
