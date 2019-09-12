@@ -202,7 +202,7 @@ fn exec_method(
                 {
                     let req = self._request(&self._path())?;
                     #set_body
-                    Ok(req.send()?.error_for_status()?.json()?)
+                    Ok(crate::error_from_response(req.send()?)?.json()?)
                 }
             }
         }
@@ -211,7 +211,7 @@ fn exec_method(
                 pub fn execute(self) -> Result<(), crate::Error> {
                     let req = self._request(&self._path())?;
                     #set_body
-                    req.send()?.error_for_status()?;
+                    crate::error_from_response(req.send()?)?;
                     Ok(())
                 }
             }
@@ -563,7 +563,7 @@ fn download_method(base_url: &str, method: &Method) -> TokenStream {
             W: ::std::io::Write + ?Sized,
         {
             self.alt = Some(crate::params::Alt::Media);
-            Ok(self._request(&self._path())?.send()?.error_for_status()?.copy_to(output)?)
+            Ok(crate::error_from_response(self._request(&self._path())?.send()?)?.copy_to(output)?)
         }
     }
 }
@@ -600,7 +600,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
                             let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
                             let req = req.body(reqwest::Body::new(multipart.into_reader()));
-                            Ok(req.send()?.error_for_status()?.json()?)
+                            Ok(crate::error_from_response(req.send()?)?.json()?)
                         }
                     }
                 },
@@ -618,7 +618,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
                             let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
                             let req = req.body(reqwest::Body::new(multipart.into_reader()));
-                            req.send()?.error_for_status()?;
+                            crate::error_from_response(req.send()?)?;
                             Ok(())
                         }
                     }
@@ -649,7 +649,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                     let req = req.query(&[("uploadType", "resumable")]);
                     let req = req.header(::reqwest::header::HeaderName::from_static("x-upload-content-type"), mime_type.to_string());
                     #set_body
-                    let resp = req.send()?.error_for_status()?;
+                    let resp = crate::error_from_response(req.send()?)?;
                     let location_header = resp.headers().get(::reqwest::header::LOCATION).ok_or_else(|| crate::Error::Other(format!("No LOCATION header returned when initiating resumable upload").into()))?;
                     let upload_url = ::std::str::from_utf8(location_header.as_bytes()).map_err(|_| crate::Error::Other(format!("Non UTF8 LOCATION header returned").into()))?.to_owned();
                     Ok(crate::ResumableUpload::new(self.reqwest.clone(), upload_url))
