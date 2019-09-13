@@ -1,3 +1,4 @@
+use shared::Standard;
 use toml_edit::{value, Document};
 
 const CARGO_TOML: &str = r#"
@@ -25,7 +26,7 @@ pub(crate) fn cargo_toml(crate_name: impl Into<String>, include_bytes_dep: bool)
     let mut doc: Document = CARGO_TOML.trim().parse().unwrap();
     let package = &mut doc["package"];
     package["name"] = value(crate_name.into());
-    package["version"] = value("0.1.0");
+    package["version"] = value(Standard::default().lib_crate_version);
     if include_bytes_dep {
         doc["dependencies"]["google_api_bytes"]["git"] =
             value("https://github.com/google-apis-rs/generator");

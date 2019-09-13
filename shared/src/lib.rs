@@ -27,6 +27,8 @@ pub struct Standard {
     pub cli_dir: String,
     /// The name of the folder containing specification files, as seen from the 'generated' repository
     pub spec_dir: String,
+    /// The version of library crates
+    pub lib_crate_version: String,
 }
 
 impl Default for Standard {
@@ -38,6 +40,7 @@ impl Default for Standard {
             lib_dir: "lib".into(),
             cli_dir: "cli".into(),
             spec_dir: "etc/api".into(),
+            lib_crate_version: "0.1.0".into(),
         }
     }
 }
