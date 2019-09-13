@@ -3,7 +3,7 @@ use crate::options::fetch_specs::Args;
 use ci_info;
 use discovery_parser::{generated::ApiIndexV1, DiscoveryRestDesc, RestDescOrErr};
 use failure::{err_msg, format_err, Error, ResultExt};
-use google_cli_generator::{generate, CombinedMetadata as Metadata};
+use google_cli_generator::{all, CombinedMetadata as Metadata};
 use log::info;
 use rayon::prelude::*;
 use shared::{Api, MappedIndex, SkipIfErrorIsPresent};
@@ -100,7 +100,7 @@ fn generate_code(
         info!("Skipping generation of '{}' as it is up to date", api.id);
         return Ok(desc);
     }
-    generate(&desc, output_directory.join(&api.gen_dir)).map_err(|e| {
+    all::generate(&desc, output_directory.join(&api.gen_dir)).map_err(|e| {
         let error = e.to_string();
         let error_path = output_directory.join(api.gen_error_file);
         fs::write(&error_path, &error).ok();
