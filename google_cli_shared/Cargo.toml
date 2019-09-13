@@ -1,0 +1,16 @@
+[package]
+
+name = "google_cli_shared"
+version = "0.1.0"
+authors = ["Sebastian Thiel <byronimo@gmail.com>"]
+description = "Code shared by all Google CLI crates"
+edition = "2018"
+publish = false
+
+[dependencies]
+mime = "^ 0.3.13"
+serde_json = "^ 1.0"
+yup-oauth2 = { git = "https://github.com/dermesser/yup-oauth2", rev = "778e5af" } # Use released version once it includes 778e5af
+strsim = "^0.9"
+
+[workspace]

@@ -1,4 +1,3 @@
-use std::path::Path;
 use toml_edit::{value, Document};
 
 const CARGO_TOML_LIB: &str = r#"
@@ -42,15 +41,7 @@ hyper-rustls = "^0.16"
 clap = "^2.33"
 hyper = "0.12.33"
 serde_json = "1.0.40"
-
-[dependencies.google-urlshortener1]
-path = "../gen/urlshortener/v1/lib"
-version = "0.1.0"
-
-[dependencies.google-cli-shared]
-path = "google_cli_shared"
-git = "https://github.com/google-apis-rs/generator"
-version = "0.1.0"
+google_cli_shared = { git = "https://github.com/google-apis-rs/generator", version = "0.1.0" }
 
 [workspace]
 "#;
@@ -75,15 +66,10 @@ fn fill_common_fields(crate_name: impl Into<String>, doc: &mut Document, crate_v
     package["version"] = value(crate_version);
 }
 
-pub(crate) fn cargo_toml_cli(
-    api: &shared::Api,
-    lib_dir_from_cli_dir_path: impl AsRef<Path>,
-    standard: &shared::Standard,
-) -> Document {
+pub(crate) fn cargo_toml_cli(api: &shared::Api, standard: &shared::Standard) -> Document {
     let mut doc: Document = CARGO_TOML_CLI.trim().parse().unwrap();
     fill_common_fields(&api.cli_crate_name, &mut doc, &standard.cli_crate_version);
 
-    dbg!(&doc["bin"]);
     let bin = doc["bin"]
         .as_array_of_tables_mut()
         .expect("[[bin]] present")
@@ -93,12 +79,6 @@ pub(crate) fn cargo_toml_cli(
     bin["path"] = value(standard.main_path.as_str());
 
     let lib_dependency = &mut doc["dependencies"][&api.lib_crate_name];
-    lib_dependency["path"] = value(
-        lib_dir_from_cli_dir_path
-            .as_ref()
-            .to_str()
-            .expect("valid utf-8"),
-    );
     lib_dependency["version"] = value(standard.lib_crate_version.as_str());
 
     doc

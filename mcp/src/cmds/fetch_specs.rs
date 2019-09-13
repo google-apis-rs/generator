@@ -103,12 +103,7 @@ fn generate_code(
         info!("Skipping generation of '{}' as it is up to date", api.id);
         return Ok(desc);
     }
-    generate(
-        &api.lib_crate_name,
-        &desc,
-        output_directory.join(&api.gen_dir),
-    )
-    .map_err(|e| {
+    generate(&desc, output_directory.join(&api.gen_dir)).map_err(|e| {
         let error = e.to_string();
         let error_path = output_directory.join(api.gen_error_file);
         fs::write(&error_path, &error).ok();

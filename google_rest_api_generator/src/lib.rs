@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use shared;
 use std::path::Path;
 use std::{
+    io::Write,
     borrow::Cow, collections::BTreeMap, collections::HashMap, convert::TryFrom, error::Error,
 };
 use syn::parse_quote;
@@ -36,14 +37,10 @@ impl Default for Metadata {
     }
 }
 
-pub fn generate<P>(
-    api_name: &str,
+pub fn generate(
     discovery_desc: &DiscoveryRestDesc,
-    base_dir: P,
-) -> Result<(), Box<dyn Error>>
-where
-    P: AsRef<std::path::Path>,
-{
+    base_dir: impl AsRef<Path>,
+) -> Result<(), Box<dyn Error>> {
     let constants = shared::Standard::default();
     std::fs::write(
         base_dir.as_ref().join(constants.metadata_path),
@@ -52,14 +49,9 @@ where
 
     let lib_dir = base_dir.as_ref().join(&constants.lib_dir);
     let cli_dir = base_dir.as_ref().join(&constants.cli_dir);
-    let lib_from_cli_dir_path = Path::new("..").join(&constants.lib_dir);
     crossbeam::scope(|s| {
-        s.spawn(|_| {
-            generate_library(api_name, lib_dir, &discovery_desc).map_err(|e| e.to_string())
-        });
-        s.spawn(|_| {
-            generate_cli(cli_dir, lib_from_cli_dir_path, &discovery_desc).map_err(|e| e.to_string())
-        });
+        s.spawn(|_| generate_library(lib_dir, &discovery_desc).map_err(|e| e.to_string()));
+        s.spawn(|_| generate_cli(cli_dir, &discovery_desc).map_err(|e| e.to_string()));
     })
     .unwrap();
 
@@ -68,9 +60,12 @@ where
 
 fn generate_cli(
     base_dir: impl AsRef<Path>,
-    lib_dir_from_cli_dir_path: impl AsRef<Path>,
     discovery_desc: &DiscoveryRestDesc,
 ) -> Result<(), Box<dyn Error>> {
+    const MAIN_RS: &str = r#"
+       fn main() {
+        println!("Hello, world!");
+       }"#;
     info!("cli: building api desc");
     let _api_desc = APIDesc::from_discovery(discovery_desc);
     let api = shared::Api::try_from(discovery_desc)?;
@@ -78,27 +73,26 @@ fn generate_cli(
     let constants = shared::Standard::default();
     let base_dir = base_dir.as_ref();
     let cargo_toml_path = base_dir.join(&constants.cargo_toml_path);
-    let cli_path = base_dir.join(&constants.main_path);
+    let main_path = base_dir.join(&constants.main_path);
 
     info!("cli: creating source directory and Cargo.toml");
-    std::fs::create_dir_all(&cli_path.parent().expect("file in directory"))?;
+    std::fs::create_dir_all(&main_path.parent().expect("file in directory"))?;
 
-    let cargo_contents =
-        cargo::cargo_toml_cli(&api, lib_dir_from_cli_dir_path, &constants).to_string();
+    let cargo_contents = cargo::cargo_toml_cli(&api, &constants).to_string();
     std::fs::write(&cargo_toml_path, &cargo_contents)?;
+
+    info!("cli: writing main '{}'", main_path.display());
+    let output_file = std::fs::File::create(&main_path)?;
+    let mut rustfmt_writer = crate::rustfmt::RustFmtWriter::new(output_file)?;
+    rustfmt_writer.write_all(MAIN_RS.as_bytes())?;
 
     Ok(())
 }
 
-fn generate_library<P>(
-    api_name: &str,
-    base_dir: P,
+fn generate_library(
+    base_dir: impl AsRef<Path>,
     discovery_desc: &DiscoveryRestDesc,
-) -> Result<(), Box<dyn Error>>
-where
-    P: AsRef<std::path::Path>,
-{
-    use std::io::Write;
+) -> Result<(), Box<dyn Error>> {
     let constants = shared::Standard::default();
     let base_dir = base_dir.as_ref();
     let lib_path = base_dir.join(&constants.lib_path);
@@ -109,6 +103,7 @@ where
 
     info!("api: building api desc");
     let api_desc = APIDesc::from_discovery(discovery_desc);
+    let api = shared::Api::try_from(discovery_desc)?;
 
     let any_bytes_types = api_desc.fold_types(false, |accum, typ| {
         accum
@@ -118,7 +113,8 @@ where
             }
     });
 
-    let cargo_contents = cargo::cargo_toml_lib(api_name, any_bytes_types, &constants).to_string();
+    let cargo_contents =
+        cargo::cargo_toml_lib(&api.lib_crate_name, any_bytes_types, &constants).to_string();
     std::fs::write(&cargo_toml_path, &cargo_contents)?;
 
     let any_resumable_upload_methods = api_desc.fold_methods(false, |accum, method| {
