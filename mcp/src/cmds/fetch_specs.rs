@@ -3,7 +3,7 @@ use crate::options::fetch_specs::Args;
 use ci_info;
 use discovery_parser::{generated::ApiIndexV1, DiscoveryRestDesc, RestDescOrErr};
 use failure::{err_msg, format_err, Error, ResultExt};
-use google_rest_api_generator::{generate, Metadata};
+use google_cli_generator::{generate, CombinedMetadata as Metadata};
 use log::info;
 use rayon::prelude::*;
 use shared::{Api, MappedIndex, SkipIfErrorIsPresent};
@@ -79,12 +79,9 @@ fn generate_code(
         let previous_metadata = fs::read(&metadata_path)
             .map_err(Error::from)
             .and_then(|data| serde_json::from_slice::<Metadata>(&data).map_err(Error::from))
-            .unwrap_or_else(|_| Metadata {
-                git_hash: "no data yet".into(),
-                ymd_date: "no data yet".into(),
-            });
+            .ok();
         let current_metadata = Metadata::default();
-        if previous_metadata != current_metadata {
+        if previous_metadata.as_ref() != Some(&current_metadata) {
             info!("Generator changed for '{}'. Last generated content stamped with {:?}, latest version is {:?}", api.lib_crate_name, previous_metadata, current_metadata);
             return Ok(true);
         }

@@ -1,7 +1,7 @@
 use crate::options::generate::Args;
 use discovery_parser::DiscoveryRestDesc;
 use failure::{format_err, Error, ResultExt};
-use google_rest_api_generator::generate;
+use google_cli_generator::generate;
 use std::fs;
 
 pub fn execute(

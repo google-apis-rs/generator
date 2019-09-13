@@ -14,6 +14,7 @@ discovery_parser = { path = "../discovery_parser" }
 failure = "0.1.5"
 log = "0.4.8"
 ci_info = "0.8.0"
+toolchain_find = "0.1.4"
 
 [dev-dependencies]
 itertools = "0.8.0"

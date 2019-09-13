@@ -5,10 +5,9 @@ use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use serde::{Deserialize, Serialize};
 use shared;
-use std::path::Path;
 use std::{
-    io::Write,
     borrow::Cow, collections::BTreeMap, collections::HashMap, convert::TryFrom, error::Error,
+    io::Write, path::Path,
 };
 use syn::parse_quote;
 
@@ -20,7 +19,6 @@ mod package_doc;
 mod path_templates;
 mod resource_actions;
 mod resource_builder;
-mod rustfmt;
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
 pub struct Metadata {
@@ -38,58 +36,6 @@ impl Default for Metadata {
 }
 
 pub fn generate(
-    discovery_desc: &DiscoveryRestDesc,
-    base_dir: impl AsRef<Path>,
-) -> Result<(), Box<dyn Error>> {
-    let constants = shared::Standard::default();
-    std::fs::write(
-        base_dir.as_ref().join(constants.metadata_path),
-        serde_json::to_string_pretty(&Metadata::default())?,
-    )?;
-
-    let lib_dir = base_dir.as_ref().join(&constants.lib_dir);
-    let cli_dir = base_dir.as_ref().join(&constants.cli_dir);
-    crossbeam::scope(|s| {
-        s.spawn(|_| generate_library(lib_dir, &discovery_desc).map_err(|e| e.to_string()));
-        s.spawn(|_| generate_cli(cli_dir, &discovery_desc).map_err(|e| e.to_string()));
-    })
-    .unwrap();
-
-    Ok(())
-}
-
-fn generate_cli(
-    base_dir: impl AsRef<Path>,
-    discovery_desc: &DiscoveryRestDesc,
-) -> Result<(), Box<dyn Error>> {
-    const MAIN_RS: &str = r#"
-       fn main() {
-        println!("Hello, world!");
-       }"#;
-    info!("cli: building api desc");
-    let _api_desc = APIDesc::from_discovery(discovery_desc);
-    let api = shared::Api::try_from(discovery_desc)?;
-
-    let constants = shared::Standard::default();
-    let base_dir = base_dir.as_ref();
-    let cargo_toml_path = base_dir.join(&constants.cargo_toml_path);
-    let main_path = base_dir.join(&constants.main_path);
-
-    info!("cli: creating source directory and Cargo.toml");
-    std::fs::create_dir_all(&main_path.parent().expect("file in directory"))?;
-
-    let cargo_contents = cargo::cargo_toml_cli(&api, &constants).to_string();
-    std::fs::write(&cargo_toml_path, &cargo_contents)?;
-
-    info!("cli: writing main '{}'", main_path.display());
-    let output_file = std::fs::File::create(&main_path)?;
-    let mut rustfmt_writer = crate::rustfmt::RustFmtWriter::new(output_file)?;
-    rustfmt_writer.write_all(MAIN_RS.as_bytes())?;
-
-    Ok(())
-}
-
-fn generate_library(
     base_dir: impl AsRef<Path>,
     discovery_desc: &DiscoveryRestDesc,
 ) -> Result<(), Box<dyn Error>> {
@@ -114,7 +60,7 @@ fn generate_library(
     });
 
     let cargo_contents =
-        cargo::cargo_toml_lib(&api.lib_crate_name, any_bytes_types, &constants).to_string();
+        cargo::cargo_toml(&api.lib_crate_name, any_bytes_types, &constants).to_string();
     std::fs::write(&cargo_toml_path, &cargo_contents)?;
 
     let any_resumable_upload_methods = api_desc.fold_methods(false, |accum, method| {
@@ -135,7 +81,7 @@ fn generate_library(
 
     info!("api: writing lib '{}'", lib_path.display());
     let output_file = std::fs::File::create(&lib_path)?;
-    let mut rustfmt_writer = crate::rustfmt::RustFmtWriter::new(output_file)?;
+    let mut rustfmt_writer = shared::RustFmtWriter::new(output_file)?;
     rustfmt_writer.write_all(api_desc.generate().to_string().as_bytes())?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/error.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/percent_encode_consts.rs"))?;
@@ -155,7 +101,7 @@ fn generate_library(
 // A structure that represents the desired rust API. Typically built by
 // transforming a discovery_parser::DiscoveryRestDesc.
 #[derive(Clone, Debug, PartialEq)]
-struct APIDesc {
+pub struct APIDesc {
     name: String,
     version: String,
     root_url: String,
@@ -167,7 +113,7 @@ struct APIDesc {
 }
 
 impl APIDesc {
-    fn from_discovery(discovery_desc: &DiscoveryRestDesc) -> APIDesc {
+    pub fn from_discovery(discovery_desc: &DiscoveryRestDesc) -> APIDesc {
         debug!("collecting schema_types");
         let mut ident_tracker = TypeIdentTracker::new();
         // Reserve the idents for all schemas first so that if there are any

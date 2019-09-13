@@ -15,7 +15,7 @@ doctest = false
 
 [dependencies]
 discovery_parser = { path = "../discovery_parser" }
-google_rest_api_generator = { path = "../google_rest_api_generator" }
+google_cli_generator = { path = "../google_cli_generator" }
 cargo_log_parser = { path = "../cargo_log_parser" }
 shared = { path = "../shared" }
 templating = { path = "../templating" }

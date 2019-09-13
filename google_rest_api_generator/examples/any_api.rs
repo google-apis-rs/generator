@@ -35,6 +35,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let project_name = format!("google_{}_{}", &desc.name, &desc.version);
     let project_dir = opt.output_dir.join(&project_name);
     println!("Writing to {:?}", &project_dir);
-    generator::generate(&desc, &project_dir)?;
+    generator::generate(&project_dir, &desc)?;
     Ok(())
 }

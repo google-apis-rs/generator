@@ -9,7 +9,7 @@ pub enum RustFmtWriter {
 }
 
 impl RustFmtWriter {
-    pub(crate) fn new(output_file: File) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(output_file: File) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(match rustfmt_path() {
             Some(path) => RustFmtWriter::Formatted(
                 Command::new(path)
@@ -23,7 +23,7 @@ impl RustFmtWriter {
         })
     }
 
-    pub(crate) fn close(self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn close(self) -> Result<(), Box<dyn std::error::Error>> {
         match self {
             RustFmtWriter::Formatted(mut cmd) => {
                 if cmd.wait()?.success() {

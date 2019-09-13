@@ -11,6 +11,9 @@ use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, path::Path, path::PathBuf};
 
+mod rustfmt;
+pub use self::rustfmt::RustFmtWriter;
+
 /// A bunch of constants which must be the single source for constants
 /// that are not API specific.
 #[derive(Serialize, Deserialize)]

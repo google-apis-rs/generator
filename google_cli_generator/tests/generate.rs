@@ -1,5 +1,5 @@
 use discovery_parser::DiscoveryRestDesc;
-use google_rest_api_generator as lib;
+use google_cli_generator as lib;
 use serde_json;
 use shared;
 use simple_logger;
@@ -15,7 +15,7 @@ use std::{
 use tempfile::TempDir;
 use toml_edit;
 
-static SPEC: &str = include_str!("./spec.json");
+static SPEC: &str = include_str!("spec.json");
 
 #[test]
 fn valid_code_is_produced_for_complex_spec() -> Result<(), Box<dyn Error>> {

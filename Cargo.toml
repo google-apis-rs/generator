@@ -15,6 +15,7 @@ members = [
     "google_field_selector",
     "google_field_selector_derive",
     "google_rest_api_generator",
+    "google_cli_generator",
     "uri_template_parser",
     "cargo_log_parser",
     "shared",
