@@ -1,9 +1,7 @@
-use toml_edit::{value, Document};
-
 const CARGO_TOML: &str = r#"
 [package]
-name = "CRATE NAME GOES HERE"
-version = "VERSION GOES HERE"
+name = "{crate_name}"
+version = "{crate_version}"
 authors = ["Glenn Griffin <ggriffiniii@gmail.com"]
 edition = "2018"
 # for now, let's not even accidentally publish these
@@ -25,16 +23,15 @@ pub(crate) fn cargo_toml(
     crate_name: &str,
     include_bytes_dep: bool,
     standard: &shared::Standard,
-) -> Document {
-    let mut doc: Document = CARGO_TOML.trim().parse().unwrap();
-
-    let package = &mut doc["package"];
-    package["name"] = value(crate_name);
-    package["version"] = value(standard.lib_crate_version.as_str());
+) -> String {
+    let mut doc = CARGO_TOML
+        .trim()
+        .replace("{crate_name}", crate_name)
+        .replace("{crate_version}", &standard.lib_crate_version);
 
     if include_bytes_dep {
-        doc["dependencies"]["google_api_bytes"]["git"] =
-            value("https://github.com/google-apis-rs/generator");
+        doc.push_str("\n[dependencies.google_api_bytes]\n");
+        doc.push_str("git = \"https://github.com/google-apis-rs/generator\"\n");
     }
     doc
 }
