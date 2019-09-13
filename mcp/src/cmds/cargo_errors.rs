@@ -26,7 +26,7 @@ pub fn execute(
         parsed
             .into_iter()
             .map(|c| c.name)
-            .filter_map(|n| index.api.iter().find(|api| api.crate_name == n))
+            .filter_map(|n| index.api.iter().find(|api| api.lib_crate_name == n))
     };
 
     loop {
@@ -37,7 +37,7 @@ pub fn execute(
         args.extend(
             excludes
                 .iter()
-                .map(|api| format!("--exclude={}", api.crate_name).into()),
+                .map(|api| format!("--exclude={}", api.lib_crate_name).into()),
         );
         command_info("<workspace>", &args);
         let mut cargo = Command::new("cargo")
@@ -123,7 +123,10 @@ pub fn execute(
             if !excludes.is_empty() {
                 info!(
                     "Recorded errors for the following workspace members: {:?}",
-                    excludes.iter().map(|a| &a.crate_name).collect::<Vec<_>>()
+                    excludes
+                        .iter()
+                        .map(|a| &a.lib_crate_name)
+                        .collect::<Vec<_>>()
                 );
             }
             return Ok(());
@@ -160,7 +163,7 @@ fn collect_errors(
         let manifest_path = output_directory.join(&api.lib_cargo_file);
         args.push("--manifest-path".into());
         args.push(manifest_path.into());
-        command_info(&api.crate_name, &args);
+        command_info(&api.lib_crate_name, &args);
 
         let output = Command::new("cargo")
             .args(&args)

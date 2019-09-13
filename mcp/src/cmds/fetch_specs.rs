@@ -71,7 +71,7 @@ fn generate_code(
         if !cargo_path.exists() {
             info!(
                 "Need to generate '{}' as it was never generated before.",
-                api.crate_name
+                api.lib_crate_name
             );
             return Ok(true);
         }
@@ -85,7 +85,7 @@ fn generate_code(
             });
         let current_metadata = Metadata::default();
         if previous_metadata != current_metadata {
-            info!("Generator changed for '{}'. Last generated content stamped with {:?}, latest version is {:?}", api.crate_name, previous_metadata, current_metadata);
+            info!("Generator changed for '{}'. Last generated content stamped with {:?}, latest version is {:?}", api.lib_crate_name, previous_metadata, current_metadata);
             return Ok(true);
         }
         let spec_path = spec_directory.join(&api.spec_file);
@@ -103,7 +103,12 @@ fn generate_code(
         info!("Skipping generation of '{}' as it is up to date", api.id);
         return Ok(desc);
     }
-    generate(&api.crate_name, &desc, output_directory.join(&api.gen_dir)).map_err(|e| {
+    generate(
+        &api.lib_crate_name,
+        &desc,
+        output_directory.join(&api.gen_dir),
+    )
+    .map_err(|e| {
         let error = e.to_string();
         let error_path = output_directory.join(api.gen_error_file);
         fs::write(&error_path, &error).ok();

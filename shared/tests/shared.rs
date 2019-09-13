@@ -15,12 +15,15 @@ mod sanitized_name {
     }
 }
 
-mod crate_name {
-    use shared::crate_name;
+mod lib_crate_name {
+    use shared::lib_crate_name;
 
     #[test]
     fn it_produces_a_valid_crate_name() {
-        assert_eq!(crate_name("youtube", "v2.0").unwrap(), "google-youtube2d0")
+        assert_eq!(
+            lib_crate_name("youtube", "v2.0").unwrap(),
+            "google-youtube2d0"
+        )
     }
 }
 

@@ -15,7 +15,7 @@ pub fn execute(
         .with_context(|_| format_err!("Could read spec file at '{}'", spec_json_path.display()))?;
 
     let api = Api::try_from(&desc)?;
-    generate(&api.crate_name, &desc, output_directory)
+    generate(&api.lib_crate_name, &desc, output_directory)
         .map_err(|e| format_err!("{}", e.to_string()))?;
     Ok(())
 }

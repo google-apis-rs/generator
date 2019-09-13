@@ -19,6 +19,8 @@ pub struct Standard {
     pub cargo_toml_path: String,
     /// A project relative path to the Rust library implementation
     pub lib_path: String,
+    /// A project relative path to the Rust binary implementation
+    pub main_path: String,
     /// A project relative path to the file providing metadata about the generator
     pub metadata_path: String,
     /// The name of the folder into which we want to generate the library project
@@ -29,6 +31,8 @@ pub struct Standard {
     pub spec_dir: String,
     /// The version of library crates
     pub lib_crate_version: String,
+    /// The version of CLI crates
+    pub cli_crate_version: String,
 }
 
 impl Default for Standard {
@@ -37,10 +41,12 @@ impl Default for Standard {
             cargo_toml_path: "Cargo.toml".into(),
             metadata_path: "meta.json".into(),
             lib_path: "src/lib.rs".into(),
+            main_path: "src/main.rs".into(),
             lib_dir: "lib".into(),
             cli_dir: "cli".into(),
             spec_dir: "etc/api".into(),
             lib_crate_version: "0.1.0".into(),
+            cli_crate_version: "0.1.0".into(),
         }
     }
 }
@@ -69,10 +75,14 @@ pub struct Api {
     pub gen_dir: PathBuf,
     /// A 'gen' directory relative path to the google discovery specification file
     pub spec_file: PathBuf,
-    /// A suitable name for the crate
-    pub crate_name: String,
+    /// A suitable name for the crate implementing the library
+    pub lib_crate_name: String,
+    /// A suitable name for the crate implementing the command-line interface
+    pub cli_crate_name: String,
     /// A suitable name for being a target in 'make'
     pub make_target: String,
+    /// A suitable name for the binary provided by the CLI crate
+    pub bin_name: String,
     /// The URL to the google discovery specification
     pub rest_url: String,
 }
@@ -84,6 +94,8 @@ impl TryFrom<Item> for Api {
         let name = sanitized_name(&value.name).into();
         let gen_dir = PathBuf::from(&name).join(&value.version);
         let standard = Standard::default();
+        let lib_crate_name = lib_crate_name(&value.name, &value.version)?;
+        let make_target = make_target(&value.name, &value.version)?;
         Ok(Api {
             spec_file: gen_dir.join("spec.json"),
             id: value.id,
@@ -96,8 +108,10 @@ impl TryFrom<Item> for Api {
             gen_dir,
             name,
             rest_url: value.discovery_rest_url,
-            crate_name: crate_name(&value.name, &value.version)?,
-            make_target: make_target(&value.name, &value.version)?,
+            cli_crate_name: cli_crate_name(&lib_crate_name),
+            lib_crate_name,
+            bin_name: make_target.clone(),
+            make_target,
         })
     }
 }
@@ -173,7 +187,7 @@ pub fn api_is_valid(
     if !spec_path.is_file() {
         error!(
             "Dropping API '{}' as its spec file at '{}' does not exist",
-            api.crate_name,
+            api.lib_crate_name,
             spec_path.display(),
         );
         return false;
@@ -187,7 +201,7 @@ pub fn api_is_valid(
         if error_log_file.is_file() {
             error!(
                 "Dropping API '{}' as it previously failed with errors, see '{}' for details.",
-                api.crate_name,
+                api.lib_crate_name,
                 error_log_file.display()
             );
             return false;
@@ -233,8 +247,12 @@ impl TryFrom<ApiIndexV1> for MappedIndex {
     }
 }
 
-pub fn crate_name(name: &str, version: &str) -> Result<String, Error> {
+pub fn lib_crate_name(name: &str, version: &str) -> Result<String, Error> {
     make_target(name, version).map(|n| format!("google-{}", n))
+}
+
+pub fn cli_crate_name(crate_name: &str) -> String {
+    format!("{}-cli", crate_name)
 }
 
 /// Currently does the following
