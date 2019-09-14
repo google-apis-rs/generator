@@ -1,7 +1,8 @@
 [profile.release]
 opt-level = 3
-lto = true
-codegen-units = 1
+# the flags below reduce binary size, but increase build time. Let's keep the latter low for now.
+#lto = true
+#codegen-units = 1
 debug = false
 rpath = false
 debug-assertions = false

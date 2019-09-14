@@ -39,6 +39,7 @@ pub fn generate(
     base_dir: impl AsRef<Path>,
     discovery_desc: &DiscoveryRestDesc,
 ) -> Result<(), Box<dyn Error>> {
+    let total_time = Instant::now();
     let constants = shared::Standard::default();
     let base_dir = base_dir.as_ref();
     let lib_path = base_dir.join(&constants.lib_path);
@@ -78,8 +79,7 @@ pub fn generate(
             }
     });
 
-    let cargo_contents =
-        cargo::cargo_toml(&api.lib_crate_name, any_bytes_types, &constants);
+    let cargo_contents = cargo::cargo_toml(&api.lib_crate_name, any_bytes_types, &constants);
     std::fs::write(&cargo_toml_path, &cargo_contents)?;
 
     info!("api: writing lib '{}'", lib_path.display());
@@ -87,7 +87,7 @@ pub fn generate(
     let mut rustfmt_writer = shared::RustFmtWriter::new(output_file)?;
 
     let time = Instant::now();
-    write!(rustfmt_writer, "{}", api_desc.generate().to_string())?;
+    rustfmt_writer.write_all(api_desc.generate().to_string().as_bytes())?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/error.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/percent_encode_consts.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;
@@ -100,6 +100,7 @@ pub fn generate(
     }
     rustfmt_writer.close()?;
     info!("api: generated and formatted in {:?}", time.elapsed());
+    info!("api: done in {:?}", total_time.elapsed());
     Ok(())
 }
 
