@@ -87,7 +87,7 @@ pub fn generate(
     let mut rustfmt_writer = shared::RustFmtWriter::new(output_file)?;
 
     let time = Instant::now();
-    write!(rustfmt_writer, "{}", api_desc.generate())?;
+    write!(rustfmt_writer, "{}", api_desc.generate().to_string())?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/error.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/percent_encode_consts.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;

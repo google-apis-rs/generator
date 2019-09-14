@@ -32,6 +32,7 @@ pub fn generate(
     let output_file = std::fs::File::create(&main_path)?;
     let mut rustfmt_writer = shared::RustFmtWriter::new(output_file)?;
     rustfmt_writer.write_all(MAIN_RS.as_bytes())?;
+    rustfmt_writer.close()?;
 
     Ok(())
 }
