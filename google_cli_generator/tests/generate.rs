@@ -42,6 +42,7 @@ fn valid_code_is_produced_for_complex_spec() -> Result<(), Box<dyn Error>> {
 fn cargo(current_dir: &Path, sub_command: &str) -> Result<ExitStatus, io::Error> {
     Command::new("cargo")
         .arg(sub_command)
+        .arg("--offline")
         .stdin(Stdio::null())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
