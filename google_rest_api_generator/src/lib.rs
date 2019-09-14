@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use shared;
 use std::{
     borrow::Cow, collections::BTreeMap, collections::HashMap, convert::TryFrom, error::Error,
-    io::Write, path::Path,
+    io::Write, path::Path, time::Instant,
 };
 use syn::parse_quote;
 
@@ -47,9 +47,12 @@ pub fn generate(
     info!("api: creating source directory and Cargo.toml");
     std::fs::create_dir_all(&lib_path.parent().expect("file in directory"))?;
 
-    info!("api: building api desc");
-    let api_desc = APIDesc::from_discovery(discovery_desc);
     let api = shared::Api::try_from(discovery_desc)?;
+
+    info!("api: building api desc");
+    let time = Instant::now();
+    let api_desc = APIDesc::from_discovery(discovery_desc);
+    info!("api: prepared APIDesc in {:?}", time.elapsed());
 
     let any_bytes_types = api_desc.fold_types(false, |accum, typ| {
         accum
@@ -58,10 +61,6 @@ pub fn generate(
                 _ => false,
             }
     });
-
-    let cargo_contents =
-        cargo::cargo_toml(&api.lib_crate_name, any_bytes_types, &constants).to_string();
-    std::fs::write(&cargo_toml_path, &cargo_contents)?;
 
     let any_resumable_upload_methods = api_desc.fold_methods(false, |accum, method| {
         accum
@@ -79,10 +78,16 @@ pub fn generate(
             }
     });
 
+    let cargo_contents =
+        cargo::cargo_toml(&api.lib_crate_name, any_bytes_types, &constants);
+    std::fs::write(&cargo_toml_path, &cargo_contents)?;
+
     info!("api: writing lib '{}'", lib_path.display());
     let output_file = std::fs::File::create(&lib_path)?;
     let mut rustfmt_writer = shared::RustFmtWriter::new(output_file)?;
-    rustfmt_writer.write_all(api_desc.generate().to_string().as_bytes())?;
+
+    let time = Instant::now();
+    write!(rustfmt_writer, "{}", api_desc.generate())?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/error.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/percent_encode_consts.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;
@@ -94,7 +99,7 @@ pub fn generate(
         rustfmt_writer.write_all(include_bytes!("../gen_include/iter.rs"))?;
     }
     rustfmt_writer.close()?;
-    info!("api: done");
+    info!("api: generated and formatted in {:?}", time.elapsed());
     Ok(())
 }
 

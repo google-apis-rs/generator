@@ -11,7 +11,7 @@ use structopt::StructOpt;
 pub struct Args {
     /// The desired log level.
     #[structopt(short = "l", long = "log-level", default_value = "INFO")]
-    #[structopt(possible_values = &["INFO", "ERROR", "DEBUG"])]
+    #[structopt(possible_values = &["INFO", "ERROR", "DEBUG", "TRACE"])]
     pub log_level: log::Level,
     #[structopt(subcommand)]
     pub(crate) cmd: SubCommand,

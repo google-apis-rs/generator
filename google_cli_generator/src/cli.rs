@@ -25,7 +25,7 @@ pub fn generate(
     info!("cli: creating source directory and Cargo.toml");
     std::fs::create_dir_all(&main_path.parent().expect("file in directory"))?;
 
-    let cargo_contents = cargo::cargo_toml(&api, &constants).to_string();
+    let cargo_contents = cargo::cargo_toml(&api, &constants);
     std::fs::write(&cargo_toml_path, &cargo_contents)?;
 
     info!("cli: writing main '{}'", main_path.display());
