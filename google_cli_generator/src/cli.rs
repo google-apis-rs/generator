@@ -4,6 +4,7 @@ use std::{convert::TryFrom, error::Error, fs, io::Write, path::Path};
 
 use crate::cargo;
 use model::Model;
+use std::cmp::Ordering;
 use std::ffi::OsStr;
 
 mod model {
@@ -53,15 +54,23 @@ pub fn generate(
     let templates_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("templates");
     let engine = liquid::ParserBuilder::with_liquid().build()?;
     let model = into_liquid_object(Model::new(api))?;
-
-    for entry in templates_dir
+    let mut templates: Vec<_> = templates_dir
         .read_dir()?
-        .filter_map(Result::ok)
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
         .filter(|e| {
             e.file_type().map(|e| e.is_file()).unwrap_or(false)
                 && e.path().extension() == Some(OsStr::new("liquid"))
         })
-    {
+        .collect();
+    templates.sort_by(|l, r| {
+        l.path()
+            .file_name()
+            .and_then(|fl| r.path().file_name().map(|rl| rl.cmp(fl)))
+            .unwrap_or(Ordering::Equal)
+    });
+
+    for entry in templates {
         let template = fs::read_to_string(entry.path())?;
         let template = engine.parse(&template).map_err(|err| {
             format!(
