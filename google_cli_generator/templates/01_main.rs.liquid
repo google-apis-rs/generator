@@ -1,6 +1,29 @@
 
 use {{lib_crate_name_for_use}} as api;
 
+use clap::{Arg, App};
+
 fn main() {
-    println!("hello world by liquid");
+    let home_dir = dirs::config_dir().expect("configuration directory can be obtained").join("google-service-cli");
+    let mut app = App::new("{{program_name}}")
+        .author("Sebastian Thiel <byronimo@gmail.com>")
+        .version("{{cli_version}}")
+        .about("{{description}}")
+        .after_help("All documentation details can be found at <TODO figure out URL>")
+        .arg(Arg::with_name("scope")
+            .long("scope")
+            .help("Specify the authentication method should be executed in. Each scope requires the user to grant this application permission to use it. If unset, it defaults to the shortest scope url for a particular method.")
+            .multiple(true)
+            .takes_value(true))
+        .arg(Arg::with_name("folder")
+            .long("config-dir")
+            .help("A directory into which we will store our persistent data. Defaults to a user-writable directory that we will create during the first invocation." )
+            .default_value_os(home_dir.as_os_str())
+            .multiple(false)
+            .takes_value(true))
+        .arg(Arg::with_name("debug")
+            .long("debug")
+            .help("Provide more output to aid with debugging")
+            .multiple(false)
+            .takes_value(false));
 }

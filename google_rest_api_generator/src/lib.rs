@@ -79,7 +79,7 @@ pub fn generate(
             }
     });
 
-    let cargo_contents = cargo::cargo_toml(&api.lib_crate_name, any_bytes_types, &constants);
+    let cargo_contents = cargo::cargo_toml(&api.lib_crate_name, any_bytes_types, &api);
     std::fs::write(&cargo_toml_path, &cargo_contents)?;
 
     info!("api: writing lib '{}'", lib_path.display());

@@ -88,6 +88,12 @@ pub struct Api {
     pub bin_name: String,
     /// The URL to the google discovery specification
     pub rest_url: String,
+    /// The version string to use in the library crate
+    #[serde(skip_serializing_if = "std::option::Option::is_none")]
+    pub lib_crate_version: Option<String>,
+    /// The version string to use in the cli crate
+    #[serde(skip_serializing_if = "std::option::Option::is_none")]
+    pub cli_crate_version: Option<String>,
 }
 
 impl TryFrom<Item> for Api {
@@ -111,10 +117,12 @@ impl TryFrom<Item> for Api {
             gen_dir,
             name,
             rest_url: value.discovery_rest_url,
+            lib_crate_version: None,
             cli_crate_name: cli_crate_name(&lib_crate_name),
             lib_crate_name,
             bin_name: make_target.clone(),
             make_target,
+            cli_crate_version: None,
         })
     }
 }
@@ -140,7 +148,14 @@ impl TryFrom<&DiscoveryRestDesc> for Api {
             discovery_link: None,
             labels: None,
         };
-        Api::try_from(item)
+
+        let mut api = Api::try_from(item)?;
+
+        let standard = Standard::default();
+        api.lib_crate_version = Some(crate_version(&standard.lib_crate_version, &value.revision));
+        api.cli_crate_version = Some(crate_version(&standard.cli_crate_version, &value.revision));
+
+        Ok(api)
     }
 }
 
@@ -274,6 +289,10 @@ pub fn make_target(name: &str, version: &str) -> Result<String, Error> {
         name = sanitized_name(name),
         version = parse_version(version)?
     ))
+}
+
+fn crate_version(major_minor_patch: &str, revision_date: &str) -> String {
+    format!("{}-{}", major_minor_patch, revision_date)
 }
 
 /// Normalize the version string to adhere to a standard format.

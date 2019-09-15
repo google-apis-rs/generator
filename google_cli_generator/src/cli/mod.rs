@@ -7,24 +7,7 @@ use model::Model;
 use std::cmp::Ordering;
 use std::ffi::OsStr;
 
-mod model {
-    use serde::Serialize;
-    use shared::Api;
-
-    #[derive(Serialize)]
-    pub struct Model {
-        /// The name of the crate for 'use ' statement
-        lib_crate_name_for_use: String,
-    }
-
-    impl Model {
-        pub fn new(api: Api) -> Self {
-            Model {
-                lib_crate_name_for_use: api.lib_crate_name.replace('-', "_"),
-            }
-        }
-    }
-}
+mod model;
 
 pub fn generate(
     output_dir: impl AsRef<Path>,
@@ -53,7 +36,7 @@ pub fn generate(
 
     let templates_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("templates");
     let engine = liquid::ParserBuilder::with_liquid().build()?;
-    let model = into_liquid_object(Model::new(api))?;
+    let model = into_liquid_object(Model::new(api, discovery_desc))?;
     let mut templates: Vec<_> = templates_dir
         .read_dir()?
         .collect::<Result<Vec<_>, _>>()?

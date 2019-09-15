@@ -19,15 +19,16 @@ textnonce = "0.6"
 percent-encoding = "2"
 "#;
 
-pub(crate) fn cargo_toml(
-    crate_name: &str,
-    include_bytes_dep: bool,
-    standard: &shared::Standard,
-) -> String {
+pub(crate) fn cargo_toml(crate_name: &str, include_bytes_dep: bool, api: &shared::Api) -> String {
     let mut doc = CARGO_TOML
         .trim()
         .replace("{crate_name}", crate_name)
-        .replace("{crate_version}", &standard.lib_crate_version);
+        .replace(
+            "{crate_version}",
+            &api.lib_crate_version
+                .as_ref()
+                .expect("available crate version"),
+        );
 
     if include_bytes_dep {
         doc.push_str("\n[dependencies.google_api_bytes]\n");
