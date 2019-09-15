@@ -1,10 +1,29 @@
 use discovery_parser::DiscoveryRestDesc;
-use google_rest_api_generator::APIDesc;
 use log::info;
 use std::{convert::TryFrom, error::Error, fs, io::Write, path::Path};
 
-use super::cargo;
+use crate::cargo;
+use model::Model;
 use std::ffi::OsStr;
+
+mod model {
+    use serde::Serialize;
+    use shared::Api;
+
+    #[derive(Serialize)]
+    pub struct Model {
+        /// The name of the crate for 'use ' statement
+        lib_crate_name_for_use: String,
+    }
+
+    impl Model {
+        pub fn new(api: Api) -> Self {
+            Model {
+                lib_crate_name_for_use: api.lib_crate_name.replace('-', "_"),
+            }
+        }
+    }
+}
 
 pub fn generate(
     output_dir: impl AsRef<Path>,
@@ -12,8 +31,8 @@ pub fn generate(
 ) -> Result<(), Box<dyn Error>> {
     const MAIN_RS: &str = r#"
    "#;
-    info!("cli: building api desc");
-    let _api_desc = APIDesc::from_discovery(discovery_desc);
+    //    info!("cli: building api desc");
+    //    let _api_desc = APIDesc::from_discovery(discovery_desc);
     let api = shared::Api::try_from(discovery_desc)?;
 
     let constants = shared::Standard::default();
@@ -33,6 +52,7 @@ pub fn generate(
 
     let templates_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("templates");
     let engine = liquid::ParserBuilder::with_liquid().build()?;
+    let model = into_liquid_object(Model::new(api))?;
 
     for entry in templates_dir
         .read_dir()?
@@ -50,10 +70,8 @@ pub fn generate(
                 err
             )
         })?;
-        template.render_to(
-            &mut rustfmt_writer,
-            &into_liquid_object(super::CombinedMetadata::default())?,
-        )?;
+        let rendered = template.render(&model)?;
+        rustfmt_writer.write_all(rendered.as_bytes())?;
     }
 
     rustfmt_writer.close()?;

@@ -4,9 +4,17 @@ use discovery_parser::DiscoveryRestDesc;
 use google_rest_api_generator::generate as generate_library;
 use std::{error::Error, path::Path};
 
+pub enum Build {
+    ApiAndCliInParallelNoErrorHandling,
+    ApiAndCli,
+    OnlyCli,
+    OnlyApi,
+}
+
 pub fn generate(
     discovery_desc: &DiscoveryRestDesc,
     base_dir: impl AsRef<Path>,
+    mode: Build,
 ) -> Result<(), Box<dyn Error>> {
     let constants = shared::Standard::default();
     std::fs::write(
@@ -16,11 +24,20 @@ pub fn generate(
 
     let lib_dir = base_dir.as_ref().join(&constants.lib_dir);
     let cli_dir = base_dir.as_ref().join(&constants.cli_dir);
-    crossbeam::scope(|s| {
-        s.spawn(|_| generate_library(lib_dir, &discovery_desc).map_err(|e| e.to_string()));
-        s.spawn(|_| cli::generate(cli_dir, &discovery_desc).map_err(|e| e.to_string()));
-    })
-    .unwrap();
+    use self::Build::*;
+    match mode {
+        ApiAndCliInParallelNoErrorHandling => crossbeam::scope(|s| {
+            s.spawn(|_| generate_library(lib_dir, &discovery_desc).map_err(|e| e.to_string()));
+            s.spawn(|_| cli::generate(cli_dir, &discovery_desc).map_err(|e| e.to_string()));
+        })
+        .unwrap(),
+        ApiAndCli => {
+            generate_library(lib_dir, &discovery_desc)?;
+            cli::generate(cli_dir, &discovery_desc)?;
+        }
+        OnlyCli => cli::generate(cli_dir, &discovery_desc)?,
+        OnlyApi => generate_library(lib_dir, &discovery_desc)?,
+    }
 
     Ok(())
 }

@@ -100,7 +100,12 @@ fn generate_code(
         info!("Skipping generation of '{}' as it is up to date", api.id);
         return Ok(desc);
     }
-    all::generate(&desc, output_directory.join(&api.gen_dir)).map_err(|e| {
+    all::generate(
+        &desc,
+        output_directory.join(&api.gen_dir),
+        all::Build::ApiAndCliInParallelNoErrorHandling,
+    )
+    .map_err(|e| {
         let error = e.to_string();
         let error_path = output_directory.join(api.gen_error_file);
         fs::write(&error_path, &error).ok();
