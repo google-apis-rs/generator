@@ -40,14 +40,18 @@ fn valid_code_is_produced_for_complex_spec() -> Result<(), Box<dyn Error>> {
 }
 
 fn cargo(current_dir: &Path, sub_command: &str) -> Result<ExitStatus, io::Error> {
-    Command::new("cargo")
-        .arg(sub_command)
-        .arg("--offline")
+    let mut cmd = Command::new("cargo");
+    cmd.arg(sub_command)
         .stdin(Stdio::null())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
-        .current_dir(current_dir)
-        .status()
+        .current_dir(current_dir);
+
+    if std::env::var("TRAIN_MODE").is_ok() {
+        cmd.arg("--offline");
+    }
+
+    cmd.status()
 }
 
 fn fixup_cli(
