@@ -1,7 +1,7 @@
 
 use {{lib_crate_name_for_use}} as api;
 
-use clap::{Arg, App, SubCommand};
+use clap::{Arg, AppSettings, App, SubCommand};
 use default_boxed::DefaultBoxed;
 
 #[derive(DefaultBoxed)]
@@ -16,6 +16,7 @@ struct HeapApp<'a, 'b> {
 impl<'a, 'b> Default for HeapApp<'a, 'b> {
     fn default() -> Self {
         let mut app = App::new("{{program_name}}")
+            .setting(clap::AppSettings::ColoredHelp)
             .author("Sebastian Thiel <byronimo@gmail.com>")
             .version("{{cli_version}}")
             .about("{{description}}")
@@ -37,13 +38,15 @@ impl<'a, 'b> Default for HeapApp<'a, 'b> {
                 .takes_value(false));
 
         {% for r in resources %}
-        let mut rcmd = SubCommand::with_name("{{r.name}}").about("{{r.about}}");
+        let mut rcmd = SubCommand::with_name("{{r.name}}")
+                        .setting(clap::AppSettings::ColoredHelp)
+                        .about("{{r.about}}");
             {% for m in r.methods %}
         {
-            let mut mcmd = SubCommand::with_name("{{m.name}}");
+            let mut mcmd = SubCommand::with_name("{{m.name}}")
             {% if m.about %}
-                mcmd = mcmd.about("{{m.about}}");
-            {% endif %}
+                .about("{{m.about}}");
+            {% endif %};
             rcmd = rcmd.subcommand(mcmd);
         }
             {% endfor %}
