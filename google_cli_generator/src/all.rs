@@ -26,11 +26,12 @@ pub fn generate(
     let cli_dir = base_dir.as_ref().join(&constants.cli_dir);
     use self::Build::*;
     match mode {
-        ApiAndCliInParallelNoErrorHandling => crossbeam::scope(|s| {
-            s.spawn(|_| generate_library(lib_dir, &discovery_desc).map_err(|e| e.to_string()));
-            s.spawn(|_| cli::generate(cli_dir, &discovery_desc).map_err(|e| e.to_string()));
-        })
-        .unwrap(),
+        ApiAndCliInParallelNoErrorHandling => {
+            let _ignore_errors_while_cli_gen_may_fail = crossbeam::scope(|s| {
+                s.spawn(|_| generate_library(lib_dir, &discovery_desc).map_err(|e| e.to_string()));
+                s.spawn(|_| cli::generate(cli_dir, &discovery_desc).map_err(|e| e.to_string()));
+            });
+        }
         ApiAndCli => {
             generate_library(lib_dir, &discovery_desc)?;
             cli::generate(cli_dir, &discovery_desc)?;
