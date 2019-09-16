@@ -18,6 +18,7 @@ clap = "^2.33"
 serde_json = "1.0.40"
 dirs = "2.0"
 google_cli_shared = { git = "https://github.com/google-apis-rs/generator", version = "0.1.0" }
+default-boxed = "0.1.6"
 
 [workspace]
 "#;
