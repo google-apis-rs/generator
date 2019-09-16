@@ -51,7 +51,7 @@ pub fn generate(
     templates.sort_by(|l, r| {
         l.path()
             .file_name()
-            .and_then(|fl| r.path().file_name().map(|rl| rl.cmp(fl)))
+            .and_then(|fl| r.path().file_name().map(|fr| fl.cmp(fr)))
             .unwrap_or(Ordering::Equal)
     });
 

@@ -1,0 +1,10 @@
+use {{lib_crate_name_for_use}} as api;
+
+fn main() {
+    // TODO: set homedir afterwards, once the address is unmovable, or use Pin for the very first time
+    // to allow a self-referential structure :D!
+    let _home_dir = dirs::config_dir().expect("configuration directory can be obtained").join("google-service-cli");
+    let outer = Outer::default_boxed();
+    let app = outer.inner.app;
+    let _matches = app.get_matches();
+}
