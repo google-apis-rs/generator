@@ -1,11 +1,13 @@
 use discovery_parser::DiscoveryRestDesc;
 use log::info;
-use std::{convert::TryFrom, error::Error, fs, io::Write, path::Path};
+use std::{
+    cmp::Ordering, convert::TryFrom, error::Error, ffi::OsStr, fs, io::Write, path::Path,
+    time::Instant,
+};
 
 use crate::cargo;
+use google_rest_api_generator::APIDesc;
 use model::Model;
-use std::cmp::Ordering;
-use std::ffi::OsStr;
 
 mod model;
 
@@ -15,8 +17,9 @@ pub fn generate(
 ) -> Result<(), Box<dyn Error>> {
     const MAIN_RS: &str = r#"
    "#;
-    //    info!("cli: building api desc");
-    //    let _api_desc = APIDesc::from_discovery(discovery_desc);
+    let time = Instant::now();
+    info!("cli: building api desc");
+    let api_desc = APIDesc::from_discovery(discovery_desc);
     let api = shared::Api::try_from(discovery_desc)?;
 
     let constants = shared::Standard::default();
@@ -24,7 +27,6 @@ pub fn generate(
     let cargo_toml_path = output_dir.join(&constants.cargo_toml_path);
     let main_path = output_dir.join(&constants.main_path);
 
-    info!("cli: creating source directory and Cargo.toml");
     fs::create_dir_all(&main_path.parent().expect("file in directory"))?;
 
     let cargo_contents = cargo::cargo_toml(&api, &constants);
@@ -36,7 +38,7 @@ pub fn generate(
 
     let templates_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("templates");
     let engine = liquid::ParserBuilder::with_liquid().build()?;
-    let model = into_liquid_object(Model::new(api, discovery_desc))?;
+    let model = into_liquid_object(Model::new(api, discovery_desc, &api_desc))?;
     let mut templates: Vec<_> = templates_dir
         .read_dir()?
         .collect::<Result<Vec<_>, _>>()?
@@ -67,6 +69,7 @@ pub fn generate(
     }
 
     rustfmt_writer.close()?;
+    info!("cli: done in {:?}", time.elapsed());
 
     Ok(())
 }

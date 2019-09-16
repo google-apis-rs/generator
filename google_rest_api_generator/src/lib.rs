@@ -114,7 +114,7 @@ pub struct APIDesc {
     service_path: String,
     schemas: BTreeMap<syn::Ident, Type>,
     params: Vec<Param>,
-    resources: Vec<Resource>,
+    pub resources: Vec<Resource>,
     methods: Vec<Method>,
 }
 
@@ -367,11 +367,11 @@ fn schema_parent_path() -> syn::Path {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct Resource {
-    ident: syn::Ident,
+pub struct Resource {
+    pub ident: syn::Ident,
     parent_path: syn::Path,
-    resources: Vec<Resource>,
-    methods: Vec<Method>,
+    pub resources: Vec<Resource>,
+    pub methods: Vec<Method>,
 }
 
 impl Resource {
@@ -427,9 +427,9 @@ impl Resource {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct Method {
+pub struct Method {
     id: String,
-    ident: syn::Ident,
+    pub ident: syn::Ident,
     path: String,
     http_method: String,
     description: Option<String>,

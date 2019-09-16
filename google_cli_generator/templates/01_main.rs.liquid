@@ -1,7 +1,7 @@
 
 use {{lib_crate_name_for_use}} as api;
 
-use clap::{Arg, App};
+use clap::{Arg, App, SubCommand};
 
 fn main() {
     let home_dir = dirs::config_dir().expect("configuration directory can be obtained").join("google-service-cli");
@@ -26,4 +26,15 @@ fn main() {
             .help("Provide more output to aid with debugging")
             .multiple(false)
             .takes_value(false));
+
+    {% for r in resources %}
+    let mut rcmd = SubCommand::with_name("{{r.name}}").about("{{r.about}}");
+        {% for m in r.methods %}
+    {
+        let mcmd = SubCommand::with_name("{{m.name}}");
+        rcmd = rcmd.subcommand(mcmd);
+    }
+        {% endfor %}
+    app = app.subcommand(rcmd);
+    {% endfor %}
 }
