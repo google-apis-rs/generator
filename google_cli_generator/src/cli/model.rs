@@ -62,12 +62,14 @@ impl From<&ApiResource> for Resource {
 #[derive(Serialize)]
 struct Method {
     name: String,
+    about: Option<String>,
 }
 
 impl From<&ApiMethod> for Method {
     fn from(m: &ApiMethod) -> Self {
         Method {
             name: m.ident.to_string(),
+            about: m.description.clone(),
         }
     }
 }

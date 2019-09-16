@@ -432,7 +432,7 @@ pub struct Method {
     pub ident: syn::Ident,
     path: String,
     http_method: String,
-    description: Option<String>,
+    pub description: Option<String>,
     param_order: Vec<String>,
     params: Vec<Param>,
     request: Option<RefOrType<'static>>,

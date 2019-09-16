@@ -32,6 +32,9 @@ fn main() {
         {% for m in r.methods %}
     {
         let mcmd = SubCommand::with_name("{{m.name}}");
+        {% if m.about %}
+            mcmd = mcmd.about("{{m.about}}");
+        {% endif %}
         rcmd = rcmd.subcommand(mcmd);
     }
         {% endfor %}
