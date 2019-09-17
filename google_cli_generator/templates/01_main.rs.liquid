@@ -17,7 +17,7 @@ impl<'a, 'b> Default for HeapApp<'a, 'b> {
             .setting(clap::AppSettings::ColoredHelp)
             .author("Sebastian Thiel <byronimo@gmail.com>")
             .version("{{cli_version}}")
-            .about("{{description}}")
+            .about({{ description | rust_string_literal }})
             .after_help("All documentation details can be found at <TODO figure out URL>")
             .arg(Arg::with_name("scope")
                 .long("scope")
@@ -38,12 +38,12 @@ impl<'a, 'b> Default for HeapApp<'a, 'b> {
         {%- for r in resources -%}
         let mut rcmd = SubCommand::with_name("{{r.name}}")
                         .setting(clap::AppSettings::ColoredHelp)
-                        .about("{{r.about}}");
+                        .about({{r.about | rust_string_literal }});
             {%- for m in r.methods -%}
         {
             let mcmd = SubCommand::with_name("{{m.name}}")
             {%- if m.about -%}
-                .about("{{m.about}}");
+                .about({{ m.about | rust_string_literal }});
             {%- endif -%};
             rcmd = rcmd.subcommand(mcmd);
         }

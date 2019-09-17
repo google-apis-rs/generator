@@ -103,7 +103,7 @@ fn generate_code(
     all::generate(
         &desc,
         output_directory.join(&api.gen_dir),
-        all::Build::ApiAndCliInParallelNoErrorHandling,
+        all::Build::ApiAndCli, // TODO: change this to the parallel mode once error handling works correctly
     )
     .map_err(|e| {
         let error = e.to_string();

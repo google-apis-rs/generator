@@ -9,6 +9,7 @@ use crate::cargo;
 use google_rest_api_generator::APIDesc;
 use model::Model;
 
+mod liquid_filters;
 mod model;
 
 pub fn generate(
@@ -37,7 +38,9 @@ pub fn generate(
     rustfmt_writer.write_all(MAIN_RS.as_bytes())?;
 
     let templates_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("templates");
-    let engine = liquid::ParserBuilder::with_liquid().build()?;
+    let engine = liquid::ParserBuilder::with_liquid()
+        .filter(liquid_filters::RustStringLiteral)
+        .build()?;
     let model = into_liquid_object(Model::new(api, discovery_desc, &api_desc))?;
     let mut templates: Vec<_> = templates_dir
         .read_dir()?
