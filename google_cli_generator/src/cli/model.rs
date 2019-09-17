@@ -57,32 +57,37 @@ impl From<&ApiResource> for Resource {
     fn from(r: &ApiResource) -> Self {
         let name = r.ident.to_string();
         let parent_count = r.parent_path.segments.len().saturating_sub(2); // skip top-level resources module
+        let parent_ident = if parent_count == 0 {
+            APP_IDENT.into()
+        } else {
+            format!(
+                "{}{}",
+                r.parent_path
+                    .segments
+                    .last()
+                    .expect("at least one item")
+                    .ident
+                    .to_string(),
+                parent_count.saturating_sub(1)
+            )
+        };
+        let about = if r.methods.is_empty() {
+            format!(
+                "sub-resources: {}",
+                concat_with_and(r.resources.iter().map(|r| r.ident.to_string()))
+            )
+        } else {
+            format!(
+                "methods: {}",
+                concat_with_and(r.methods.iter().map(|m| m.ident.to_string()))
+            )
+        };
 
         Resource {
-            parent_ident: if parent_count == 0 {
-                APP_IDENT.into()
-            } else {
-                format!(
-                    "{}{}",
-                    r.parent_path
-                        .segments
-                        .last()
-                        .expect("at least one item")
-                        .ident
-                        .to_string(),
-                    parent_count.saturating_sub(1)
-                )
-            },
+            parent_ident,
             ident: format!("{}{}", name, parent_count),
             name,
-            about: if r.methods.is_empty() {
-                "a resource with sub-resources".into()
-            } else {
-                format!(
-                    "methods: {}",
-                    concat_with_and(r.methods.iter().map(|m| m.ident.to_string()))
-                )
-            },
+            about,
             methods: r.methods.iter().map(Method::from).collect(),
         }
     }
