@@ -37,7 +37,7 @@ impl<'a, 'b> Default for HeapApp<'a, 'b> {
 
         {%- for r in resources %}
         let mut {{r.ident}} = SubCommand::with_name("{{r.name}}")
-                        .setting(clap::AppSettings::ColoredHelp)
+                        .setting(AppSettings::ColoredHelp)
                         .about({{r.about | rust_string_literal }});
             {%- for m in r.methods %}
         {

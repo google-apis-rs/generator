@@ -3,7 +3,7 @@ use discovery_parser::DiscoveryRestDesc;
 use google_rest_api_generator::{APIDesc, Method as ApiMethod, Resource as ApiResource};
 use serde::Serialize;
 use shared::Api;
-use std::convert::TryFrom;
+use std::{collections::VecDeque, iter::FromIterator};
 
 const APP_IDENT: &str = "app";
 
@@ -24,23 +24,23 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn new(
-        api: Api,
-        desc: &DiscoveryRestDesc,
-        api_desc: &APIDesc,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-        Ok(Model {
+    pub fn new(api: Api, desc: &DiscoveryRestDesc, api_desc: &APIDesc) -> Self {
+        Model {
             app_ident: APP_IDENT.to_owned(),
             lib_crate_name_for_use: api.lib_crate_name.replace('-', "_"),
             program_name: api.bin_name,
             cli_version: api.cli_crate_version.expect("available cli crate version"),
             description: desc.description.clone(),
-            resources: api_desc
-                .resources
-                .iter()
-                .map(Resource::try_from)
-                .collect::<Result<Vec<_>, _>>()?,
-        })
+            resources: {
+                let mut deque = VecDeque::from_iter(api_desc.resources.iter());
+                let mut resources = Vec::new();
+                while let Some(api_resource) = deque.pop_front() {
+                    resources.push(Resource::from(api_resource));
+                    deque.extend(api_resource.resources.iter());
+                }
+                resources
+            },
+        }
     }
 }
 
@@ -53,13 +53,12 @@ struct Resource {
     methods: Vec<Method>,
 }
 
-impl TryFrom<&ApiResource> for Resource {
-    type Error = Box<dyn std::error::Error>;
-    fn try_from(r: &ApiResource) -> Result<Self, Self::Error> {
+impl From<&ApiResource> for Resource {
+    fn from(r: &ApiResource) -> Self {
         let name = r.ident.to_string();
         let parent_count = r.parent_path.segments.len().saturating_sub(2); // skip top-level resources module
 
-        Ok(Resource {
+        Resource {
             parent_ident: if parent_count == 0 {
                 APP_IDENT.into()
             } else {
@@ -71,7 +70,7 @@ impl TryFrom<&ApiResource> for Resource {
                         .expect("at least one item")
                         .ident
                         .to_string(),
-                    parent_count
+                    parent_count.saturating_sub(1)
                 )
             },
             ident: format!("{}{}", name, parent_count),
@@ -85,7 +84,7 @@ impl TryFrom<&ApiResource> for Resource {
                 )
             },
             methods: r.methods.iter().map(Method::from).collect(),
-        })
+        }
     }
 }
 
