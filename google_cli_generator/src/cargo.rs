@@ -19,8 +19,6 @@ serde_json = "1.0.40"
 dirs = "2.0"
 google_cli_shared = { git = "https://github.com/google-apis-rs/generator", version = "0.1.0" }
 default-boxed = "0.1.6"
-
-[workspace]
 "#;
 
 pub(crate) fn cargo_toml(api: &shared::Api, standard: &shared::Standard) -> String {
@@ -37,8 +35,9 @@ pub(crate) fn cargo_toml(api: &shared::Api, standard: &shared::Standard) -> Stri
         .replace("{bin_path}", &standard.main_path);
 
     doc.push_str(&format!("\n[dependencies.{}]\n", api.lib_crate_name));
+    doc.push_str(&format!("path = \"../lib\"\n"));
     doc.push_str(&format!(
-        "version = \"{}\"",
+        "version = \"{}\"\n",
         api.lib_crate_version
             .as_ref()
             .expect("available crate version")
