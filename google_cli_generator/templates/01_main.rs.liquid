@@ -13,7 +13,7 @@ struct HeapApp<'a, 'b> {
 
 impl<'a, 'b> Default for HeapApp<'a, 'b> {
     fn default() -> Self {
-        let mut app = App::new("{{program_name}}")
+        let mut {{app_ident}} = App::new("{{program_name}}")
             .setting(clap::AppSettings::ColoredHelp)
             .author("Sebastian Thiel <byronimo@gmail.com>")
             .version("{{cli_version}}")
@@ -35,24 +35,27 @@ impl<'a, 'b> Default for HeapApp<'a, 'b> {
                 .multiple(false)
                 .takes_value(false));
 
-        {%- for r in resources -%}
-        let mut rcmd = SubCommand::with_name("{{r.name}}")
+        {%- for r in resources %}
+        let mut {{r.ident}} = SubCommand::with_name("{{r.name}}")
                         .setting(clap::AppSettings::ColoredHelp)
                         .about({{r.about | rust_string_literal }});
-            {%- for m in r.methods -%}
+            {%- for m in r.methods %}
         {
             let mcmd = SubCommand::with_name("{{m.name}}")
             {%- if m.about -%}
                 .about({{ m.about | rust_string_literal }});
-            {%- endif -%};
-            rcmd = rcmd.subcommand(mcmd);
+            {%- endif %};
+            {{r.ident}} = {{r.ident}}.subcommand(mcmd);
         }
-            {%- endfor -%}
-        app = app.subcommand(rcmd);
+            {%- endfor %}
         {%- endfor -%}
 
+        {%- for r in resources reversed %}
+            {{r.parent_ident}} = {{r.parent_ident}}.subcommand({{r.ident}});
+        {%- endfor %}
+
         Self {
-            app
+            {{app_ident}}
         }
     }
 }

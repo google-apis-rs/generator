@@ -369,7 +369,7 @@ fn schema_parent_path() -> syn::Path {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Resource {
     pub ident: syn::Ident,
-    parent_path: syn::Path,
+    pub parent_path: syn::Path,
     pub resources: Vec<Resource>,
     pub methods: Vec<Method>,
 }
