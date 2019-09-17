@@ -41,7 +41,7 @@ pub fn generate(
     let engine = liquid::ParserBuilder::with_liquid()
         .filter(liquid_filters::RustStringLiteral)
         .build()?;
-    let model = into_liquid_object(Model::new(api, discovery_desc, &api_desc))?;
+    let model = into_liquid_object(Model::new(api, discovery_desc, &api_desc)?)?;
     let mut templates: Vec<_> = templates_dir
         .read_dir()?
         .collect::<Result<Vec<_>, _>>()?
