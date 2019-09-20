@@ -1302,7 +1302,7 @@ impl Type {
                     derives.push(quote! {::serde::Serialize});
                     Some(quote! {
                         #[derive(#(#derives,)*)]
-                        pub struct #name;
+                        pub struct #name{}
 
                         impl ::google_field_selector::FieldSelector for #name {
                             fn fields() -> Vec<::google_field_selector::Field> {
