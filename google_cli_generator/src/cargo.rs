@@ -12,7 +12,7 @@ name = "{bin_name}"
 path = "{bin_path}"
 
 [dependencies]
-yup-oauth2 = { git = "https://github.com/dermesser/yup-oauth2", rev = "778e5af" } # Use released version once it includes this commit
+yup-oauth2 = "^3.1"
 google_api_auth = { git = "https://github.com/google-apis-rs/generator", features = ["with-yup-oauth2"] }
 clap = "^2.33"
 serde_json = "1.0.40"
