@@ -274,8 +274,20 @@ impl APIDesc {
                 where
                     A: Into<Box<dyn ::google_api_auth::GetAccessToken>>,
                 {
+                    Client::with_reqwest_client(
+                        auth,
+                        ::reqwest::Client::builder().timeout(None).build().unwrap()
+                    )
+                }
+
+                // Not necessarily the best API. If we have a need for anymore
+                // configuration knobs we should switch to a builder pattern.
+                pub fn with_reqwest_client<A>(auth: A, reqwest: ::reqwest::Client) -> Self
+                where
+                    A: Into<Box<dyn ::google_api_auth::GetAccessToken>>,
+                {
                     Client {
-                        reqwest: ::reqwest::Client::builder().timeout(None).build().unwrap(),
+                        reqwest,
                         auth: auth.into(),
                     }
                 }
