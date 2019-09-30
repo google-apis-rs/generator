@@ -1207,8 +1207,12 @@ impl Type {
                     }
                 })
             }
-            TypeDesc::Object { props, add_props } => match (props.is_empty(), add_props) {
-                (false, add_props) => {
+            TypeDesc::Object { props, add_props } => {
+                if props.is_empty() && add_props.is_some() {
+                    // Objects that only contain additional properties are
+                    // treated as BTreeMap's and don't need a type definition.
+                    None
+                } else {
                     let mut fields: Vec<syn::Field> = props
                         .iter()
                         .map(
@@ -1272,6 +1276,9 @@ impl Type {
                         );
                         fields.push(field);
                     }
+                    if props.is_empty() && add_props.is_none() {
+                        derives.push(quote! {Copy});
+                    }
                     derives.push(quote! {Default});
                     derives.push(quote! {::serde::Deserialize});
                     derives.push(quote! {::serde::Serialize});
@@ -1280,29 +1287,6 @@ impl Type {
                         pub struct #name {
                             #(#fields,)*
                         }
-
-                        impl ::google_field_selector::FieldSelector for #name {
-                            fn fields() -> Vec<::google_field_selector::Field> {
-                                Vec::new()
-                            }
-                        }
-
-                        impl ::google_field_selector::ToFieldType for #name {
-                            fn field_type() -> ::google_field_selector::FieldType {
-                                ::google_field_selector::FieldType::Leaf
-                            }
-                        }
-                    })
-                }
-                (true, Some(_)) => None,
-                (true, None) => {
-                    derives.push(quote! {Copy});
-                    derives.push(quote! {Default});
-                    derives.push(quote! {::serde::Deserialize});
-                    derives.push(quote! {::serde::Serialize});
-                    Some(quote! {
-                        #[derive(#(#derives,)*)]
-                        pub struct #name{}
 
                         impl ::google_field_selector::FieldSelector for #name {
                             fn fields() -> Vec<::google_field_selector::Field> {
