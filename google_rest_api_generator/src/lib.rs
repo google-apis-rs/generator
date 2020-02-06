@@ -112,6 +112,7 @@ pub struct APIDesc {
     version: String,
     root_url: String,
     service_path: String,
+    auth_scopes: Vec<ScopeDesc>,
     schemas: BTreeMap<syn::Ident, Type>,
     params: Vec<Param>,
     pub resources: Vec<Resource>,
@@ -180,6 +181,16 @@ impl APIDesc {
         if any_method_supports_media(&resources) {
             add_media_to_alt_param(&mut params);
         }
+        use discovery_parser::{AuthDesc, Oauth2Desc};
+        let auth_scopes = match &discovery_desc.auth {
+            Some(AuthDesc {
+                oauth2: Oauth2Desc { scopes },
+            }) => scopes
+                .iter()
+                .map(|(scope, sc)| ScopeDesc::new(&scope, &sc.description))
+                .collect(),
+            _ => Vec::new(),
+        };
         debug!("sorting");
         params.sort_by(|a, b| a.ident.cmp(&b.ident));
         resources.sort_by(|a, b| a.ident.cmp(&b.ident));
@@ -189,6 +200,7 @@ impl APIDesc {
             version: discovery_desc.version.clone(),
             root_url: discovery_desc.root_url.clone(),
             service_path: discovery_desc.service_path.clone(),
+            auth_scopes,
             schemas,
             params,
             resources,
@@ -256,9 +268,21 @@ impl APIDesc {
             .iter()
             .map(|method| method_actions::generate(method, &self.params));
         let package_doc = package_doc::generate(self);
+        let scope_constants = self.auth_scopes.iter().map(|scope_desc| {
+            let ident = &scope_desc.ident;
+            let value = &scope_desc.value;
+            let desc = format!("{}\n\n`{}`", &scope_desc.description, &value);
+            quote! {
+                #[doc = #desc]
+                pub const #ident: &str = #value;
+            }
+        });
         info!("outputting");
         quote! {
             #![doc = #package_doc]
+            pub mod scopes {
+                #(#scope_constants)*
+            }
             pub mod schemas {
                 #(#schema_type_defs)*
             }
@@ -1313,7 +1337,7 @@ impl Type {
                         }
                     })
                 }
-            },
+            }
             _ => None,
         }
     }
@@ -1782,4 +1806,29 @@ enum PageTokenParam {
     None,
     Optional,
     Required,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct ScopeDesc {
+    ident: syn::Ident,
+    value: String,
+    description: String,
+}
+
+impl ScopeDesc {
+    fn new(scope: &str, description: &str) -> Self {
+        fn make_ident(mut scope: &str) -> syn::Ident {
+            scope = scope.trim_start_matches("https://www.googleapis.com/auth/");
+            scope = scope.trim_start_matches("https://");
+            scope = scope.trim_end_matches("/");
+            let mut scope = scope.replace(&['.', '/', '-'][..], "_");
+            scope.make_ascii_uppercase();
+            to_ident(&scope)
+        }
+        ScopeDesc {
+            ident: make_ident(&scope),
+            value: scope.to_owned(),
+            description: description.to_owned(),
+        }
+    }
 }
