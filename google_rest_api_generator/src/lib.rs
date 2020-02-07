@@ -290,7 +290,7 @@ impl APIDesc {
                 #(#param_type_defs)*
             }
             pub struct Client {
-                reqwest: ::reqwest::Client,
+                reqwest: ::reqwest::blocking::Client,
                 auth: Box<dyn ::google_api_auth::GetAccessToken>,
             }
             impl Client {
@@ -300,13 +300,13 @@ impl APIDesc {
                 {
                     Client::with_reqwest_client(
                         auth,
-                        ::reqwest::Client::builder().timeout(None).build().unwrap()
+                        ::reqwest::blocking::Client::builder().timeout(None).build().unwrap()
                     )
                 }
 
                 // Not necessarily the best API. If we have a need for anymore
                 // configuration knobs we should switch to a builder pattern.
-                pub fn with_reqwest_client<A>(auth: A, reqwest: ::reqwest::Client) -> Self
+                pub fn with_reqwest_client<A>(auth: A, reqwest: ::reqwest::blocking::Client) -> Self
                 where
                     A: Into<Box<dyn ::google_api_auth::GetAccessToken>>,
                 {

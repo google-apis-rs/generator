@@ -11,7 +11,7 @@ publish = false
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 chrono = { version = "0.4", features = ["serde"] }
-reqwest = { version = "0.9", default-features = false, features = ['rustls-tls'] }
+reqwest = { version = "0.10", default-features = false, features = ['rustls-tls', 'blocking', 'json'] }
 google_field_selector = { git = "https://github.com/google-apis-rs/generator" }
 google_api_auth = { git = "https://github.com/google-apis-rs/generator" }
 mime = "0.3"

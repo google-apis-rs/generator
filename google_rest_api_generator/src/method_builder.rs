@@ -113,7 +113,7 @@ pub(crate) fn generate(
         #[doc = #builder_doc]
         #[derive(Debug,Clone)]
         pub struct #builder_name<'a> {
-            pub(crate) reqwest: &'a ::reqwest::Client,
+            pub(crate) reqwest: &'a ::reqwest::blocking::Client,
             pub(crate) auth: &'a dyn ::google_api_auth::GetAccessToken,
             #(#builder_fields,)*
         }
@@ -378,7 +378,7 @@ fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>
         .expect(format!("unknown http method: {}", http_method).as_str());
     let reqwest_method = reqwest_http_method(&http_method);
     quote! {
-        fn _request(&self, path: &str) -> Result<::reqwest::RequestBuilder, crate::Error> {
+        fn _request(&self, path: &str) -> Result<::reqwest::blocking::RequestBuilder, crate::Error> {
             let req = self.reqwest.request(#reqwest_method, path);
             #(let req = req.query(&[#query_params]);)*
             let req = req.bearer_auth(self.auth.access_token().map_err(|err| crate::Error::OAuth2(err))?);
@@ -599,7 +599,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                             #add_request_part
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
                             let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
-                            let req = req.body(reqwest::Body::new(multipart.into_reader()));
+                            let req = req.body(reqwest::blocking::Body::new(multipart.into_reader()));
                             Ok(crate::error_from_response(req.send()?)?.json()?)
                         }
                     }
@@ -617,7 +617,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                             #add_request_part
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
                             let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
-                            let req = req.body(reqwest::Body::new(multipart.into_reader()));
+                            let req = req.body(reqwest::blocking::Body::new(multipart.into_reader()));
                             crate::error_from_response(req.send()?)?;
                             Ok(())
                         }

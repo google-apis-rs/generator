@@ -36,13 +36,28 @@ fn count_methods<'a>(resources: impl Iterator<Item = &'a discovery_parser::Resou
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    use discovery_parser::{AuthDesc, Oauth2Desc};
     for_each_api(|rest_desc| {
-        if !rest_desc.methods.is_empty() {
-            println!("name: {} version: {}", &rest_desc.name, &rest_desc.version);
+        if let Some(AuthDesc {
+            oauth2: Oauth2Desc { scopes },
+        }) = &rest_desc.auth
+        {
+            for scope in scopes.keys() {
+                println!("{} -> {}", scope, const_id_for_scope(&scope));
+            }
         }
-        for_each_resource(rest_desc, |_resource| {});
     })?;
     Ok(())
+}
+
+fn const_id_for_scope(mut scope: &str) -> String {
+    const GOOGLE_AUTH_PREFIX: &str = "https://www.googleapis.com/auth/";
+    scope = scope.trim_start_matches("https://www.googleapis.com/auth/");
+    scope = scope.trim_start_matches("https://");
+    scope = scope.trim_end_matches("/");
+    let mut scope = scope.replace(&['.', '/', '-'][..], "_");
+    scope.make_ascii_uppercase();
+    scope
 }
 
 fn for_each_resource<F>(rest_desc: &DiscoveryRestDesc, mut f: F)
@@ -88,5 +103,5 @@ fn get_api(
     url: &str,
 ) -> Result<DiscoveryRestDesc, Box<dyn std::error::Error>> {
     eprintln!("Fetching {}", url);
-    Ok(client.get(url).send()?.json()?)
+    Ok(client.get(url).send()?.error_for_status()?.json()?)
 }
