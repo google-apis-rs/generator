@@ -113,7 +113,7 @@ pub(crate) fn generate(
         #[doc = #builder_doc]
         #[derive(Debug,Clone)]
         pub struct #builder_name<'a> {
-            pub(crate) reqwest: &'a ::reqwest::blocking::Client,
+            pub(crate) reqwest: &'a ::reqwest::Client,
             pub(crate) auth: &'a dyn ::google_api_auth::GetAccessToken,
             #(#builder_fields,)*
         }
@@ -154,7 +154,7 @@ fn exec_method(
                 /// are not generic over the return type and deserialize the
                 /// response into an auto-generated struct will all possible
                 /// fields.
-                pub fn execute<T>(self) -> Result<T, crate::Error>
+                pub async fn execute<T>(self) -> Result<T, crate::Error>
                 where
                     T: ::serde::de::DeserializeOwned + ::google_field_selector::FieldSelector,
                 {
@@ -164,7 +164,7 @@ fn exec_method(
                     } else {
                         Some(fields)
                     };
-                    self.execute_with_fields(fields)
+                    self.execute_with_fields(fields).await
                 }
 
                 /// Execute the given operation. This will not provide any
@@ -172,46 +172,46 @@ fn exec_method(
                 /// the fields returned. This typically includes the most common
                 /// fields, but it will not include every possible attribute of
                 /// the response resource.
-                pub fn execute_with_default_fields(self) -> Result<#resp_type_path, crate::Error> {
-                    self.execute_with_fields(None::<&str>)
+                pub async fn execute_with_default_fields(self) -> Result<#resp_type_path, crate::Error> {
+                    self.execute_with_fields(None::<&str>).await
                 }
 
                 /// Execute the given operation. This will provide a `fields`
                 /// selector of `*`. This will include every attribute of the
                 /// response resource and should be limited to use during
                 /// development or debugging.
-                pub fn execute_with_all_fields(self) -> Result<#resp_type_path, crate::Error> {
-                    self.execute_with_fields(Some("*"))
+                pub async fn execute_with_all_fields(self) -> Result<#resp_type_path, crate::Error> {
+                    self.execute_with_fields(Some("*")).await
                 }
 
                 /// Execute the given operation. This will use the `fields`
                 /// selector provided and will deserialize the response into
                 /// whatever return value is provided.
-                pub fn execute_with_fields<T, F>(mut self, fields: Option<F>) -> Result<T, crate::Error>
+                pub async fn execute_with_fields<T, F>(mut self, fields: Option<F>) -> Result<T, crate::Error>
                 where
                     T: ::serde::de::DeserializeOwned,
                     F: Into<String>,
                 {
                     self.fields = fields.map(Into::into);
-                    self._execute()
+                    self._execute().await
                 }
 
-                fn _execute<T>(&mut self) -> Result<T, crate::Error>
+                async fn _execute<T>(&mut self) -> Result<T, crate::Error>
                 where
                     T: ::serde::de::DeserializeOwned,
                 {
                     let req = self._request(&self._path())?;
                     #set_body
-                    Ok(crate::error_from_response(req.send()?)?.json()?)
+                    Ok(req.send().await?.error_for_status()?.json().await?)
                 }
             }
         }
         None => {
             quote! {
-                pub fn execute(self) -> Result<(), crate::Error> {
+                pub async fn execute(self) -> Result<(), crate::Error> {
                     let req = self._request(&self._path())?;
                     #set_body
-                    crate::error_from_response(req.send()?)?;
+                    req.send().await?.error_for_status()?;
                     Ok(())
                 }
             }
@@ -378,7 +378,7 @@ fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>
         .expect(format!("unknown http method: {}", http_method).as_str());
     let reqwest_method = reqwest_http_method(&http_method);
     quote! {
-        fn _request(&self, path: &str) -> Result<::reqwest::blocking::RequestBuilder, crate::Error> {
+        fn _request(&self, path: &str) -> Result<::reqwest::RequestBuilder, crate::Error> {
             let req = self.reqwest.request(#reqwest_method, path);
             #(let req = req.query(&[#query_params]);)*
             let req = req.bearer_auth(self.auth.access_token().map_err(|err| crate::Error::OAuth2(err))?);
@@ -399,6 +399,7 @@ fn iterable_method_impl<'a>(method: &Method) -> TokenStream {
             where
                 T: ::serde::de::DeserializeOwned,
             {
+                // FIXME: make `IterableMethod` async/refactor `Iter` impl to async `Stream`
                 self._execute()
             }
         }
@@ -558,12 +559,13 @@ fn download_method(base_url: &str, method: &Method) -> TokenStream {
     );
     quote! {
         #download_path_method
-        pub fn download<W>(mut self, output: &mut W) -> Result<u64, crate::Error>
+        pub async fn download<W>(mut self, output: &mut W) -> Result<u64, crate::Error>
         where
-            W: ::std::io::Write + ?Sized,
+            W: futures::io::AsyncWriteExt + std::marker::Unpin + ?Sized,
         {
             self.alt = Some(crate::params::Alt::Media);
-            Ok(crate::error_from_response(self._request(&self._path())?.send()?)?.copy_to(output)?)
+            let response = self._request(&self._path())?.send().await?.error_for_status()?;
+            Ok(futures::io::copy(response.bytes_stream(), output).await?)
         }
     }
 }
@@ -581,7 +583,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
             let upload_fn = match &method.response {
                 Some(_response) => {
                     quote!{
-                        pub fn upload<T, R>(mut self, content: R, mime_type: ::mime::Mime) -> Result<T, crate::Error>
+                        pub async fn upload<T, R>(mut self, content: R, mime_type: ::mime::Mime) -> Result<T, crate::Error>
                         where
                             T: ::serde::de::DeserializeOwned + ::google_field_selector::FieldSelector,
                             R: ::std::io::Read + ::std::io::Seek + Send + 'static,
@@ -599,8 +601,9 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                             #add_request_part
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
                             let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
-                            let req = req.body(reqwest::blocking::Body::new(multipart.into_reader()));
-                            Ok(crate::error_from_response(req.send()?)?.json()?)
+                            let req = req.body(reqwest::Body::new(multipart.into_reader()));
+                            let response = req.send().await?.error_for_status()?;
+                            Ok(response)
                         }
                     }
                 },
@@ -617,8 +620,8 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                             #add_request_part
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
                             let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
-                            let req = req.body(reqwest::blocking::Body::new(multipart.into_reader()));
-                            crate::error_from_response(req.send()?)?;
+                            let req = req.body(reqwest::Body::new(multipart.into_reader()));
+                            req.send().await?.error_for_status()?;
                             Ok(())
                         }
                     }
@@ -644,12 +647,12 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                 &method.params,
             );
             let upload_fn = quote!{
-                pub fn start_resumable_upload(self, mime_type: ::mime::Mime) -> Result<crate::ResumableUpload, crate::Error> {
+                pub async fn start_resumable_upload(self, mime_type: ::mime::Mime) -> Result<crate::ResumableUpload, crate::Error> {
                     let req = self._request(&self._resumable_upload_path())?;
                     let req = req.query(&[("uploadType", "resumable")]);
                     let req = req.header(::reqwest::header::HeaderName::from_static("x-upload-content-type"), mime_type.to_string());
                     #set_body
-                    let resp = crate::error_from_response(req.send()?)?;
+                    let resp = req.send().await?.error_for_status()?;
                     let location_header = resp.headers().get(::reqwest::header::LOCATION).ok_or_else(|| crate::Error::Other(format!("No LOCATION header returned when initiating resumable upload").into()))?;
                     let upload_url = ::std::str::from_utf8(location_header.as_bytes()).map_err(|_| crate::Error::Other(format!("Non UTF8 LOCATION header returned").into()))?.to_owned();
                     Ok(crate::ResumableUpload::new(self.reqwest.clone(), upload_url))

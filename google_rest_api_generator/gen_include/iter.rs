@@ -1,7 +1,7 @@
 pub mod iter {
     pub trait IterableMethod {
         fn set_page_token(&mut self, value: String);
-        fn execute<T>(&mut self) -> Result<T, crate::Error>
+        async fn execute<T>(&mut self) -> Result<T, crate::Error>
         where
             T: ::serde::de::DeserializeOwned;
     }

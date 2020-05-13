@@ -53,15 +53,3 @@ impl From<::reqwest::Error> for Error {
         }
     }
 }
-
-/// Check the response to see if the status code represents an error. If so
-/// convert it into the Reqwest variant of Error.
-fn error_from_response(response: ::reqwest::blocking::Response) -> Result<::reqwest::blocking::Response, Error> {
-    match response.error_for_status_ref() {
-        Err(reqwest_err) => {
-            let body = response.text().ok();
-            Err(Error::Reqwest { reqwest_err, body })
-        }
-        Ok(_) => Ok(response),
-    }
-}
