@@ -11,5 +11,6 @@ default = []
 with-yup-oauth2 = ["yup-oauth2", "tokio"]
 
 [dependencies]
-yup-oauth2 = { version = "^3.1", optional = true }
-tokio = { version = "0.1", optional = true }
+yup-oauth2 = { version = "^4.1", optional = true }
+tokio = { version = "0.2", optional = true }
+hyper = "^0.13"
