@@ -564,11 +564,22 @@ fn download_method(base_url: &str, method: &Method) -> TokenStream {
         #download_path_method
         pub async fn download<W>(mut self, output: &mut W) -> Result<u64, crate::Error>
         where
-            W: futures::io::AsyncWriteExt + std::marker::Unpin + ?Sized,
+            W: futures::io::AsyncWrite + std::marker::Unpin + ?Sized,
         {
+            use futures::io::AsyncWriteExt;
+
             self.alt = Some(crate::params::Alt::Media);
-            let response = self._request(&self._path())?.send().await?.error_for_status()?;
-            Ok(futures::io::copy(response.bytes_stream(), output).await?)
+            let request = self._request(&self._path()).await?;
+
+            let mut response = request.send().await?.error_for_status()?;
+
+            let mut num_bytes_written: usize = 0;
+            while let Some(chunk) = response.chunk().await? {
+                output.write(&chunk);
+                num_bytes_written += chunk.len();
+            }
+
+            Ok(num_bytes_written as u64)
         }
     }
 }
