@@ -1,8 +1,10 @@
 use ::std::sync::Mutex;
+use yup_oauth2::authenticator::Authenticator;
+use hyper::client::connect::Connect;
 
-pub fn from_authenticator<T, I, S>(auth: T, scopes: I) -> impl crate::GetAccessToken
+pub fn from_authenticator<C, I, S>(auth: Authenticator<C>, scopes: I) -> impl crate::GetAccessToken
 where
-    T: ::yup_oauth2::GetToken + Send,
+    C: Connect + Clone + Send + Sync + 'static,
     I: IntoIterator<Item = S>,
     S: Into<String>,
 {
@@ -12,8 +14,8 @@ where
     }
 }
 
-struct YupAuthenticator<T> {
-    auth: Mutex<T>,
+struct YupAuthenticator<C> {
+    auth: Mutex<Authenticator<C>>,
     scopes: Vec<String>,
 }
 
@@ -23,18 +25,18 @@ impl<T> ::std::fmt::Debug for YupAuthenticator<T> {
     }
 }
 
-impl<T> crate::GetAccessToken for YupAuthenticator<T>
+impl<C> crate::GetAccessToken for YupAuthenticator<C>
 where
-    T: ::yup_oauth2::GetToken + Send,
+    C: Connect + Clone + Send + Sync + 'static,
 {
     fn access_token(&self) -> Result<String, Box<dyn ::std::error::Error + Send + Sync>> {
-        let mut auth = self
+        let auth = self
             .auth
             .lock()
             .expect("thread panicked while holding lock");
         let fut = auth.token(&self.scopes);
         let mut runtime = ::tokio::runtime::Runtime::new().expect("unable to start tokio runtime");
-        Ok(runtime.block_on(fut)?.access_token)
+        Ok(runtime.block_on(fut)?.as_str().to_string())
     }
 }
 
@@ -44,16 +46,15 @@ mod tests {
     use crate::GetAccessToken;
     use yup_oauth2 as oauth2;
 
-    #[test]
-    fn it_works() {
-        let inf = oauth2::InstalledFlow::new(
+    #[tokio::test]
+    async fn it_works() {
+        let auth = oauth2::InstalledFlowAuthenticator::builder(
             oauth2::ApplicationSecret::default(),
-            yup_oauth2::InstalledFlowReturnMethod::HTTPRedirect(8081),
-        );
+            yup_oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+        ).build()
+        .await
+        .expect("failed to build");
 
-        let auth = oauth2::Authenticator::new(inf)
-            .build()
-            .expect("create a new statically known client");
         let auth = from_authenticator(auth, vec!["foo", "bar"]);
 
         fn this_should_work<T: GetAccessToken>(_x: T) {};
