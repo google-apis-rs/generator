@@ -9,7 +9,7 @@ publish = false
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
-google_api_auth = { git = "https://github.com/google-apis-rs/generator" }
+google_api_auth = { git = "https://github.com/google-apis-rs/generator", branch = "refactor/async" }
 google_field_selector = { git = "https://github.com/google-apis-rs/generator" }
 mime = "0.3"
 percent-encoding = "2"

@@ -14,3 +14,4 @@ with-yup-oauth2 = ["yup-oauth2", "tokio"]
 yup-oauth2 = { version = "^4.1", optional = true }
 tokio = { version = "0.2", optional = true }
 hyper = "^0.13"
+async-trait = "^0.1"

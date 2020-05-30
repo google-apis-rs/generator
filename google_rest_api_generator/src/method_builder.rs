@@ -200,7 +200,7 @@ fn exec_method(
                 where
                     T: ::serde::de::DeserializeOwned,
                 {
-                    let req = self._request(&self._path())?;
+                    let req = self._request(&self._path()).await?;
                     #set_body
                     Ok(req.send().await?.error_for_status()?.json().await?)
                 }
@@ -209,7 +209,7 @@ fn exec_method(
         None => {
             quote! {
                 pub async fn execute(self) -> Result<(), crate::Error> {
-                    let req = self._request(&self._path())?;
+                    let req = self._request(&self._path()).await?;
                     #set_body
                     req.send().await?.error_for_status()?;
                     Ok(())
@@ -378,10 +378,13 @@ fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>
         .expect(format!("unknown http method: {}", http_method).as_str());
     let reqwest_method = reqwest_http_method(&http_method);
     quote! {
-        fn _request(&self, path: &str) -> Result<::reqwest::RequestBuilder, crate::Error> {
+       async fn _request(&self, path: &str) -> Result<::reqwest::RequestBuilder, crate::Error> {
             let req = self.reqwest.request(#reqwest_method, path);
             #(let req = req.query(&[#query_params]);)*
-            let req = req.bearer_auth(self.auth.access_token().map_err(|err| crate::Error::OAuth2(err))?);
+            let access_token = self.auth.access_token()
+                .await
+                .map_err(|err| crate::Error::OAuth2(err))?;
+            let req = req.bearer_auth(access_token);
             Ok(req)
         }
     }
