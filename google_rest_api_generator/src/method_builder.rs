@@ -402,7 +402,7 @@ fn iterable_method_impl<'a>(method: &Method) -> TokenStream {
             where
                 T: ::serde::de::DeserializeOwned,
             {
-                // FIXME: make `IterableMethod` async/refactor `Iter` impl to async `Stream`
+                // FIXME: refactor `Iter` impl to async `Stream`
                 self._execute()
             }
         }
@@ -591,51 +591,79 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
             let add_request_part = method.request.as_ref().map(|_| {
                 quote!{
                     let request_json = ::serde_json::to_vec(&self.request)?;
-                    multipart.new_part(Part::new(::mime::APPLICATION_JSON, Box::new(::std::io::Cursor::new(request_json))));
+                    multipart.new_part(Part::new(
+                        ::mime::APPLICATION_JSON,
+                        Box::new(futures::io::Cursor::new(request_json)),
+                    ));
                 }
             });
+            // TODO: We either have to use `read_to_end` and read the whole body
+            // into memory or implement Stream for RelatedMultiPartReader, but
+            // that would require allocating a lot of intermediate Vecs; see:
+            // http://smallcultfollowing.com/babysteps/blog/2019/12/10/async-interview-2-cramertj-part-2/#the-natural-way-to-write-attached-streams-is-with-gats
             let upload_fn = match &method.response {
                 Some(_response) => {
                     quote!{
                         pub async fn upload<T, R>(mut self, content: R, mime_type: ::mime::Mime) -> Result<T, crate::Error>
                         where
                             T: ::serde::de::DeserializeOwned + ::google_field_selector::FieldSelector,
-                            R: ::std::io::Read + ::std::io::Seek + Send + 'static,
+                            R: futures::io::AsyncRead + std::marker::Unpin + Send + 'static,
                         {
+                            use crate::multipart::{RelatedMultiPart, Part};
+                            use futures::io::AsyncReadExt;
+
                             let fields = ::google_field_selector::to_string::<T>();
                             self.fields = if fields.is_empty() {
                                 None
                             } else {
                                 Some(fields)
                             };
-                            let req = self._request(&self._simple_upload_path())?;
+                            
+                            let req = self._request(&self._simple_upload_path()).await?;
                             let req = req.query(&[("uploadType", "multipart")]);
-                            use crate::multipart::{RelatedMultiPart, Part};
+
                             let mut multipart = RelatedMultiPart::new();
                             #add_request_part
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
+                            
                             let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
-                            let req = req.body(reqwest::Body::new(multipart.into_reader()));
+                            
+                            let mut body: Vec<u8> = vec![];
+                            let mut reader = multipart.into_reader();
+                            let _num_bytes = reader.read_to_end(&mut body).await?;
+                            let req = req.body(body);
+
                             let response = req.send().await?.error_for_status()?;
-                            Ok(response)
+
+                            Ok(response.json().await?)
                         }
                     }
                 },
                 None => {
                     quote!{
-                        pub fn upload<R>(self, content: R, mime_type: ::mime::Mime) -> Result<(), crate::Error>
+                        pub async fn upload<R>(self, content: R, mime_type: ::mime::Mime) -> Result<(), crate::Error>
                         where
-                            R: ::std::io::Read + ::std::io::Seek + Send + 'static,
+                            R: futures::io::AsyncRead + std::marker::Unpin + Send + 'static,
                         {
-                            let req = self._request(&self._simple_upload_path())?;
-                            let req = req.query(&[("uploadType", "multipart")]);
                             use crate::multipart::{RelatedMultiPart, Part};
+                            use futures::io::AsyncReadExt;
+
+                            let req = self._request(&self._simple_upload_path()).await?;
+                            let req = req.query(&[("uploadType", "multipart")]);
+                            
                             let mut multipart = RelatedMultiPart::new();
                             #add_request_part
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
+                           
                             let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
-                            let req = req.body(reqwest::Body::new(multipart.into_reader()));
+
+                            let mut body: Vec<u8> = vec![];
+                            let mut reader = multipart.into_reader();
+                            let _num_bytes = reader.read_to_end(&mut body).await?;
+                            let req = req.body(body);
+                            
                             req.send().await?.error_for_status()?;
+
                             Ok(())
                         }
                     }
@@ -662,7 +690,7 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
             );
             let upload_fn = quote!{
                 pub async fn start_resumable_upload(self, mime_type: ::mime::Mime) -> Result<crate::ResumableUpload, crate::Error> {
-                    let req = self._request(&self._resumable_upload_path())?;
+                    let req = self._request(&self._resumable_upload_path()).await?;
                     let req = req.query(&[("uploadType", "resumable")]);
                     let req = req.header(::reqwest::header::HeaderName::from_static("x-upload-content-type"), mime_type.to_string());
                     #set_body

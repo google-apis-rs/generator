@@ -6,6 +6,7 @@ pub enum Error {
         reqwest_err: ::reqwest::Error,
         body: Option<String>,
     },
+    IO(std::io::Error),
     Other(Box<dyn::std::error::Error + Send + Sync>),
 }
 
@@ -15,6 +16,7 @@ impl Error {
             Error::OAuth2(_) => None,
             Error::JSON(err) => Some(err),
             Error::Reqwest { .. } => None,
+            Error::IO(_) => None,
             Error::Other(_) => None,
         }
     }
@@ -32,6 +34,7 @@ impl ::std::fmt::Display for Error {
                 }
                 Ok(())
             }
+            Error::IO(err) => write!(f, "IO Error: {}", err),
             Error::Other(err) => write!(f, "Uknown Error: {}", err),
         }
     }
@@ -51,5 +54,11 @@ impl From<::reqwest::Error> for Error {
             reqwest_err,
             body: None,
         }
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Error {
+        Error::IO(err)
     }
 }
