@@ -109,6 +109,7 @@ pub(crate) fn generate(
     let upload_methods = upload_methods(root_url, method);
     let builder_doc = builder_doc(method, creator_ident);
 
+    // FIXME: implement Stream instead of Iter so it is async
     quote! {
         #[doc = #builder_doc]
         #[derive(Debug,Clone)]
@@ -121,7 +122,7 @@ pub(crate) fn generate(
         impl<'a> #builder_name<'a> {
             #(#param_methods)*
 
-            #iter_methods
+            // #iter_methods
             #download_method
             #upload_methods
             #exec_method
@@ -130,7 +131,7 @@ pub(crate) fn generate(
             #request_method
         }
 
-        #iter_types_and_impls
+       // #iter_types_and_impls
     }
 }
 
@@ -402,7 +403,6 @@ fn iterable_method_impl<'a>(method: &Method) -> TokenStream {
             where
                 T: ::serde::de::DeserializeOwned,
             {
-                // FIXME: refactor `Iter` impl to async `Stream`
                 self._execute()
             }
         }
@@ -706,9 +706,10 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
             }
         });
 
+        // FIXME: refactor ResumableUpload to be async
         quote! {
             #simple_fns
-            #resumable_fns
+            // #resumable_fns
         }
     } else {
         quote! {}

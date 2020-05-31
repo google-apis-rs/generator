@@ -17,7 +17,6 @@ impl ResumableUpload {
         &self.url
     }
 
-    // FIXME: fix compile issues `ResumableUpload::upload` to be async
     pub async fn upload<R>(&mut self, mut reader: R) -> Result<(), Box<dyn::std::error::Error>>
     where
         R: ::std::io::Read + ::std::io::Seek + Send + 'static,

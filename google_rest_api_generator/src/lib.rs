@@ -92,12 +92,14 @@ pub fn generate(
     rustfmt_writer.write_all(include_bytes!("../gen_include/percent_encode_consts.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/parsed_string.rs"))?;
-    if any_resumable_upload_methods {
-        rustfmt_writer.write_all(include_bytes!("../gen_include/resumable_upload.rs"))?;
-    }
-    if any_iterable_methods {
-        rustfmt_writer.write_all(include_bytes!("../gen_include/iter.rs"))?;
-    }
+    // FIXME: refactor ResumableUpload to be async
+    // if any_resumable_upload_methods {
+    //     rustfmt_writer.write_all(include_bytes!("../gen_include/resumable_upload.rs"))?;
+    // }
+    // FIXME: implement Stream instead of Iter so it is async
+    // if any_iterable_methods {
+    //     rustfmt_writer.write_all(include_bytes!("../gen_include/iter.rs"))?;
+    // }
     rustfmt_writer.close()?;
     info!("api: generated and formatted in {:?}", time.elapsed());
     info!("api: done in {:?}", total_time.elapsed());
