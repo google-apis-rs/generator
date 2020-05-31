@@ -560,6 +560,7 @@ fn download_method(base_url: &str, method: &Method) -> TokenStream {
         &method.path,
         &method.params,
     );
+    // TODO: faster to use tokio_util::compat? see: https://github.com/seanmonstar/reqwest/issues/482
     quote! {
         #download_path_method
         pub async fn download<W>(mut self, output: &mut W) -> Result<u64, crate::Error>
@@ -575,7 +576,7 @@ fn download_method(base_url: &str, method: &Method) -> TokenStream {
 
             let mut num_bytes_written: usize = 0;
             while let Some(chunk) = response.chunk().await? {
-                output.write(&chunk);
+                output.write(&chunk).await?;
                 num_bytes_written += chunk.len();
             }
 
