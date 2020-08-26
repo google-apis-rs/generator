@@ -1,4 +1,4 @@
-This project is the successor of [Google-APIS-rs](https://github.com/byron/oogle-apis-rs).
+This project is the successor of [Google-APIS-rs](https://github.com/byron/google-apis-rs).
 
 # Overview
 
