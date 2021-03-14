@@ -105,11 +105,12 @@ pub(crate) fn generate(
     let upload_methods = upload_methods(root_url, method);
     let builder_doc = builder_doc(method, creator_ident);
 
+    // FIXME: implement Stream instead of Iter so it is async
     quote! {
         #[doc = #builder_doc]
         #[derive(Debug,Clone)]
         pub struct #builder_name<'a> {
-            pub(crate) reqwest: &'a ::reqwest::blocking::Client,
+            pub(crate) reqwest: &'a ::reqwest::Client,
             pub(crate) auth: &'a dyn ::google_api_auth::GetAccessToken,
             #(#builder_fields,)*
         }
@@ -117,7 +118,7 @@ pub(crate) fn generate(
         impl<'a> #builder_name<'a> {
             #(#param_methods)*
 
-            #iter_methods
+            // #iter_methods
             #download_method
             #upload_methods
             #exec_method
@@ -126,7 +127,7 @@ pub(crate) fn generate(
             #request_method
         }
 
-        #iter_types_and_impls
+       // #iter_types_and_impls
     }
 }
 
@@ -150,7 +151,7 @@ fn exec_method(
                 /// are not generic over the return type and deserialize the
                 /// response into an auto-generated struct will all possible
                 /// fields.
-                pub fn execute<T>(self) -> Result<T, crate::Error>
+                pub async fn execute<T>(self) -> Result<T, crate::Error>
                 where
                     T: ::serde::de::DeserializeOwned + ::google_field_selector::FieldSelector,
                 {
@@ -160,7 +161,7 @@ fn exec_method(
                     } else {
                         Some(fields)
                     };
-                    self.execute_with_fields(fields)
+                    self.execute_with_fields(fields).await
                 }
 
                 /// Execute the given operation. This will not provide any
@@ -168,46 +169,46 @@ fn exec_method(
                 /// the fields returned. This typically includes the most common
                 /// fields, but it will not include every possible attribute of
                 /// the response resource.
-                pub fn execute_with_default_fields(self) -> Result<#resp_type_path, crate::Error> {
-                    self.execute_with_fields(None::<&str>)
+                pub async fn execute_with_default_fields(self) -> Result<#resp_type_path, crate::Error> {
+                    self.execute_with_fields(None::<&str>).await
                 }
 
                 /// Execute the given operation. This will provide a `fields`
                 /// selector of `*`. This will include every attribute of the
                 /// response resource and should be limited to use during
                 /// development or debugging.
-                pub fn execute_with_all_fields(self) -> Result<#resp_type_path, crate::Error> {
-                    self.execute_with_fields(Some("*"))
+                pub async fn execute_with_all_fields(self) -> Result<#resp_type_path, crate::Error> {
+                    self.execute_with_fields(Some("*")).await
                 }
 
                 /// Execute the given operation. This will use the `fields`
                 /// selector provided and will deserialize the response into
                 /// whatever return value is provided.
-                pub fn execute_with_fields<T, F>(mut self, fields: Option<F>) -> Result<T, crate::Error>
+                pub async fn execute_with_fields<T, F>(mut self, fields: Option<F>) -> Result<T, crate::Error>
                 where
                     T: ::serde::de::DeserializeOwned,
                     F: Into<String>,
                 {
                     self.fields = fields.map(Into::into);
-                    self._execute()
+                    self._execute().await
                 }
 
-                fn _execute<T>(&mut self) -> Result<T, crate::Error>
+                async fn _execute<T>(&mut self) -> Result<T, crate::Error>
                 where
                     T: ::serde::de::DeserializeOwned,
                 {
-                    let req = self._request(&self._path())?;
+                    let req = self._request(&self._path()).await?;
                     #set_body
-                    Ok(crate::error_from_response(req.send()?)?.json()?)
+                    Ok(req.send().await?.error_for_status()?.json().await?)
                 }
             }
         }
         None => {
             quote! {
-                pub fn execute(self) -> Result<(), crate::Error> {
-                    let req = self._request(&self._path())?;
+                pub async fn execute(self) -> Result<(), crate::Error> {
+                    let req = self._request(&self._path()).await?;
                     #set_body
-                    crate::error_from_response(req.send()?)?;
+                    req.send().await?.error_for_status()?;
                     Ok(())
                 }
             }
@@ -388,10 +389,13 @@ fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>
         .expect(format!("unknown http method: {}", http_method).as_str());
     let reqwest_method = reqwest_http_method(&http_method);
     quote! {
-        fn _request(&self, path: &str) -> Result<::reqwest::blocking::RequestBuilder, crate::Error> {
+       async fn _request(&self, path: &str) -> Result<::reqwest::RequestBuilder, crate::Error> {
             let mut req = self.reqwest.request(#reqwest_method, path);
             #(#query_params)*
-            req = req.bearer_auth(self.auth.access_token().map_err(|err| crate::Error::OAuth2(err))?);
+            let access_token = self.auth.access_token()
+                .await
+                .map_err(|err| crate::Error::OAuth2(err))?;
+            req = req.bearer_auth(access_token);
             Ok(req)
         }
     }
@@ -566,14 +570,27 @@ fn download_method(base_url: &str, method: &Method) -> TokenStream {
         &method.path,
         &method.params,
     );
+    // TODO: faster to use tokio_util::compat? see: https://github.com/seanmonstar/reqwest/issues/482
     quote! {
         #download_path_method
-        pub fn download<W>(mut self, output: &mut W) -> Result<u64, crate::Error>
+        pub async fn download<W>(mut self, output: &mut W) -> Result<u64, crate::Error>
         where
-            W: ::std::io::Write + ?Sized,
+            W: futures::io::AsyncWrite + std::marker::Unpin + ?Sized,
         {
+            use futures::io::AsyncWriteExt;
+
             self.alt = Some(crate::params::Alt::Media);
-            Ok(crate::error_from_response(self._request(&self._path())?.send()?)?.copy_to(output)?)
+            let request = self._request(&self._path()).await?;
+
+            let mut response = request.send().await?.error_for_status()?;
+
+            let mut num_bytes_written: usize = 0;
+            while let Some(chunk) = response.chunk().await? {
+                output.write(&chunk).await?;
+                num_bytes_written += chunk.len();
+            }
+
+            Ok(num_bytes_written as u64)
         }
     }
 }
@@ -585,50 +602,79 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
             let add_request_part = method.request.as_ref().map(|_| {
                 quote!{
                     let request_json = ::serde_json::to_vec(&self.request)?;
-                    multipart.new_part(Part::new(::mime::APPLICATION_JSON, Box::new(::std::io::Cursor::new(request_json))));
+                    multipart.new_part(Part::new(
+                        ::mime::APPLICATION_JSON,
+                        Box::new(futures::io::Cursor::new(request_json)),
+                    ));
                 }
             });
+            // TODO: We either have to use `read_to_end` and read the whole body
+            // into memory or implement Stream for RelatedMultiPartReader, but
+            // that would require allocating a lot of intermediate Vecs; see:
+            // http://smallcultfollowing.com/babysteps/blog/2019/12/10/async-interview-2-cramertj-part-2/#the-natural-way-to-write-attached-streams-is-with-gats
             let upload_fn = match &method.response {
                 Some(_response) => {
                     quote!{
-                        pub fn upload<T, R>(mut self, content: R, mime_type: ::mime::Mime) -> Result<T, crate::Error>
+                        pub async fn upload<T, R>(mut self, content: R, mime_type: ::mime::Mime) -> Result<T, crate::Error>
                         where
                             T: ::serde::de::DeserializeOwned + ::google_field_selector::FieldSelector,
-                            R: ::std::io::Read + ::std::io::Seek + Send + 'static,
+                            R: futures::io::AsyncRead + std::marker::Unpin + Send + 'static,
                         {
+                            use crate::multipart::{RelatedMultiPart, Part};
+                            use futures::io::AsyncReadExt;
+
                             let fields = ::google_field_selector::to_string::<T>();
                             self.fields = if fields.is_empty() {
                                 None
                             } else {
                                 Some(fields)
                             };
-                            let req = self._request(&self._simple_upload_path())?;
+                            
+                            let req = self._request(&self._simple_upload_path()).await?;
                             let req = req.query(&[("uploadType", "multipart")]);
-                            use crate::multipart::{RelatedMultiPart, Part};
+
                             let mut multipart = RelatedMultiPart::new();
                             #add_request_part
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
+                            
                             let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
-                            let req = req.body(reqwest::blocking::Body::new(multipart.into_reader()));
-                            Ok(crate::error_from_response(req.send()?)?.json()?)
+                            
+                            let mut body: Vec<u8> = vec![];
+                            let mut reader = multipart.into_reader();
+                            let _num_bytes = reader.read_to_end(&mut body).await?;
+                            let req = req.body(body);
+
+                            let response = req.send().await?.error_for_status()?;
+
+                            Ok(response.json().await?)
                         }
                     }
                 },
                 None => {
                     quote!{
-                        pub fn upload<R>(self, content: R, mime_type: ::mime::Mime) -> Result<(), crate::Error>
+                        pub async fn upload<R>(self, content: R, mime_type: ::mime::Mime) -> Result<(), crate::Error>
                         where
-                            R: ::std::io::Read + ::std::io::Seek + Send + 'static,
+                            R: futures::io::AsyncRead + std::marker::Unpin + Send + 'static,
                         {
-                            let req = self._request(&self._simple_upload_path())?;
-                            let req = req.query(&[("uploadType", "multipart")]);
                             use crate::multipart::{RelatedMultiPart, Part};
+                            use futures::io::AsyncReadExt;
+
+                            let req = self._request(&self._simple_upload_path()).await?;
+                            let req = req.query(&[("uploadType", "multipart")]);
+                            
                             let mut multipart = RelatedMultiPart::new();
                             #add_request_part
                             multipart.new_part(Part::new(mime_type, Box::new(content)));
+                           
                             let req = req.header(::reqwest::header::CONTENT_TYPE, format!("multipart/related; boundary={}", multipart.boundary()));
-                            let req = req.body(reqwest::blocking::Body::new(multipart.into_reader()));
-                            crate::error_from_response(req.send()?)?;
+
+                            let mut body: Vec<u8> = vec![];
+                            let mut reader = multipart.into_reader();
+                            let _num_bytes = reader.read_to_end(&mut body).await?;
+                            let req = req.body(body);
+                            
+                            req.send().await?.error_for_status()?;
+
                             Ok(())
                         }
                     }
@@ -654,12 +700,12 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
                 &method.params,
             );
             let upload_fn = quote!{
-                pub fn start_resumable_upload(self, mime_type: ::mime::Mime) -> Result<crate::ResumableUpload, crate::Error> {
-                    let req = self._request(&self._resumable_upload_path())?;
+                pub async fn start_resumable_upload(self, mime_type: ::mime::Mime) -> Result<crate::ResumableUpload, crate::Error> {
+                    let req = self._request(&self._resumable_upload_path()).await?;
                     let req = req.query(&[("uploadType", "resumable")]);
                     let req = req.header(::reqwest::header::HeaderName::from_static("x-upload-content-type"), mime_type.to_string());
                     #set_body
-                    let resp = crate::error_from_response(req.send()?)?;
+                    let resp = req.send().await?.error_for_status()?;
                     let location_header = resp.headers().get(::reqwest::header::LOCATION).ok_or_else(|| crate::Error::Other(format!("No LOCATION header returned when initiating resumable upload").into()))?;
                     let upload_url = ::std::str::from_utf8(location_header.as_bytes()).map_err(|_| crate::Error::Other(format!("Non UTF8 LOCATION header returned").into()))?.to_owned();
                     Ok(crate::ResumableUpload::new(self.reqwest.clone(), upload_url))
@@ -671,9 +717,10 @@ fn upload_methods(base_url: &str, method: &Method) -> TokenStream {
             }
         });
 
+        // FIXME: refactor ResumableUpload to be async
         quote! {
             #simple_fns
-            #resumable_fns
+            // #resumable_fns
         }
     } else {
         quote! {}

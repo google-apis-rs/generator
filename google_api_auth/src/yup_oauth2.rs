@@ -24,14 +24,13 @@ impl<T> ::std::fmt::Debug for YupAuthenticator<T> {
     }
 }
 
+#[async_trait::async_trait]
 impl<C> crate::GetAccessToken for YupAuthenticator<C>
 where
     C: Connect + Clone + Send + Sync + 'static,
 {
-    fn access_token(&self) -> Result<String, Box<dyn ::std::error::Error + Send + Sync>> {
-        let fut = self.auth.token(&self.scopes);
-        let mut runtime = ::tokio::runtime::Runtime::new().expect("unable to start tokio runtime");
-        Ok(runtime.block_on(fut)?.as_str().to_string())
+    async fn access_token(&self) -> Result<String, Box<dyn ::std::error::Error + Send + Sync>> {
+        Ok(self.auth.token(&self.scopes).await?.as_str().to_string())
     }
 }
 

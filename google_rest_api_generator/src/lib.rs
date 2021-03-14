@@ -92,12 +92,14 @@ pub fn generate(
     rustfmt_writer.write_all(include_bytes!("../gen_include/percent_encode_consts.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/multipart.rs"))?;
     rustfmt_writer.write_all(include_bytes!("../gen_include/parsed_string.rs"))?;
-    if any_resumable_upload_methods {
-        rustfmt_writer.write_all(include_bytes!("../gen_include/resumable_upload.rs"))?;
-    }
-    if any_iterable_methods {
-        rustfmt_writer.write_all(include_bytes!("../gen_include/iter.rs"))?;
-    }
+    // FIXME: refactor ResumableUpload to be async
+    // if any_resumable_upload_methods {
+    //     rustfmt_writer.write_all(include_bytes!("../gen_include/resumable_upload.rs"))?;
+    // }
+    // FIXME: implement Stream instead of Iter so it is async
+    // if any_iterable_methods {
+    //     rustfmt_writer.write_all(include_bytes!("../gen_include/iter.rs"))?;
+    // }
     rustfmt_writer.close()?;
     info!("api: generated and formatted in {:?}", time.elapsed());
     info!("api: done in {:?}", total_time.elapsed());
@@ -290,7 +292,7 @@ impl APIDesc {
                 #(#param_type_defs)*
             }
             pub struct Client {
-                reqwest: ::reqwest::blocking::Client,
+                reqwest: ::reqwest::Client,
                 auth: Box<dyn ::google_api_auth::GetAccessToken>,
             }
             impl Client {
@@ -300,13 +302,13 @@ impl APIDesc {
                 {
                     Client::with_reqwest_client(
                         auth,
-                        ::reqwest::blocking::Client::builder().timeout(None).build().unwrap()
+                        ::reqwest::Client::builder().build().unwrap()
                     )
                 }
 
                 // Not necessarily the best API. If we have a need for anymore
                 // configuration knobs we should switch to a builder pattern.
-                pub fn with_reqwest_client<A>(auth: A, reqwest: ::reqwest::blocking::Client) -> Self
+                pub fn with_reqwest_client<A>(auth: A, reqwest: ::reqwest::Client) -> Self
                 where
                     A: ::google_api_auth::GetAccessToken + 'static,
                 {

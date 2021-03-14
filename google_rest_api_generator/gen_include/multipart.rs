@@ -37,13 +37,13 @@ mod multipart {
 
     pub(crate) struct Part {
         content_type: ::mime::Mime,
-        body: Box<dyn::std::io::Read + Send>,
+        body: Box<dyn futures::io::AsyncRead + std::marker::Unpin + Send>,
     }
 
     impl Part {
         pub(crate) fn new(
             content_type: ::mime::Mime,
-            body: Box<dyn::std::io::Read + Send>,
+            body: Box<dyn futures::io::AsyncRead + std::marker::Unpin + Send>,
         ) -> Part {
             Part { content_type, body }
         }
@@ -52,26 +52,32 @@ mod multipart {
     pub(crate) struct RelatedMultiPartReader {
         state: RelatedMultiPartReaderState,
         boundary: String,
-        next_body: Option<Box<dyn::std::io::Read + Send>>,
+        next_body: Option<Box<dyn futures::io::AsyncRead + std::marker::Unpin + Send>>,
         parts: std::vec::IntoIter<Part>,
     }
 
     enum RelatedMultiPartReaderState {
         WriteBoundary {
-            start: usize, boundary: String,
+            start: usize,
+            boundary: String,
         },
         WriteContentType {
             start: usize,
             content_type: Vec<u8>,
         },
         WriteBody {
-            body: Box<dyn::std::io::Read + Send>,
+            body: Box<dyn futures::io::AsyncRead + std::marker::Unpin + Send>,
         },
     }
 
-    impl ::std::io::Read for RelatedMultiPartReader {
-        fn read(&mut self, buf: &mut [u8]) -> ::std::io::Result<usize> {
+    impl futures::io::AsyncRead for RelatedMultiPartReader {
+        fn poll_read(
+            mut self: std::pin::Pin<&mut Self>,
+            ctx: &mut futures::task::Context,
+            buf: &mut [u8],
+        ) -> futures::task::Poll<Result<usize, futures::io::Error>> {
             use RelatedMultiPartReaderState::*;
+
             let mut bytes_written: usize = 0;
             loop {
                 let rem_buf = &mut buf[bytes_written..];
@@ -90,8 +96,11 @@ mod multipart {
                             self.next_body = Some(next_part.body);
                             self.state = WriteContentType {
                                 start: 0,
-                                content_type: format!("Content-Type: {}\r\n\r\n", next_part.content_type)
-                                    .into_bytes(),
+                                content_type: format!(
+                                    "Content-Type: {}\r\n\r\n",
+                                    next_part.content_type
+                                )
+                                .into_bytes(),
                             };
                         } else {
                             break;
@@ -101,7 +110,8 @@ mod multipart {
                         start,
                         content_type,
                     } => {
-                        let bytes_to_copy = std::cmp::min(content_type.len() - *start, rem_buf.len());
+                        let bytes_to_copy =
+                            std::cmp::min(content_type.len() - *start, rem_buf.len());
                         rem_buf[..bytes_to_copy]
                             .copy_from_slice(&content_type[*start..*start + bytes_to_copy]);
                         *start += bytes_to_copy;
@@ -115,7 +125,14 @@ mod multipart {
                         }
                     }
                     WriteBody { body } => {
-                        let written = body.read(rem_buf)?;
+                        let body = std::pin::Pin::new(body);
+                        let written = match futures::io::AsyncRead::poll_read(body, ctx, rem_buf) {
+                            futures::task::Poll::Ready(Ok(n)) => n,
+                            futures::task::Poll::Ready(Err(err)) => {
+                                return futures::task::Poll::Ready(Err(err));
+                            }
+                            futures::task::Poll::Pending => return futures::task::Poll::Pending,
+                        };
                         bytes_written += written;
                         if written == 0 {
                             self.state = WriteBoundary {
@@ -128,7 +145,8 @@ mod multipart {
                     }
                 }
             }
-            Ok(bytes_written)
+
+            futures::task::Poll::Ready(Ok(bytes_written))
         }
     }
 

@@ -54,7 +54,7 @@ pub(crate) fn generate(
             }
 
             pub struct #action_ident<'a> {
-                pub(crate) reqwest: &'a reqwest::blocking::Client,
+                pub(crate) reqwest: &'a reqwest::Client,
                 pub(crate) auth: &'a dyn ::google_api_auth::GetAccessToken,
             }
             impl<'a> #action_ident<'a> {

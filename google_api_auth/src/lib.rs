@@ -2,8 +2,9 @@
 /// client libraries to retrieve access tokens when making http requests. This
 /// library optionally provides a variety of implementations, but users are also
 /// free to implement whatever logic they want for retrieving a token.
+#[async_trait::async_trait]
 pub trait GetAccessToken: ::std::fmt::Debug + Send + Sync {
-    fn access_token(&self) -> Result<String, Box<dyn ::std::error::Error + Send + Sync>>;
+    async fn access_token(&self) -> Result<String, Box<dyn ::std::error::Error + Send + Sync>>;
 }
 
 impl<T> From<T> for Box<dyn GetAccessToken>
