@@ -20,10 +20,10 @@ google_api_auth = { git = "https://github.com/google-apis-rs/generator", branch 
 google_field_selector = { git = "https://github.com/google-apis-rs/generator", branch = "refactor/async" }
 mime = "0.3"
 percent-encoding = "2"
-reqwest = { version = "0.10", default-features = false, features = ["json"] }
+reqwest = { version = "0.11", default-features = false, features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-textnonce = "0.6"
+textnonce = "1"
 "#;
 
 pub(crate) fn cargo_toml(crate_name: &str, include_bytes_dep: bool, api: &shared::Api) -> String {
