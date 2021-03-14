@@ -298,7 +298,7 @@ impl APIDesc {
             impl Client {
                 pub fn new<A>(auth: A) -> Self
                 where
-                    A: Into<Box<dyn ::google_api_auth::GetAccessToken>>,
+                    A: ::google_api_auth::GetAccessToken + 'static,
                 {
                     Client::with_reqwest_client(
                         auth,
@@ -310,11 +310,11 @@ impl APIDesc {
                 // configuration knobs we should switch to a builder pattern.
                 pub fn with_reqwest_client<A>(auth: A, reqwest: ::reqwest::Client) -> Self
                 where
-                    A: Into<Box<dyn ::google_api_auth::GetAccessToken>>,
+                    A: ::google_api_auth::GetAccessToken + 'static,
                 {
                     Client {
                         reqwest,
-                        auth: auth.into(),
+                        auth: Box::new(auth),
                     }
                 }
 

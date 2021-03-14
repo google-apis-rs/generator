@@ -1,6 +1,6 @@
 use crate::{
-    markdown, to_ident, to_rust_varstr, Method, Param, ParamInitMethod, PropertyDesc, RefOrType,
-    Type, TypeDesc,
+    markdown, to_ident, to_rust_varstr, Method, Param, ParamInitMethod, PropertyDesc,
+    RefOrType, Type, TypeDesc,
 };
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -96,12 +96,8 @@ pub(crate) fn generate(
         });
 
     let base_url = format!("{}{}", root_url, service_path);
-    let default_path_method = path_method(
-        &parse_quote! {_path},
-        &base_url,
-        &method.path,
-        &method.params,
-    );
+    let default_path_method =
+        path_method(&parse_quote! {_path}, &base_url, &method.path, &method.params);
     let request_method = request_method(&method.http_method, all_params);
     let exec_method = exec_method(method.request.as_ref(), method.response.as_ref());
     let (iter_methods, iter_types_and_impls) = iter_defs(method, schemas);
@@ -367,25 +363,39 @@ fn reqwest_http_method(http_method: &::reqwest::Method) -> syn::Path {
 }
 
 fn request_method<'a>(http_method: &str, params: impl Iterator<Item = &'a Param>) -> TokenStream {
-    let query_params = params
-        .filter(|param| param.location == "query")
-        .map(|param| {
-            let id = &param.id;
-            let ident = &param.ident;
-            quote! {(#id, &self.#ident)}
-        });
+    let query_params = params.filter(|param| param.location == "query").map(|param| {
+        let id = &param.id;
+        let ident = &param.ident;
+        match param.typ.type_desc {
+            TypeDesc::Array{..} if param.required => {
+                quote! {
+                    for value in &self.#ident {
+                        req = req.query(&[(#id, value)]);
+                    }
+                }
+            },
+            TypeDesc::Array{..} if !param.required => {
+                quote! {
+                    for value in self.#ident.iter().flatten() {
+                        req = req.query(&[(#id, value)]);
+                    }
+                }
+            },
+            _ => quote! {req = req.query(&[(#id, &self.#ident)]);},
+        }
+    });
 
     let http_method = ::reqwest::Method::from_str(http_method)
         .expect(format!("unknown http method: {}", http_method).as_str());
     let reqwest_method = reqwest_http_method(&http_method);
     quote! {
        async fn _request(&self, path: &str) -> Result<::reqwest::RequestBuilder, crate::Error> {
-            let req = self.reqwest.request(#reqwest_method, path);
-            #(let req = req.query(&[#query_params]);)*
+            let mut req = self.reqwest.request(#reqwest_method, path);
+            #(#query_params)*
             let access_token = self.auth.access_token()
                 .await
                 .map_err(|err| crate::Error::OAuth2(err))?;
-            let req = req.bearer_auth(access_token);
+            req = req.bearer_auth(access_token);
             Ok(req)
         }
     }
